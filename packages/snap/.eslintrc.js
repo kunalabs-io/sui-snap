@@ -1,44 +1,28 @@
+/* eslint-env node */
 module.exports = {
   root: true,
-  parserOptions: {
-    sourceType: 'module',
+  env: {
+    es2022: true,
   },
-
-  extends: ['@metamask/eslint-config'],
-
-  overrides: [
-    {
-      files: ['**/*.js'],
-      extends: ['@metamask/eslint-config-nodejs'],
-    },
-
-    {
-      files: ['**/*.{ts,tsx}'],
-      extends: ['@metamask/eslint-config-typescript'],
-      rules: {
-        '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-      },
-    },
-
-    {
-      files: ['**/*.test.ts', '**/*.test.js'],
-      extends: ['@metamask/eslint-config-jest'],
-      rules: {
-        '@typescript-eslint/no-shadow': [
-          'error',
-          { allow: ['describe', 'expect', 'it'] },
-        ],
-      },
-    },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:prettier/recommended',
   ],
-
-  ignorePatterns: [
-    '!.prettierrc.js',
-    '**/!.eslintrc.js',
-    '**/dist*/',
-    '**/*__GENERATED__*',
-    '**/build',
-    '**/public',
-    '**/.cache',
-  ],
-};
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    tsconfigRootDir: __dirname,
+    sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.eslint.json'],
+  },
+  plugins: ['@typescript-eslint'],
+  rules: {
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    'prettier/prettier': ['error', {}, { usePrettierrc: true }],
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
+    '@typescript-eslint/no-floating-promises': 'warn',
+  },
+  ignorePatterns: ['node_modules', 'dist'],
+}

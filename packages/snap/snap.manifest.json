@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
-  "description": "An example Snap written in TypeScript.",
-  "proposedName": "TypeScript Example Snap",
+  "description": "A Snap for making transactions on the Sui blockchain",
+  "proposedName": "Sui",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "BIxixBNu4NSfcQJOMAquiRLEPr64pZXamY/iDDK8DAs=",
+    "shasum": "+1SAtQIvzhATWyb/Xil9yd1wozwwQBC458d5aGuQ6SY=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -22,7 +22,18 @@
     "endowment:rpc": {
       "dapps": true,
       "snaps": false
-    }
+    },
+    "endowment:network-access": {},
+    "snap_getBip32Entropy": [
+      {
+        "path": [
+          "m",
+          "44'",
+          "784'"
+        ],
+        "curve": "ed25519"
+      }
+    ]
   },
   "manifestVersion": "0.1"
 }

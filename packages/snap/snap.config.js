@@ -1,24 +1,8 @@
-const through = require('through2');
-
+/* eslint-env node */
 module.exports = {
   cliOptions: {
     src: './src/index.ts',
     port: 8080,
+    transpilationMode: 'localAndDeps',
   },
-  bundlerCustomizer: (bundler) => {
-    bundler.transform(function () {
-      let data = '';
-      return through(
-        function (buffer, _encoding, callback) {
-          data += buffer;
-          callback();
-        },
-        function (callback) {
-          this.push("globalThis.Buffer = require('buffer/').Buffer;");
-          this.push(data);
-          callback();
-        },
-      );
-    });
-  },
-};
+}
