@@ -8,7 +8,7 @@ export enum FontSize {
 }
 
 export enum FontWeight {
-  Normal = 400,
+  Regular = 400,
   Medium = 500,
   Bold = 700,
 }

@@ -5,6 +5,7 @@ import { IconClose } from 'components/Icons/IconClose'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
+import Typography from 'components/Typography/Typography'
 
 const Main = () => {
   const handleClick = () => {
@@ -41,6 +42,16 @@ const Main = () => {
           <IconExplore />
         </IconButton>
       </div>
+      <div style={{ height: 50 }} />
+
+      <Typography variant="title" fontWeight="bold">
+        Title
+      </Typography>
+      <Typography variant="subtitle1">Title</Typography>
+      <Typography variant="subtitle2">Title</Typography>
+      <Typography variant="description">Title</Typography>
+      <Typography variant="body">Title</Typography>
+      <Typography variant="caption">Title</Typography>
     </div>
   )
 }
