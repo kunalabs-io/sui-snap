@@ -4,15 +4,15 @@
   "proposedName": "Sui",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+    "url": "https://github.com/kunalabs-io/sui-snap"
   },
   "source": {
-    "shasum": "+1SAtQIvzhATWyb/Xil9yd1wozwwQBC458d5aGuQ6SY=",
+    "shasum": "PY5XeIZQDcnoETxLqOwpest+ESKAn7lc0uHCLbJzN/k=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/icon.svg",
-        "packageName": "snap",
+        "packageName": "@kunalabs-io/sui-metamask-snap",
         "registry": "https://registry.npmjs.org/"
       }
     }

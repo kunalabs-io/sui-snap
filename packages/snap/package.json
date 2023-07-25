@@ -9,6 +9,10 @@
     "images/",
     "snap.manifest.json"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kunalabs-io/sui-snap"
+  },
   "scripts": {
     "build": "mm-snap build",
     "build:clean": "pnpm clean && pnpm build",
