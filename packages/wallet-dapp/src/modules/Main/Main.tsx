@@ -1,4 +1,5 @@
 import Button from 'components/Button/Button'
+import IconButton from 'components/IconButton/IconButton'
 import { IconCircle } from 'components/Icons/IconCircle'
 import { IconClose } from 'components/Icons/IconClose'
 import { IconCopy } from 'components/Icons/IconCopy'
@@ -31,6 +32,14 @@ const Main = () => {
         <IconCircle />
         <IconClose fill="#ffffff" />
         <IconCopy />
+      </div>
+      <div>
+        <IconButton onClick={handleClick}>
+          <IconSend />
+        </IconButton>
+        <IconButton onClick={handleClick}>
+          <IconExplore />
+        </IconButton>
       </div>
     </div>
   )
