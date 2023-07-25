@@ -1,3 +1,4 @@
 packages:
+  - "packages/wallet-adapter"
   - "packages/wallet-dapp"
   - "packages/snap"
