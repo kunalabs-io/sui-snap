@@ -19,40 +19,50 @@ export class SuiSnapWalletAdapter implements WalletAdapter {
     this.connected = true
   }
 
+  static async flaskAvailable() {
+    const provider = window.ethereum
+    const version = await provider?.request({ method: 'web3_clientVersion' })
+    return version?.includes('flask')
+  }
+
   async connect() {
     this.connecting = true
     this.connected = false
 
-    const provider = window.ethereum
-    const version = await provider?.request({ method: 'web3_clientVersion' })
-    const isFlask = version?.includes('flask')
-    if (!isFlask) {
-      throw new Error('MetaMask Flask not detected!')
-    }
+    try {
+      const provider = window.ethereum
+      if (!(await SuiSnapWalletAdapter.flaskAvailable())) {
+        throw new Error('MetaMask Flask not detected!')
+      }
 
-    await provider.request({
-      method: 'wallet_requestSnaps',
-      params: {
-        [snapOrigin]: {},
-      },
-    })
-
-    const account = await provider.request({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId: snapOrigin,
-        request: {
-          method: 'getAccount',
+      await provider.request({
+        method: 'wallet_requestSnaps',
+        params: {
+          [snapOrigin]: {},
         },
-      },
-    })
-    this.#account = new ReadonlyWalletAccount({
-      ...account,
-      publicKey: fromB64(account.publicKey),
-    })
+      })
 
-    this.connecting = false
-    this.connected = true
+      const account = await provider.request({
+        method: 'wallet_invokeSnap',
+        params: {
+          snapId: snapOrigin,
+          request: {
+            method: 'getAccount',
+          },
+        },
+      })
+      this.#account = new ReadonlyWalletAccount({
+        ...account,
+        publicKey: fromB64(account.publicKey),
+      })
+
+      this.connecting = false
+      this.connected = true
+    } catch (e) {
+      this.connecting = false
+      this.connected = false
+      throw e
+    }
   }
 
   async disconnect() {
