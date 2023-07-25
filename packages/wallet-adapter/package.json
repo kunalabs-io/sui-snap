@@ -1,0 +1,42 @@
+{
+  "name": "@kunalabs-io/sui-snap-wallet-adapter",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "author": "Kuna Labs <build@kunalabs.io>",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "source": "./src/index.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
+    "build": "pnpm clean && pnpm tsc --build && pnpm tsup ./src/index.ts --format esm,cjs --sourcemap",
+    "dev": "pnpm build --watch",
+    "check": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "@typescript-eslint/eslint-plugin": "^5.58.0",
+    "@typescript-eslint/parser": "^5.58.0",
+    "eslint": "^8.38.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.7",
+    "tsup": "^6.7.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@metamask/detect-provider": "^2.0.0",
+    "@mysten/sui.js": "^0.37.1",
+    "@mysten/wallet-adapter-base": "^0.7.12",
+    "@mysten/wallet-standard": "^0.5.12"
+  }
+}
