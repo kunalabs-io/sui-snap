@@ -13,4 +13,6 @@ export const themeColors = {
   button: {
     primary: '#0376C9',
   },
+
+  divider: '#D6D9DC',
 }

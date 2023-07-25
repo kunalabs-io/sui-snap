@@ -5,11 +5,16 @@ import { IconClose } from 'components/Icons/IconClose'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
+import Select, { Option } from 'components/Select/Select'
 import Typography from 'components/Typography/Typography'
 
 const Main = () => {
   const handleClick = () => {
     console.log('click')
+  }
+
+  const handleOptionClick = (option: Option) => {
+    console.log({ option })
   }
   return (
     <div style={{ marginTop: 39, marginLeft: 40 }}>
@@ -52,6 +57,14 @@ const Main = () => {
       <Typography variant="description">Title</Typography>
       <Typography variant="body">Title</Typography>
       <Typography variant="caption">Title</Typography>
+
+      <Select
+        options={[
+          { name: 'Mainnet', value: 'mainnet' },
+          { name: 'Testnet', value: 'testnet' },
+        ]}
+        onOptionClick={handleOptionClick}
+      />
     </div>
   )
 }
