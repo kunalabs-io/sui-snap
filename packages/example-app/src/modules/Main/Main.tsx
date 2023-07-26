@@ -12,7 +12,12 @@ const Main = () => {
 
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
   useEffect(() => {
-    SuiSnapWalletAdapter.flaskAvailable().then(setFlaskInstalled)
+    SuiSnapWalletAdapter.flaskAvailable()
+      .then(setFlaskInstalled)
+      .catch(e => {
+        setFlaskInstalled(false)
+        console.error(e)
+      })
   }, [])
 
   const connectedToSnap = kit.isConnected && kit.currentWallet?.name === 'Sui MetaMask Snap'
