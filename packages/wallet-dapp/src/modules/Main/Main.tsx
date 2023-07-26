@@ -5,11 +5,19 @@ import { IconClose } from 'components/Icons/IconClose'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
+import Modal from 'components/Modal/Modal'
+import ModalActions from 'components/Modal/components/ModalActions'
+import ModalBody from 'components/Modal/components/ModalBody'
+import ModalTitle from 'components/Modal/components/ModalTitle'
 import Select, { Option } from 'components/Select/Select'
 import Typography from 'components/Typography/Typography'
+import { useState } from 'react'
 
 const Main = () => {
+  const [isOpenModal, setIsOpenModal] = useState(false)
+
   const handleClick = () => {
+    setIsOpenModal(true)
     console.log('click')
   }
 
@@ -65,6 +73,14 @@ const Main = () => {
         ]}
         onOptionClick={handleOptionClick}
       />
+
+      {isOpenModal && (
+        <Modal onClose={() => setIsOpenModal(false)}>
+          <ModalTitle onClose={() => setIsOpenModal(false)}>Title</ModalTitle>
+          <ModalBody>Body</ModalBody>
+          <ModalActions>Actions</ModalActions>
+        </Modal>
+      )}
     </div>
   )
 }
