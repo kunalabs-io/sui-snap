@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@kunalabs-io/sui-metamask-snap": "workspace:*",
+    "@kunalabs-io/sui-snap-wallet-adapter": "workspace:*",
     "@mysten/sui.js": "^0.37.1",
     "@mysten/wallet-adapter-wallet-standard": "^0.7.12",
     "@mysten/wallet-kit": "^0.4.12",

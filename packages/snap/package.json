@@ -26,6 +26,7 @@
     "dev": "mm-snap watch"
   },
   "dependencies": {
+    "@kunalabs-io/sui-snap-wallet-adapter": "workspace:*",
     "@metamask/key-tree": "^9.0.0",
     "@metamask/snaps-types": "^0.32.2",
     "@metamask/snaps-ui": "^0.32.2",

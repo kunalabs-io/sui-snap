@@ -1,22 +1,31 @@
 import { OnRpcRequestHandler } from '@metamask/snaps-types'
 import { heading, panel, text } from '@metamask/snaps-ui'
 import { SLIP10Node } from '@metamask/key-tree'
-import { Ed25519Keypair } from '@mysten/sui.js/dist/cjs/keypairs/ed25519'
 import { blake2b } from '@noble/hashes/blake2b'
 
 import {
+  Ed25519Keypair,
   IntentScope,
   JsonRpcProvider,
   Keypair,
   RawSigner,
   SignedMessage,
-  TransactionBlock,
-  fromB64,
   messageWithIntent,
   testnetConnection,
   toB64,
   toSerializedSignature,
 } from '@mysten/sui.js'
+
+import {
+  SerializedSuiSignAndExecuteTransactionBlockInput,
+  SerializedSuiSignMessageInput,
+  SerializedSuiSignTransactionBlockInput,
+  SerializedWalletAccount,
+  deserializeSuiSignAndExecuteTransactionBlockInput,
+  deserializeSuiSignMessageInput,
+  deserializeSuiSignTransactionBlockInput,
+  is,
+} from '@kunalabs-io/sui-snap-wallet-adapter/dist/types'
 
 /**
  * Derive the Ed25519 keypair from user's MetaMask seed phrase.
@@ -80,17 +89,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 }) => {
   switch (request.method) {
     case 'signMessage': {
-      if (
-        !request.params ||
-        typeof request.params !== 'object' ||
-        Array.isArray(request.params) ||
-        typeof request.params.messageB64 !== 'string'
-      ) {
+      console.log(JSON.stringify(request.params, null, 2))
+      if (!is(request.params, SerializedSuiSignMessageInput)) {
         throw new Error('Invalid request params.')
       }
+      const input = deserializeSuiSignMessageInput(request.params)
 
       const keypair = await deriveKeypair()
-      const message = fromB64(request.params.messageB64)
 
       const response = await snap.request({
         method: 'snap_dialog',
@@ -107,22 +112,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw new Error('User rejected the signing.')
       }
 
-      return signMessage(keypair, message)
+      return signMessage(keypair, input.message)
     }
 
     case 'signTransactionBlock': {
-      if (
-        !request.params ||
-        typeof request.params !== 'object' ||
-        Array.isArray(request.params) ||
-        typeof request.params.serializedTransactionBlock !== 'string'
-      ) {
+      if (!is(request.params, SerializedSuiSignTransactionBlockInput)) {
         throw new Error('Invalid request params.')
       }
-
-      const txb = TransactionBlock.from(
-        request.params.serializedTransactionBlock
-      )
+      const input = deserializeSuiSignTransactionBlockInput(request.params)
 
       const keypair = await deriveKeypair()
       const connection = testnetConnection
@@ -146,22 +143,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       return await signer.signTransactionBlock({
-        transactionBlock: txb,
+        transactionBlock: input.transactionBlock,
       })
     }
 
     case 'signAndExecuteTransactionBlock': {
       if (
-        !request.params ||
-        typeof request.params !== 'object' ||
-        Array.isArray(request.params) ||
-        typeof request.params.serializedTransactionBlock !== 'string'
+        !is(request.params, SerializedSuiSignAndExecuteTransactionBlockInput)
       ) {
         throw new Error('Invalid request params.')
       }
-
-      const txb = TransactionBlock.from(
-        request.params.serializedTransactionBlock
+      const input = deserializeSuiSignAndExecuteTransactionBlockInput(
+        request.params
       )
 
       const keypair = await deriveKeypair()
@@ -186,14 +179,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       return await signer.signAndExecuteTransactionBlock({
-        transactionBlock: txb,
+        transactionBlock: input.transactionBlock,
       })
     }
 
     case 'getAccount': {
       const keypair = await deriveKeypair()
 
-      const account = {
+      const account: SerializedWalletAccount = {
         address: keypair.getPublicKey().toSuiAddress(),
         publicKey: keypair.getPublicKey().toBase64(),
         chains: ['sui:devnet', 'sui:testnet', 'sui:localnet', 'sui:mainnet'],

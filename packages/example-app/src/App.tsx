@@ -1,14 +1,12 @@
 import { ReactNode, useState } from 'react'
 import { Footer } from './components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
-import { SuiSnapWalletAdapter } from 'sui-snap-wallet-adapter'
+import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
 import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-wallet-standard'
 
 import Main from 'modules/Main'
 import '../index.css'
-import { GlobalStyles } from 'styles/GlobalStyles'
 import styled, { ThemeProvider } from 'styled-components'
-import { theme } from 'styles/theme'
 import { getThemePreference } from 'utils'
 import { GlobalStyle, dark, light } from 'config/theme'
 

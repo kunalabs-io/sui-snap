@@ -1,9 +1,103 @@
-import { fromB64, toB64 } from '@mysten/sui.js'
+import { SignedMessage, SignedTransaction, SuiTransactionBlockResponse } from '@mysten/sui.js'
 import { WalletAdapter, WalletAdapterEvents } from '@mysten/wallet-adapter-base'
-import { ReadonlyWalletAccount, WalletAccount } from '@mysten/wallet-standard'
+import {
+  ReadonlyWalletAccount,
+  SuiSignMessageInput,
+  SuiSignTransactionBlockInput,
+  WalletAccount,
+} from '@mysten/wallet-standard'
 import { ICON } from './icon'
+import { BaseProvider } from '@metamask/providers'
+import {
+  SerializedWalletAccount,
+  deserializeWalletAccount,
+  serializeSuiSignMessageInput,
+  serializeSuiSignTransactionBlockInput,
+} from './types'
+
+export * from './types'
 
 export const snapOrigin = 'local:http://localhost:8080'
+
+export async function getAccount(provider: BaseProvider): Promise<ReadonlyWalletAccount> {
+  const res = (await provider.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: snapOrigin,
+      request: {
+        method: 'getAccount',
+      },
+    },
+  })) as SerializedWalletAccount
+
+  return new ReadonlyWalletAccount(deserializeWalletAccount(res))
+}
+
+export async function signMessage(
+  provider: BaseProvider,
+  messageInput: SuiSignMessageInput
+): Promise<SignedMessage> {
+  const serialized = serializeSuiSignMessageInput(messageInput)
+
+  const res = (await provider.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: snapOrigin,
+      request: {
+        method: 'signMessage',
+        params: {
+          ...serialized,
+        },
+      },
+    },
+  })) as SignedMessage
+
+  return res
+}
+
+export async function signTransactionBlock(
+  provider: BaseProvider,
+  transactionInput: SuiSignTransactionBlockInput
+): Promise<SignedTransaction> {
+  const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
+
+  const res = (await provider.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: snapOrigin,
+      request: {
+        method: 'signTransactionBlock',
+        params: {
+          ...serialized,
+        },
+      },
+    },
+  })) as SignedTransaction
+
+  return res
+}
+
+export async function signAndExecuteTransactionBlock(
+  provider: BaseProvider,
+  transactionInput: SuiSignTransactionBlockInput
+): Promise<SuiTransactionBlockResponse> {
+  const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
+
+  const res = (await provider.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: snapOrigin,
+      request: {
+        method: 'signAndExecuteTransactionBlock',
+        params: {
+          ...serialized,
+        },
+      },
+    },
+  })) as SuiTransactionBlockResponse
+
+  return res
+}
 
 export class SuiSnapWalletAdapter implements WalletAdapter {
   name = 'Sui MetaMask Snap'
@@ -21,7 +115,7 @@ export class SuiSnapWalletAdapter implements WalletAdapter {
 
   static async flaskAvailable() {
     const provider = window.ethereum
-    const version = await provider?.request({ method: 'web3_clientVersion' })
+    const version = await provider?.request<string>({ method: 'web3_clientVersion' })
     return version?.includes('flask')
   }
 
@@ -42,19 +136,7 @@ export class SuiSnapWalletAdapter implements WalletAdapter {
         },
       })
 
-      const account = await provider.request({
-        method: 'wallet_invokeSnap',
-        params: {
-          snapId: snapOrigin,
-          request: {
-            method: 'getAccount',
-          },
-        },
-      })
-      this.#account = new ReadonlyWalletAccount({
-        ...account,
-        publicKey: fromB64(account.publicKey),
-      })
+      this.#account = await getAccount(provider)
 
       this.connecting = false
       this.connected = true
@@ -79,56 +161,14 @@ export class SuiSnapWalletAdapter implements WalletAdapter {
     }
   }
 
-  signMessage: WalletAdapter['signMessage'] = async messageInput => {
-    return await window.ethereum.request({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId: snapOrigin,
-        request: {
-          method: 'signMessage',
-          params: {
-            messageB64: toB64(messageInput.message),
-            account: messageInput.account,
-          },
-        },
-      },
-    })
-  }
+  signMessage: WalletAdapter['signMessage'] = async messageInput =>
+    signMessage(window.ethereum, messageInput)
 
-  signTransactionBlock: WalletAdapter['signTransactionBlock'] = async transactionInput => {
-    return await window.ethereum.request({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId: snapOrigin,
-        request: {
-          method: 'signTransactionBlock',
-          params: {
-            serializedTransactionBlock: transactionInput.transactionBlock.serialize(),
-            account: transactionInput.account,
-            chain: transactionInput.chain,
-          },
-        },
-      },
-    })
-  }
+  signTransactionBlock: WalletAdapter['signTransactionBlock'] = async transactionInput =>
+    signTransactionBlock(window.ethereum, transactionInput)
 
   signAndExecuteTransactionBlock: WalletAdapter['signAndExecuteTransactionBlock'] =
-    async transactionInput => {
-      return await window.ethereum.request({
-        method: 'wallet_invokeSnap',
-        params: {
-          snapId: snapOrigin,
-          request: {
-            method: 'signAndExecuteTransactionBlock',
-            params: {
-              serializedTransactionBlock: transactionInput.transactionBlock.serialize(),
-              account: transactionInput.account,
-              chain: transactionInput.chain,
-            },
-          },
-        },
-      })
-    }
+    async transactionInput => signAndExecuteTransactionBlock(window.ethereum, transactionInput)
 
   on: <E extends keyof WalletAdapterEvents>(
     event: E,

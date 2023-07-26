@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import { SuiSnapWalletAdapter } from 'sui-snap-wallet-adapter'
+import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
 import { TransactionBlock } from '@mysten/sui.js'
 import { useWalletKit } from '@mysten/wallet-kit'
 
@@ -33,18 +33,22 @@ const Main = () => {
       if (typeof e === 'string') {
         setError(e)
       } else {
-        setError((e as any).message)
+        setError((e as Error).message)
       }
     }
   }
 
   const signMessage = async () => {
+    if (!connectedToSnap || !kit.currentAccount) {
+      return
+    }
+
     try {
       const adapter = new SuiSnapWalletAdapter()
 
       const signed = await adapter.signMessage({
         message: new Uint8Array([1, 2, 3]),
-        account: {} as any,
+        account: kit.currentAccount,
       })
 
       console.log(signed)
@@ -52,7 +56,7 @@ const Main = () => {
       if (typeof e === 'string') {
         setError(e)
       } else {
-        setError((e as any).message)
+        setError((e as Error).message)
       }
     }
   }
@@ -80,7 +84,7 @@ const Main = () => {
       if (typeof e === 'string') {
         setError(e)
       } else {
-        setError((e as any).message)
+        setError((e as Error).message)
       }
     }
   }
@@ -108,7 +112,7 @@ const Main = () => {
       if (typeof e === 'string') {
         setError(e)
       } else {
-        setError((e as any).message)
+        setError((e as Error).message)
       }
     }
   }

@@ -8,15 +8,19 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "source": "./src/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./types": {
+      "source": "./src/types.ts",
+      "import": "./dist/types.mjs",
+      "require": "./dist/types.js"
     }
   },
   "scripts": {
     "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
-    "build": "pnpm clean && pnpm tsc --build && pnpm tsup ./src/index.ts --format esm,cjs --sourcemap",
+    "build": "pnpm clean && pnpm tsc --build && pnpm tsup ./src/index.ts ./src/types.ts --format esm,cjs --sourcemap",
     "dev": "pnpm build --watch",
     "check": "tsc --noEmit",
     "lint": "eslint .",
@@ -35,8 +39,10 @@
   },
   "dependencies": {
     "@metamask/detect-provider": "^2.0.0",
+    "@metamask/providers": "^11.1.0",
     "@mysten/sui.js": "^0.37.1",
     "@mysten/wallet-adapter-base": "^0.7.12",
-    "@mysten/wallet-standard": "^0.5.12"
+    "@mysten/wallet-standard": "^0.5.12",
+    "superstruct": "^1.0.3"
   }
 }
