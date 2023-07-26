@@ -1,3 +1,4 @@
+import Accordion from 'components/Accordion/Accordion'
 import Button from 'components/Button/Button'
 import IconButton from 'components/IconButton/IconButton'
 import { IconCircle } from 'components/Icons/IconCircle'
@@ -81,6 +82,8 @@ const Main = () => {
           <ModalActions>Actions</ModalActions>
         </Modal>
       )}
+
+      <Accordion accordionSummary={<div>1 Unrecognized Token</div>} accordionDetails={<div>Details</div>} />
     </div>
   )
 }
