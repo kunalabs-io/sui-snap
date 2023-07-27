@@ -10,11 +10,6 @@ export const AccordionSummary = styled.div<{ isOpen: boolean }>`
   align-items: center;
   font-size: ${p => p.theme.typography.size.Body}px;
   color: ${p => p.theme.colors.text.secondary};
-  ${p =>
-    p.isOpen &&
-    `
-  padding-bottom: 24px;
-  `}
 
   &:hover {
     cursor: pointer;
@@ -22,6 +17,7 @@ export const AccordionSummary = styled.div<{ isOpen: boolean }>`
 `
 
 export const AccordionDetails = styled.div<{ isOpen: boolean }>`
+  margin-top: 24px;
   height: 0px;
   opacity: 0;
   transition: opacity 0.3s ease-in-out, height 0.3s 0.3s ease-in-out;
