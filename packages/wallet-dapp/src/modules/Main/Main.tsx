@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import Welcome from '../Welcome/Welcome'
+import Header from 'modules/Header/Header'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -15,7 +15,7 @@ const Wrapper = styled.div`
 const Main = () => {
   return (
     <Wrapper>
-      <Welcome />
+      <Header />
     </Wrapper>
   )
 }
