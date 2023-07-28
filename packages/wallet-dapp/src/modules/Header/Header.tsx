@@ -1,5 +1,6 @@
 import Jazzicon from 'react-jazzicon'
 import { useCallback, useState } from 'react'
+import { useTheme } from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
 import Select, { Option } from 'components/Select/Select'
@@ -13,6 +14,8 @@ const address = '0xcc2bd176a478baea9a0de7a24cd927661cc6e860d5bacecb9a138ef20dbab
 
 const Header = () => {
   const [isOpenInfoModal, setIsOpenInfoModal] = useState(false)
+
+  const theme = useTheme()
 
   const toggleModal = useCallback(() => {
     setIsOpenInfoModal(!isOpenInfoModal)
@@ -31,7 +34,7 @@ const Header = () => {
           <Jazzicon diameter={25} seed={Math.round(Math.random() * 10000000)} />
         </div>
         <div style={{ cursor: 'pointer' }} onClick={handleAddressClick}>
-          <Typography variant="body" style={{ marginLeft: 12 }}>
+          <Typography variant="body" style={{ marginLeft: 12, color: theme.colors.text.description }}>
             {ellipsizeTokenAddress(address)}
           </Typography>
         </div>

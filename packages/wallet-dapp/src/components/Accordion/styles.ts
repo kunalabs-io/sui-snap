@@ -1,7 +1,6 @@
 import styled from 'styled-components'
 
 export const AccordionContainer = styled.div`
-  padding: 8px;
   background-color: ${p => p.theme.colors.background.primary};
 `
 
@@ -17,7 +16,6 @@ export const AccordionSummary = styled.div<{ isOpen: boolean }>`
 `
 
 export const AccordionDetails = styled.div<{ isOpen: boolean }>`
-  margin-top: 24px;
   height: 0px;
   opacity: 0;
   transition: opacity 0.3s ease-in-out, height 0.3s 0.3s ease-in-out;

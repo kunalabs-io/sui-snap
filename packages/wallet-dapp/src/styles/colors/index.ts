@@ -2,6 +2,7 @@ export const themeColors = {
   background: {
     primary: '#ffffff',
     overlay: '#0000007D',
+    hover: '#FAFBFC',
   },
 
   text: {

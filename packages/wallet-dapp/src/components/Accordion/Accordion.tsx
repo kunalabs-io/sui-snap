@@ -5,12 +5,13 @@ import { AccordionContainer, AccordionDetails, AccordionSummary, IconButton } fr
 import { IconCaret } from 'components/Icons/IconCaret'
 
 interface Props {
+  isOpenInitial?: boolean
   accordionSummary: ReactNode
   accordionDetails: ReactNode
 }
 
-const Accordion = ({ accordionSummary, accordionDetails }: Props) => {
-  const [isOpen, setIsOpen] = useState(false)
+const Accordion = ({ accordionSummary, accordionDetails, isOpenInitial }: Props) => {
+  const [isOpen, setIsOpen] = useState(!!isOpenInitial)
   const [height, setHeight] = useState<number | undefined>()
 
   // This ref is needed for proper height detection

@@ -1,5 +1,7 @@
 import styled from 'styled-components'
+
 import Header from 'modules/Header/Header'
+import Dashboard from 'modules/Dashboard/Dashboard'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -16,6 +18,8 @@ const Main = () => {
   return (
     <Wrapper>
       <Header />
+      <div style={{ height: 25 }} />
+      <Dashboard />
     </Wrapper>
   )
 }
