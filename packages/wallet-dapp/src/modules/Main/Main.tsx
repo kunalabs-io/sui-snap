@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 
-import Header from 'modules/Header/Header'
 import Dashboard from 'modules/Dashboard/Dashboard'
 
 const Wrapper = styled.div`
@@ -17,8 +16,6 @@ const Wrapper = styled.div`
 const Main = () => {
   return (
     <Wrapper>
-      <Header />
-      <div style={{ height: 25 }} />
       <Dashboard />
     </Wrapper>
   )

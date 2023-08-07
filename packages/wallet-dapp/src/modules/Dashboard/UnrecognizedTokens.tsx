@@ -1,5 +1,5 @@
 import Accordion from 'components/Accordion/Accordion'
-import CoinItem from './CoinItem'
+import CoinItem from '../Info/CoinItem'
 
 interface Coin {
   name: string

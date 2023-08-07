@@ -12,4 +12,5 @@ export const StyledSelect = styled.select`
   border: 1px solid ${p => p.theme.colors.divider};
   padding: 0 16px;
   border-radius: 22px;
+  outline: none;
 `

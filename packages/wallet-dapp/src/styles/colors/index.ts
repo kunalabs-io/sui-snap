@@ -10,6 +10,7 @@ export const themeColors = {
     primary: '#000000',
     secondary: '#949494',
     description: '#494D52',
+    alternative: '#535A61',
   },
 
   button: {
