@@ -2,7 +2,7 @@ import { Children, Stylable } from 'utils/types'
 import { StyledButton } from './styles'
 
 interface ButtonProps extends Stylable, Children {
-  onClick: () => void
+  onClick?: () => void
   variant?: 'contained' | 'outlined'
   disabled?: boolean
 }

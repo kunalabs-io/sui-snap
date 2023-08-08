@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react'
+import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { useWalletKit } from '@mysten/wallet-kit'
 import styled from 'styled-components'
 
 import Dashboard from 'modules/Dashboard/Dashboard'
+import Welcome from 'modules/Welcome/Welcome'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -14,9 +18,29 @@ const Wrapper = styled.div`
 `
 
 const Main = () => {
+  const kit = useWalletKit()
+
+  const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
+
+  useEffect(() => {
+    SuiSnapWalletAdapter.flaskAvailable()
+      .then((isAvailable?: boolean) => setFlaskInstalled(!!isAvailable))
+      .catch(e => {
+        setFlaskInstalled(false)
+        console.error(e)
+      })
+  }, [])
+
+  const connectedToSnap = kit.isConnected && kit.currentWallet?.name === 'Sui MetaMask Snap'
+
+  const showWelcomeScreen = !flaskInstalled || !connectedToSnap
   return (
     <Wrapper>
-      <Dashboard />
+      {showWelcomeScreen ? (
+        <Welcome flaskInstalled={flaskInstalled} connectedToSnap={connectedToSnap} />
+      ) : (
+        <Dashboard />
+      )}
     </Wrapper>
   )
 }

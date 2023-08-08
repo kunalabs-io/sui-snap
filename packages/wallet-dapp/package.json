@@ -8,7 +8,11 @@
     "react-is": "^18.2.0",
     "react-jazzicon": "^1.0.4",
     "styled-components": "5.3.3",
-    "vitest": "^0.31.4"
+    "vitest": "^0.31.4",
+    "@kunalabs-io/sui-snap-wallet-adapter": "workspace:*",
+    "@mysten/sui.js": "^0.37.1",
+    "@mysten/wallet-adapter-wallet-standard": "^0.7.12",
+    "@mysten/wallet-kit": "^0.4.12"
   },
   "devDependencies": {
     "@types/react": "^18.2.16",
