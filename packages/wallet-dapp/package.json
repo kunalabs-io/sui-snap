@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@kunalabs-io/sui-snap-wallet-adapter": "workspace:*",
+    "@mysten/bcs": "^0.7.3",
+    "@mysten/sui.js": "^0.37.1",
+    "@mysten/wallet-adapter-base": "^0.7.12",
+    "@mysten/wallet-adapter-wallet-standard": "^0.7.12",
+    "@mysten/wallet-kit": "^0.4.12",
+    "@tanstack/react-query": "^4.32.6",
+    "@tanstack/react-query-devtools": "^4.32.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",
     "react-jazzicon": "^1.0.4",
     "styled-components": "5.3.3",
-    "vitest": "^0.31.4",
-    "@kunalabs-io/sui-snap-wallet-adapter": "workspace:*",
-    "@mysten/sui.js": "^0.37.1",
-    "@mysten/wallet-adapter-wallet-standard": "^0.7.12",
-    "@mysten/wallet-kit": "^0.4.12"
+    "vitest": "^0.31.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.16",
