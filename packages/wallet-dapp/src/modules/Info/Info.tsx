@@ -3,60 +3,44 @@ import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
 import Typography from 'components/Typography/Typography'
 import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, TokensLabel } from './styles'
-import Accordion from 'components/Accordion/Accordion'
 import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { ellipsizeTokenAddress } from 'utils/tokenAddress'
+import { CoinInfo } from 'utils/useWalletBalances'
+import { suiTypeArg, walletAddress } from 'utils/const'
 
 interface Props {
   onSendClick: () => void
+  infos: Map<string, CoinInfo> | undefined
 }
 
-const mockedCoins = [
-  {
-    name: 'Sui',
-    symbol: 'SUI',
-    amount: '1,443.96',
-  },
-
-  {
-    name: 'Tether',
-    symbol: 'USDT',
-    amount: '250.00',
-  },
-]
-
-const mockedUnrecognizedCoins = [
-  {
-    name: 'SuiBoxer SuiBoxer',
-    symbol: 'SBOX',
-    amount: '300',
-  },
-]
-
-const mockedAddress = '0xcc2bd176a478baea9a0de7a24cd927661cc6e860d5bacecb9a138ef20dbab231'
-
-const Info = ({ onSendClick }: Props) => {
+const Info = ({ onSendClick, infos }: Props) => {
   const handleIconButtonClick = () => {
     console.log('handleIconButtonClick')
   }
+
+  if (typeof infos === 'undefined') {
+    return null
+  }
+
+  const suiCoinInfo = infos.get(suiTypeArg)
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <AddressContainer>
           <AddressTypography variant="body" color="primary">
-            {ellipsizeTokenAddress(mockedAddress)}
+            {ellipsizeTokenAddress(walletAddress)}
             <IconCopy />
           </AddressTypography>
         </AddressContainer>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25 }}>
         <Typography variant="title" style={{ marginRight: 8 }}>
-          1,443.96
+          {suiCoinInfo?.amount.toString()}
         </Typography>
         <Typography variant="subtitle1" color="secondary">
-          SUI
+          {suiCoinInfo?.meta.symbol}
         </Typography>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
@@ -77,11 +61,11 @@ const Info = ({ onSendClick }: Props) => {
         <TokensLabel variant="body">Tokens</TokensLabel>
       </div>
       <div>
-        {mockedCoins.map(c => (
-          <CoinItem coin={c} key={c.symbol} />
+        {[...infos.keys()].map(coinType => (
+          <CoinItem coinInfo={infos.get(coinType)} key={coinType} />
         ))}
       </div>
-      <Accordion
+      {/* <Accordion
         isOpenInitial
         accordionSummary={`${mockedUnrecognizedCoins.length} Unrecognized Token`}
         accordionDetails={
@@ -91,7 +75,7 @@ const Info = ({ onSendClick }: Props) => {
             ))}
           </div>
         }
-      />
+      /> */}
     </div>
   )
 }

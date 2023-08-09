@@ -1,6 +1,9 @@
 import styled, { useTheme } from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
+import { CoinInfo } from 'utils/useWalletBalances'
+import { IconSui } from 'components/Icons/IconSui'
+import { suiTypeArg } from 'utils/const'
 
 const Container = styled.div`
   display: flex;
@@ -12,37 +15,42 @@ const Container = styled.div`
   }
   cursor: pointer;
 `
-export interface Coin {
-  name: string
-  symbol: string
-  amount: string
+
+export interface Props {
+  coinInfo: CoinInfo | undefined
 }
 
-interface Props {
-  coin: Coin
-}
-
-const CoinItem = ({ coin }: Props) => {
+const CoinItem = ({ coinInfo }: Props) => {
   const theme = useTheme()
+
+  if (typeof coinInfo === 'undefined') {
+    return null
+  }
+
   return (
-    <Container key={coin.symbol}>
+    <Container>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ marginRight: 10 }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
-            <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
-          </svg>
+          {coinInfo.meta.typeArg === suiTypeArg ? (
+            <IconSui />
+          ) : coinInfo.meta.iconUrl ? (
+            <img src={coinInfo.meta.iconUrl} style={{ width: 37, height: 37 }} />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
+              <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
+            </svg>
+          )}
         </div>
         <div>
-          <Typography variant="body">{coin.name}</Typography>
+          <Typography variant="body">{coinInfo?.meta.name}</Typography>
           <Typography variant="caption" color="secondary">
-            {coin.symbol}
+            {coinInfo?.meta.symbol}
           </Typography>
         </div>
       </div>
-      <Typography
-        variant="body"
-        style={{ color: theme.colors.text.description }}
-      >{`${coin.amount} ${coin.symbol}`}</Typography>
+      <Typography variant="body" style={{ color: theme.colors.text.description }}>{`${coinInfo?.amount.toString()} ${
+        coinInfo?.meta.symbol
+      }`}</Typography>
     </Container>
   )
 }
