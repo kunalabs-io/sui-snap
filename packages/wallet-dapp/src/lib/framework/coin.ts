@@ -1,19 +1,8 @@
-import {
-  ObjectId,
-  Coin as SuiCoin,
-  JsonRpcProvider,
-  TypeTag,
-  StructTag,
-  SuiObjectResponse,
-  SuiParsedData,
-  TransactionBlock,
-  TransactionArgument,
-} from '@mysten/sui.js'
+import { ObjectId, Coin as SuiCoin, TypeTag, StructTag, SuiObjectResponse, SuiParsedData } from '@mysten/sui.js'
 import { tagToType, Type, typeToTag } from './type'
 import { Balance } from './balance'
 import { MoveObjectField } from './util'
 import { Amount } from './amount'
-import { Wallet } from 'lib/wallet'
 
 export interface CoinMetadataFields {
   id: ObjectId
@@ -143,51 +132,6 @@ export function selectCoinSetWithCombinedBalanceGreaterThanOrEqual(coins: Coin[]
   }
 
   return sortByBalance(ret)
-}
-
-export async function getOrCreateCoinOfExactBalance(
-  tx: TransactionBlock,
-  provider: JsonRpcProvider,
-  wallet: Wallet,
-  coinType: Type,
-  balance: bigint
-): Promise<TransactionArgument> {
-  if (coinType === '0x2::sui::SUI') {
-    return tx.splitCoins(tx.gas, [tx.pure(balance)])[0]
-  }
-
-  const coins = (
-    await provider.getCoins({
-      owner: wallet.address,
-      coinType,
-    })
-  ).data.map(c => new Coin(c.coinType, c.coinObjectId, BigInt(c.balance)))
-
-  if (totalBalance(coins) < balance) {
-    throw new Error(`Balances of ${coinType} Coins in the wallet don't amount to ${balance.toString()}`)
-  }
-
-  const largeEnoughCoin = selectCoinWithBalanceGreaterThanOrEqual(coins, balance)
-  let coinToSplit: TransactionArgument
-  if (largeEnoughCoin) {
-    if (largeEnoughCoin.balance.value === balance) {
-      return tx.object(largeEnoughCoin.id)
-    }
-    coinToSplit = tx.object(largeEnoughCoin.id)
-  } else {
-    const inputCoins = selectCoinSetWithCombinedBalanceGreaterThanOrEqual(coins, balance)
-    if (inputCoins.length === 1) {
-      coinToSplit = tx.object(inputCoins[0].id)
-    } else {
-      tx.mergeCoins(
-        tx.object(inputCoins[0].id),
-        inputCoins.slice(1).map(coin => tx.object(coin.id))
-      )
-      coinToSplit = tx.object(inputCoins[0].id)
-    }
-  }
-
-  return tx.splitCoins(coinToSplit, [tx.pure(balance)])[0]
 }
 
 /// Returns a list of unique coin types.

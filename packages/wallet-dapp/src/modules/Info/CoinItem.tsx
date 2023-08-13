@@ -42,14 +42,14 @@ const CoinItem = ({ coinInfo }: Props) => {
           )}
         </div>
         <div>
-          <Typography variant="body">{coinInfo?.meta.name}</Typography>
+          <Typography variant="body">{coinInfo.meta.name}</Typography>
           <Typography variant="caption" color="secondary">
-            {coinInfo?.meta.symbol}
+            {coinInfo.meta.symbol}
           </Typography>
         </div>
       </div>
-      <Typography variant="body" style={{ color: theme.colors.text.description }}>{`${coinInfo?.amount.toString()} ${
-        coinInfo?.meta.symbol
+      <Typography variant="body" style={{ color: theme.colors.text.description }}>{`${coinInfo.amount.toString()} ${
+        coinInfo.meta.symbol
       }`}</Typography>
     </Container>
   )

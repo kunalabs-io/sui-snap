@@ -1,5 +1,4 @@
 import { ReactNode } from 'react'
-import { Connection } from '@mysten/sui.js'
 import { ThemeProvider } from 'styled-components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
 import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
@@ -11,7 +10,7 @@ import { GlobalStyles } from 'styles/GlobalStyles'
 import { theme } from 'styles/theme'
 
 import '../index.css'
-import { ProviderProvider } from 'utils/ProviderProvider'
+import { SuiClientProvider } from 'utils/SuiClientProvider'
 import { testnetConnectionUrl } from 'utils/const'
 
 export type RootProps = {
@@ -21,22 +20,20 @@ export type RootProps = {
 const queryClient = new QueryClient()
 
 // TODO: add different fullnode link depending on selected network (devnet, testnet or mainnet)
-const connection = new Connection({
-  fullnode: testnetConnectionUrl,
-})
-
 export const App = () => {
+  const connectionUrl = testnetConnectionUrl
+
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={true} />
-      <ProviderProvider connection={connection}>
+      <SuiClientProvider connectionUrl={connectionUrl}>
         <WalletKitProvider adapters={[new SuiSnapWalletAdapter()]}>
           <ThemeProvider theme={theme}>
             <Main />
             <GlobalStyles />
           </ThemeProvider>
         </WalletKitProvider>
-      </ProviderProvider>
+      </SuiClientProvider>
     </QueryClientProvider>
   )
 }

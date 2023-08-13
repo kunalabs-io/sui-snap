@@ -5,8 +5,8 @@ import { Amount } from 'lib/framework/amount'
 import { CoinMetadata } from 'lib/framework/coin'
 
 import useCoinMetadatas from './useCoinMetadatas'
-import { useProvider } from './useProvider'
-import { REFETCH_INTERVAL, walletAddress } from './const'
+import { useSuiClientProvider } from './useSuiClientProvider'
+import { walletAddress } from './const'
 
 export interface CoinInfo {
   amount: Amount
@@ -20,7 +20,7 @@ export interface WalletBalanceInfos {
 }
 
 export const useWalletBalances = (options?: { refetchInterval: number }): WalletBalanceInfos => {
-  const provider = useProvider()
+  const suiClient = useSuiClientProvider()
   const wallet = {
     address: walletAddress,
   }
@@ -34,7 +34,7 @@ export const useWalletBalances = (options?: { refetchInterval: number }): Wallet
       }
 
       const balances = new Map<Type, bigint>()
-      const res = await provider.getAllBalances({ owner: wallet?.address })
+      const res = await suiClient.getAllBalances({ owner: wallet?.address })
       res.forEach(balance => {
         balances.set(balance.coinType, BigInt(balance.totalBalance))
       })
@@ -57,9 +57,11 @@ export const useWalletBalances = (options?: { refetchInterval: number }): Wallet
   if (coinTypes !== undefined && metas !== undefined && balances !== undefined) {
     infos = new Map()
     for (const type of coinTypes) {
-      const meta = metas.find(m => m.typeArg === type)!
-      const value = balances.get(type) || 0n
-      infos.set(type, { amount: meta.newAmount(value), meta })
+      const meta = metas.find(m => m.typeArg === type)
+      if (meta) {
+        const value = balances.get(type) || 0n
+        infos.set(type, { amount: meta.newAmount(value), meta })
+      }
     }
   }
 
