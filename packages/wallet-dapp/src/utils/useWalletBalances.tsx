@@ -57,7 +57,7 @@ export const useWalletBalances = (options?: { refetchInterval: number }): Wallet
   if (coinTypes !== undefined && metas !== undefined && balances !== undefined) {
     infos = new Map()
     for (const type of coinTypes) {
-      const meta = metas.find(m => m.typeArg === type)
+      const meta = metas.find(m => m?.typeArg === type)
       if (meta) {
         const value = balances.get(type) || 0n
         infos.set(type, { amount: meta.newAmount(value), meta })
