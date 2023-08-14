@@ -11,11 +11,7 @@ export const GlobalStyles = createGlobalStyle`
      background: ${({ theme }) => theme.colors.background.primary};
      color: ${({ theme }) => theme.colors.text.primary};
   }
-
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
+  
   /* Chrome, Safari, Edge, Opera */
   input::-webkit-outer-spin-button,
   input::-webkit-inner-spin-button {

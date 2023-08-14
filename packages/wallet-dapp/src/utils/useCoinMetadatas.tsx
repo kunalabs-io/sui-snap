@@ -4,7 +4,7 @@ import { CoinMetadata } from 'lib/framework/coin'
 import { Type, tagToType } from 'lib/framework/type'
 import { useSuiClientProvider } from './useSuiClientProvider'
 import { ONE_DAY } from './const'
-import { getTokenSymbolFromTypeArg } from './tokenSymbol'
+import { getTokenSymbolFromTypeArg } from './helpers'
 
 export interface UseCoinMetadataResult {
   meta: CoinMetadata

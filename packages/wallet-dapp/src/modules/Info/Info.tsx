@@ -5,9 +5,11 @@ import Typography from 'components/Typography/Typography'
 import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, TokensLabel } from './styles'
 import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
-import { ellipsizeTokenAddress } from 'utils/tokenAddress'
+import { ellipsizeTokenAddress } from 'utils/helpers'
 import { CoinInfo } from 'utils/useWalletBalances'
-import { suiTypeArg, walletAddress } from 'utils/const'
+import { RECOGNIZED_TOKENS_PACKAGE_IDS, suiTypeArg, walletAddress } from 'utils/const'
+import { getPackageIdFromTypeArg } from 'utils/helpers'
+import Accordion from 'components/Accordion/Accordion'
 
 interface Props {
   onSendClick: () => void
@@ -24,6 +26,19 @@ const Info = ({ onSendClick, infos }: Props) => {
   }
 
   const suiCoinInfo = infos.get(suiTypeArg)
+
+  const infosKeys = [...infos.keys()]
+  const unrecognizedCoins: CoinInfo[] = []
+  const recognizedCoins: CoinInfo[] = []
+
+  infosKeys.forEach(typeArg => {
+    const packageId = getPackageIdFromTypeArg(typeArg)
+    if (RECOGNIZED_TOKENS_PACKAGE_IDS.indexOf(packageId) !== -1) {
+      recognizedCoins.push(infos.get(typeArg)!)
+    } else {
+      unrecognizedCoins.push(infos.get(typeArg)!)
+    }
+  })
 
   return (
     <div>
@@ -61,21 +76,23 @@ const Info = ({ onSendClick, infos }: Props) => {
         <TokensLabel variant="body">Tokens</TokensLabel>
       </div>
       <div>
-        {[...infos.keys()].map(coinType => (
-          <CoinItem coinInfo={infos.get(coinType)} key={coinType} />
+        {recognizedCoins.map(c => (
+          <CoinItem coinInfo={c} key={c.meta.typeArg} />
         ))}
       </div>
-      {/* <Accordion
-        isOpenInitial
-        accordionSummary={`${mockedUnrecognizedCoins.length} Unrecognized Token`}
-        accordionDetails={
-          <div style={{ marginTop: 10 }}>
-            {mockedUnrecognizedCoins.map(c => (
-              <CoinItem coin={c} key={c.symbol} />
-            ))}
-          </div>
-        }
-      /> */}
+      {unrecognizedCoins.length ? (
+        <Accordion
+          isOpenInitial
+          accordionSummary={`${unrecognizedCoins.length} Unrecognized Token`}
+          accordionDetails={
+            <div style={{ marginTop: 10 }}>
+              {unrecognizedCoins.map(c => (
+                <CoinItem coinInfo={c} key={c.meta.typeArg} />
+              ))}
+            </div>
+          }
+        />
+      ) : null}
     </div>
   )
 }
