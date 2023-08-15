@@ -1,22 +1,28 @@
+import { ChangeEvent } from 'react'
+
 import { Stylable } from 'utils/types'
 import { StyledSelect } from './styles'
 
-export interface Option {
+interface Option {
   value: string
   name: string
 }
 
 interface Props extends Stylable {
   options: Option[]
-  onOptionClick: (option: Option) => void
+  onOptionClick: (option: string) => void
   selectedOption?: string
 }
 
 const Select = ({ options, onOptionClick, style, selectedOption }: Props) => {
+  const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    onOptionClick(event.target.value)
+  }
+
   return (
-    <StyledSelect style={style}>
+    <StyledSelect style={style} onChange={handleChange} value={selectedOption}>
       {options.map(o => (
-        <option key={o.value} value={o.value} onClick={() => onOptionClick(o)} selected={selectedOption === o.value}>
+        <option key={o.value} value={o.value}>
           {o.name}
         </option>
       ))}

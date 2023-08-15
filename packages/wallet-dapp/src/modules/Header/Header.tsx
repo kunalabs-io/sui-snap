@@ -1,18 +1,22 @@
 import Jazzicon from 'react-jazzicon'
+import { useWalletKit } from '@mysten/wallet-kit'
 import { useCallback, useState } from 'react'
 import { useTheme } from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
-import Select, { Option } from 'components/Select/Select'
+import Select from 'components/Select/Select'
 import { Wrapper } from './styles'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import Modal from 'components/Modal/Modal'
 import ModalTitle from 'components/Modal/components/ModalTitle'
 import ModalBody from 'components/Modal/components/ModalBody'
-
-const address = '0xcc2bd176a478baea9a0de7a24cd927661cc6e860d5bacecb9a138ef20dbab231'
+import { devnetConnectionUrl, mainnetConnectionUrl, testnetConnectionUrl } from 'utils/const'
+import { useNetwork } from 'utils/useNetworkProvider'
 
 const Header = () => {
+  const { network, setNetwork } = useNetwork()
+  const { currentAccount } = useWalletKit()
+
   const [isOpenInfoModal, setIsOpenInfoModal] = useState(false)
 
   const theme = useTheme()
@@ -21,11 +25,14 @@ const Header = () => {
     setIsOpenInfoModal(!isOpenInfoModal)
   }, [isOpenInfoModal])
 
-  const handleOptionClick = (o: Option) => {
-    console.log('handleOptionClick')
+  const handleOptionClick = (option: string) => {
+    setNetwork(option)
   }
 
-  const handleAddressClick = useCallback(() => navigator.clipboard.writeText(address), [])
+  const handleAddressClick = useCallback(
+    () => navigator.clipboard.writeText(currentAccount?.address || ''),
+    [currentAccount?.address]
+  )
 
   return (
     <Wrapper>
@@ -35,16 +42,18 @@ const Header = () => {
         </div>
         <div style={{ cursor: 'pointer' }} onClick={handleAddressClick}>
           <Typography variant="body" style={{ marginLeft: 12, color: theme.colors.text.description }}>
-            {ellipsizeTokenAddress(address)}
+            {ellipsizeTokenAddress(currentAccount?.address || '')}
           </Typography>
         </div>
       </div>
       <Select
         options={[
-          { name: 'Mainnet', value: 'mainnet' },
-          { name: 'Testnet', value: 'testnet' },
+          { name: 'Mainnet', value: mainnetConnectionUrl },
+          { name: 'Testnet', value: testnetConnectionUrl },
+          { name: 'Devnet', value: devnetConnectionUrl },
         ]}
         onOptionClick={handleOptionClick}
+        selectedOption={network}
       />
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>

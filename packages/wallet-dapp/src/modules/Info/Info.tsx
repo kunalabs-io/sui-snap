@@ -1,3 +1,5 @@
+import { useWalletKit } from '@mysten/wallet-kit'
+
 import IconButton from 'components/IconButton/IconButton'
 import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
@@ -7,7 +9,7 @@ import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { CoinInfo } from 'utils/useWalletBalances'
-import { RECOGNIZED_TOKENS_PACKAGE_IDS, suiTypeArg, walletAddress } from 'utils/const'
+import { RECOGNIZED_TOKENS_PACKAGE_IDS, suiTypeArg } from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
 
@@ -17,6 +19,7 @@ interface Props {
 }
 
 const Info = ({ onSendClick, infos }: Props) => {
+  const { currentAccount } = useWalletKit()
   const handleIconButtonClick = () => {
     console.log('handleIconButtonClick')
   }
@@ -45,18 +48,31 @@ const Info = ({ onSendClick, infos }: Props) => {
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <AddressContainer>
           <AddressTypography variant="body" color="primary">
-            {ellipsizeTokenAddress(walletAddress)}
+            {ellipsizeTokenAddress(currentAccount?.address || '')}
             <IconCopy />
           </AddressTypography>
         </AddressContainer>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25 }}>
-        <Typography variant="title" style={{ marginRight: 8 }}>
-          {suiCoinInfo?.amount.toString()}
-        </Typography>
-        <Typography variant="subtitle1" color="secondary">
-          {suiCoinInfo?.meta.symbol}
-        </Typography>
+        {typeof suiCoinInfo === 'undefined' ? (
+          <>
+            <Typography variant="title" style={{ marginRight: 8 }}>
+              0
+            </Typography>
+            <Typography variant="subtitle1" color="secondary">
+              SUI
+            </Typography>
+          </>
+        ) : (
+          <>
+            <Typography variant="title" style={{ marginRight: 8 }}>
+              {suiCoinInfo?.amount.toString()}
+            </Typography>
+            <Typography variant="subtitle1" color="secondary">
+              {suiCoinInfo?.meta.symbol}
+            </Typography>
+          </>
+        )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
         <IconButtonContainer>

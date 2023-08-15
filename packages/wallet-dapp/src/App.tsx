@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useCallback, useState } from 'react'
 import { ThemeProvider } from 'styled-components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
 import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
@@ -12,6 +12,7 @@ import { theme } from 'styles/theme'
 import '../index.css'
 import { SuiClientProvider } from 'utils/SuiClientProvider'
 import { testnetConnectionUrl } from 'utils/const'
+import { NetworkContext } from 'utils/useNetworkProvider'
 
 export type RootProps = {
   children: ReactNode
@@ -19,19 +20,24 @@ export type RootProps = {
 
 const queryClient = new QueryClient()
 
-// TODO: add different fullnode link depending on selected network (devnet, testnet or mainnet)
 export const App = () => {
-  const connectionUrl = testnetConnectionUrl
+  const [network, setNetwork] = useState(testnetConnectionUrl)
+
+  const handleNetworkChange = useCallback((newNetwork: string) => {
+    setNetwork(newNetwork)
+  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={true} />
-      <SuiClientProvider connectionUrl={connectionUrl}>
+      <SuiClientProvider connectionUrl={network}>
         <WalletKitProvider adapters={[new SuiSnapWalletAdapter()]}>
-          <ThemeProvider theme={theme}>
-            <Main />
-            <GlobalStyles />
-          </ThemeProvider>
+          <NetworkContext.Provider value={{ network, setNetwork: handleNetworkChange }}>
+            <ThemeProvider theme={theme}>
+              <Main />
+              <GlobalStyles />
+            </ThemeProvider>
+          </NetworkContext.Provider>
         </WalletKitProvider>
       </SuiClientProvider>
     </QueryClientProvider>
