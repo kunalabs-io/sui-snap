@@ -9,9 +9,10 @@ import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { CoinInfo } from 'utils/useWalletBalances'
-import { RECOGNIZED_TOKENS_PACKAGE_IDS, suiTypeArg } from 'utils/const'
+import { RECOGNIZED_TOKENS_PACKAGE_IDS, mainnetConnectionUrl, suiTypeArg } from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
+import { useNetwork } from 'utils/useNetworkProvider'
 
 interface Props {
   onSendClick: () => void
@@ -20,6 +21,8 @@ interface Props {
 
 const Info = ({ onSendClick, infos }: Props) => {
   const { currentAccount } = useWalletKit()
+  const { network } = useNetwork()
+
   const handleIconButtonClick = () => {
     console.log('handleIconButtonClick')
   }
@@ -35,11 +38,19 @@ const Info = ({ onSendClick, infos }: Props) => {
   const recognizedCoins: CoinInfo[] = []
 
   infosKeys.forEach(typeArg => {
-    const packageId = getPackageIdFromTypeArg(typeArg)
-    if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
-      recognizedCoins.push(infos.get(typeArg)!)
+    if (network === mainnetConnectionUrl) {
+      const packageId = getPackageIdFromTypeArg(typeArg)
+      if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
+        recognizedCoins.push(infos.get(typeArg)!)
+      } else {
+        unrecognizedCoins.push(infos.get(typeArg)!)
+      }
     } else {
-      unrecognizedCoins.push(infos.get(typeArg)!)
+      if (typeArg === suiTypeArg) {
+        recognizedCoins.push(infos.get(typeArg)!)
+      } else {
+        unrecognizedCoins.push(infos.get(typeArg)!)
+      }
     }
   })
 
