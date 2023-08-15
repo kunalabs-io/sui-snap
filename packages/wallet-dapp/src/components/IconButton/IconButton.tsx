@@ -2,7 +2,7 @@ import { Children, Stylable } from 'utils/types'
 import { StyledIconButton } from './styles'
 
 interface IconButtonProps extends Stylable, Children {
-  onClick: () => void
+  onClick?: () => void
   disabled?: boolean
 }
 

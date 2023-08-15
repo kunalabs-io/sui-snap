@@ -1,3 +1,6 @@
+import { useCallback } from 'react'
+import { useWalletKit } from '@mysten/wallet-kit'
+
 import IconButton from 'components/IconButton/IconButton'
 import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
@@ -5,11 +8,12 @@ import Typography from 'components/Typography/Typography'
 import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, TokensLabel } from './styles'
 import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
-import { ellipsizeTokenAddress } from 'utils/helpers'
+import { ellipsizeTokenAddress, getNetworkFromUrl } from 'utils/helpers'
 import { CoinInfo } from 'utils/useWalletBalances'
-import { RECOGNIZED_TOKENS_PACKAGE_IDS, suiTypeArg, walletAddress } from 'utils/const'
+import { RECOGNIZED_TOKENS_PACKAGE_IDS, mainnetConnectionUrl, suiTypeArg } from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
+import { useNetwork } from 'utils/useNetworkProvider'
 
 interface Props {
   onSendClick: () => void
@@ -17,9 +21,13 @@ interface Props {
 }
 
 const Info = ({ onSendClick, infos }: Props) => {
-  const handleIconButtonClick = () => {
-    console.log('handleIconButtonClick')
-  }
+  const { currentAccount } = useWalletKit()
+  const { network } = useNetwork()
+
+  const handleAddressClick = useCallback(
+    () => navigator.clipboard.writeText(currentAccount?.address || ''),
+    [currentAccount?.address]
+  )
 
   if (typeof infos === 'undefined') {
     return null
@@ -32,31 +40,52 @@ const Info = ({ onSendClick, infos }: Props) => {
   const recognizedCoins: CoinInfo[] = []
 
   infosKeys.forEach(typeArg => {
-    const packageId = getPackageIdFromTypeArg(typeArg)
-    if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
-      recognizedCoins.push(infos.get(typeArg)!)
+    if (network === mainnetConnectionUrl) {
+      const packageId = getPackageIdFromTypeArg(typeArg)
+      if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
+        recognizedCoins.push(infos.get(typeArg)!)
+      } else {
+        unrecognizedCoins.push(infos.get(typeArg)!)
+      }
     } else {
-      unrecognizedCoins.push(infos.get(typeArg)!)
+      if (typeArg === suiTypeArg) {
+        recognizedCoins.push(infos.get(typeArg)!)
+      } else {
+        unrecognizedCoins.push(infos.get(typeArg)!)
+      }
     }
   })
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <AddressContainer>
+        <AddressContainer onClick={handleAddressClick}>
           <AddressTypography variant="body" color="primary">
-            {ellipsizeTokenAddress(walletAddress)}
+            {ellipsizeTokenAddress(currentAccount?.address || '')}
             <IconCopy />
           </AddressTypography>
         </AddressContainer>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25 }}>
-        <Typography variant="title" style={{ marginRight: 8 }}>
-          {suiCoinInfo?.amount.toString()}
-        </Typography>
-        <Typography variant="subtitle1" color="secondary">
-          {suiCoinInfo?.meta.symbol}
-        </Typography>
+        {typeof suiCoinInfo === 'undefined' ? (
+          <>
+            <Typography variant="title" style={{ marginRight: 8 }}>
+              0
+            </Typography>
+            <Typography variant="subtitle1" color="secondary">
+              SUI
+            </Typography>
+          </>
+        ) : (
+          <>
+            <Typography variant="title" style={{ marginRight: 8 }}>
+              {suiCoinInfo?.amount.toString()}
+            </Typography>
+            <Typography variant="subtitle1" color="secondary">
+              {suiCoinInfo?.meta.symbol}
+            </Typography>
+          </>
+        )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
         <IconButtonContainer>
@@ -66,9 +95,15 @@ const Info = ({ onSendClick, infos }: Props) => {
           <StyledTypography variant="body">Send</StyledTypography>
         </IconButtonContainer>
         <IconButtonContainer>
-          <IconButton onClick={handleIconButtonClick}>
-            <IconExplore />
-          </IconButton>
+          <a
+            href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${getNetworkFromUrl(network)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <IconButton>
+              <IconExplore />
+            </IconButton>
+          </a>
           <StyledTypography variant="body">Explorer</StyledTypography>
         </IconButtonContainer>
       </div>

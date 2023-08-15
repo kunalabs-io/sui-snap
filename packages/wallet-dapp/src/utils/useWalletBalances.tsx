@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useWalletKit } from '@mysten/wallet-kit'
 
 import { Type } from 'lib/framework/type'
 import { Amount } from 'lib/framework/amount'
@@ -6,7 +7,7 @@ import { CoinMetadata } from 'lib/framework/coin'
 
 import useCoinMetadatas from './useCoinMetadatas'
 import { useSuiClientProvider } from './useSuiClientProvider'
-import { walletAddress } from './const'
+import { useNetwork } from './useNetworkProvider'
 
 export interface CoinInfo {
   amount: Amount
@@ -21,20 +22,19 @@ export interface WalletBalanceInfos {
 
 export const useWalletBalances = (options?: { refetchInterval: number }): WalletBalanceInfos => {
   const suiClient = useSuiClientProvider()
-  const wallet = {
-    address: walletAddress,
-  }
+  const { currentAccount } = useWalletKit()
+  const { network } = useNetwork()
 
   const balancesRes = useQuery({
-    queryKey: ['wallet-balances', wallet?.address],
-    enabled: !!wallet?.address,
+    queryKey: ['wallet-balances', currentAccount?.address, network],
+    enabled: !!currentAccount?.address,
     queryFn: async () => {
-      if (!wallet?.address) {
+      if (!currentAccount?.address) {
         throw new Error('invariant violation')
       }
 
       const balances = new Map<Type, bigint>()
-      const res = await suiClient.getAllBalances({ owner: wallet?.address })
+      const res = await suiClient.getAllBalances({ owner: currentAccount?.address })
       res.forEach(balance => {
         balances.set(balance.coinType, BigInt(balance.totalBalance))
       })

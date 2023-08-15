@@ -5,6 +5,7 @@ import { Type, tagToType } from 'lib/framework/type'
 import { useSuiClientProvider } from './useSuiClientProvider'
 import { ONE_DAY } from './const'
 import { getTokenSymbolFromTypeArg } from './helpers'
+import { useNetwork } from './useNetworkProvider'
 
 export interface UseCoinMetadataResult {
   meta: CoinMetadata
@@ -13,6 +14,7 @@ export interface UseCoinMetadataResult {
 
 export const useCoinMetadatas = (coinTypes: Type[]) => {
   const suiClient = useSuiClientProvider()
+  const { network } = useNetwork()
 
   const fetchCoinMetadata = async (ct: Type) => {
     let typeStr: string
@@ -45,7 +47,7 @@ export const useCoinMetadatas = (coinTypes: Type[]) => {
 
   const results = useQueries({
     queries: coinTypes.map(ct => ({
-      queryKey: ['coinMetadatas', ct],
+      queryKey: ['coinMetadatas', ct, network],
       queryFn: () => fetchCoinMetadata(ct),
       staleTime: ONE_DAY,
       cacheTime: ONE_DAY,
