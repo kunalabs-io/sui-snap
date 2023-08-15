@@ -8,7 +8,7 @@ export const REFETCH_INTERVAL = 10000
 
 export const ONE_DAY = 1000 * 60 * 60 * 24
 
-export const RECOGNIZED_TOKENS_PACKAGE_IDS = [
+const recognizedTokensPackageIdsArr = [
   '0x2',
   '0x3',
   '0xa198f3be41cda8c07b3bf3fee02263526e535d682499806979a111e88a5a8d0f',
@@ -32,3 +32,5 @@ export const RECOGNIZED_TOKENS_PACKAGE_IDS = [
   '0xe4239cd951f6c53d9c41e25270d80d31f925ad1655e5ba5b543843d4a66975ee',
   '0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a',
 ]
+
+export const RECOGNIZED_TOKENS_PACKAGE_IDS = new Set(recognizedTokensPackageIdsArr)

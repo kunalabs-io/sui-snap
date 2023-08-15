@@ -33,7 +33,7 @@ const Info = ({ onSendClick, infos }: Props) => {
 
   infosKeys.forEach(typeArg => {
     const packageId = getPackageIdFromTypeArg(typeArg)
-    if (RECOGNIZED_TOKENS_PACKAGE_IDS.indexOf(packageId) !== -1) {
+    if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
       recognizedCoins.push(infos.get(typeArg)!)
     } else {
       unrecognizedCoins.push(infos.get(typeArg)!)
