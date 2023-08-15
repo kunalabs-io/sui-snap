@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useWalletKit } from '@mysten/wallet-kit'
 
 import IconButton from 'components/IconButton/IconButton'
@@ -26,6 +27,11 @@ const Info = ({ onSendClick, infos }: Props) => {
   const handleIconButtonClick = () => {
     console.log('handleIconButtonClick')
   }
+
+  const handleAddressClick = useCallback(
+    () => navigator.clipboard.writeText(currentAccount?.address || ''),
+    [currentAccount?.address]
+  )
 
   if (typeof infos === 'undefined') {
     return null
@@ -57,7 +63,7 @@ const Info = ({ onSendClick, infos }: Props) => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <AddressContainer>
+        <AddressContainer onClick={handleAddressClick}>
           <AddressTypography variant="body" color="primary">
             {ellipsizeTokenAddress(currentAccount?.address || '')}
             <IconCopy />
