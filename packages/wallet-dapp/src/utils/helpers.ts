@@ -1,3 +1,5 @@
+import { devnetConnectionUrl, testnetConnectionUrl } from './const'
+
 export const getTokenSymbolFromTypeArg = (typeArg: string, separator = '::') => {
   const lastIndexOfSeparator = typeArg.lastIndexOf(separator)
   if (lastIndexOfSeparator >= 0) {
@@ -16,4 +18,15 @@ export const getPackageIdFromTypeArg = (typeArg: string, separator = '::') => {
     return typeArg.substring(0, firstIndexOfSeparator)
   }
   return ''
+}
+
+export const getNetworkFromUrl = (networkUrl: string) => {
+  switch (networkUrl) {
+    case testnetConnectionUrl:
+      return 'testnet'
+    case devnetConnectionUrl:
+      return 'devnet'
+    default:
+      return 'mainnet'
+  }
 }

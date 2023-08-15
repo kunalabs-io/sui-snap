@@ -8,7 +8,7 @@ import Typography from 'components/Typography/Typography'
 import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, TokensLabel } from './styles'
 import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
-import { ellipsizeTokenAddress } from 'utils/helpers'
+import { ellipsizeTokenAddress, getNetworkFromUrl } from 'utils/helpers'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { RECOGNIZED_TOKENS_PACKAGE_IDS, mainnetConnectionUrl, suiTypeArg } from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
@@ -23,10 +23,6 @@ interface Props {
 const Info = ({ onSendClick, infos }: Props) => {
   const { currentAccount } = useWalletKit()
   const { network } = useNetwork()
-
-  const handleIconButtonClick = () => {
-    console.log('handleIconButtonClick')
-  }
 
   const handleAddressClick = useCallback(
     () => navigator.clipboard.writeText(currentAccount?.address || ''),
@@ -99,9 +95,15 @@ const Info = ({ onSendClick, infos }: Props) => {
           <StyledTypography variant="body">Send</StyledTypography>
         </IconButtonContainer>
         <IconButtonContainer>
-          <IconButton onClick={handleIconButtonClick}>
-            <IconExplore />
-          </IconButton>
+          <a
+            href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${getNetworkFromUrl(network)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <IconButton>
+              <IconExplore />
+            </IconButton>
+          </a>
           <StyledTypography variant="body">Explorer</StyledTypography>
         </IconButtonContainer>
       </div>
