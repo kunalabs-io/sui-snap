@@ -1,33 +1,35 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import Input from 'components/Input/Input'
 import { EstimatedLabel, EstimatedUsd, EstimatedValue, GasLabel, SendLabel } from './styles'
 import Button from 'components/Button/Button'
 import TokenSelect from './TokenSelect'
-import { Coin } from 'modules/Info/CoinItem'
+import { CoinInfo } from 'utils/useWalletBalances'
+import { suiTypeArg } from 'utils/const'
 
 interface Props {
   onRejectClick: () => void
+  infos: Map<string, CoinInfo> | undefined
 }
 
-const mockedCoins = [
-  {
-    name: 'Sui',
-    symbol: 'SUI',
-    amount: '1,443.96',
-  },
-
-  {
-    name: 'Tether',
-    symbol: 'USDT',
-    amount: '250.00',
-  },
-]
-
-const Send = ({ onRejectClick }: Props) => {
+const Send = ({ onRejectClick, infos }: Props) => {
   const [address, setAddress] = useState('')
   const [amount, setAmount] = useState('')
-  const [selectedCoin, setSelectedCoin] = useState<Coin>(mockedCoins[0])
+  const [selectedCoin, setSelectedCoin] = useState<CoinInfo>()
+
+  const options = useMemo(() => {
+    if (!infos) {
+      return []
+    }
+    return Array.from(infos.values())
+  }, [infos])
+
+  useEffect(() => {
+    if (!selectedCoin && infos) {
+      const suiCoinInfo = infos?.get(suiTypeArg)
+      setSelectedCoin(suiCoinInfo)
+    }
+  }, [infos, selectedCoin])
 
   const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(e.target.value)
@@ -37,7 +39,7 @@ const Send = ({ onRejectClick }: Props) => {
     setAmount(e.target.value)
   }, [])
 
-  const handleCoinChange = useCallback((coin: Coin) => {
+  const handleCoinChange = useCallback((coin: CoinInfo) => {
     setSelectedCoin(coin)
   }, [])
 
@@ -53,7 +55,7 @@ const Send = ({ onRejectClick }: Props) => {
         label="Recipient"
         style={{ marginBottom: 20 }}
       />
-      <TokenSelect label="Asset" coin={selectedCoin} handleCoinChange={handleCoinChange} />
+      <TokenSelect label="Asset" coin={selectedCoin} handleCoinChange={handleCoinChange} options={options} />
       <Input
         inputText={amount}
         onChange={handleAmountChange}

@@ -26,7 +26,11 @@ const Dashboard = () => {
       <Header />
       <DashboardContainer>
         <div style={{ height: 25 }} />
-        {showSend ? <Send onRejectClick={toggleSendClick} /> : <Info onSendClick={toggleSendClick} infos={infos} />}
+        {showSend ? (
+          <Send onRejectClick={toggleSendClick} infos={infos} />
+        ) : (
+          <Info onSendClick={toggleSendClick} infos={infos} />
+        )}
       </DashboardContainer>
     </div>
   )

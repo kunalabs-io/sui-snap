@@ -1,13 +1,14 @@
 import styled from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
-import { Coin } from 'modules/Info/CoinItem'
 import Select from 'components/Select/Select'
+import { CoinInfo } from 'utils/useWalletBalances'
 
 interface Props {
   label: string
-  coin: Coin
-  handleCoinChange: (coin: Coin) => void
+  coin?: CoinInfo
+  options: CoinInfo[]
+  handleCoinChange: (coin: CoinInfo) => void
 }
 
 const Container = styled.div`
@@ -33,10 +34,14 @@ const Label = styled(Typography)`
   color: ${p => p.theme.colors.text.description};
 `
 
-const TokenSelect = ({ label, coin }: Props) => {
-  const handleOptionClick = () => {
-    console.log('handleOptionClick')
+const TokenSelect = ({ label, coin, options, handleCoinChange }: Props) => {
+  const handleOptionClick = (option: string) => {
+    const newCoinInfo = options.find(o => o.meta.typeArg === option)
+    if (newCoinInfo) {
+      handleCoinChange(newCoinInfo)
+    }
   }
+
   return (
     <div>
       <Label variant="description">{label}</Label>
@@ -46,15 +51,12 @@ const TokenSelect = ({ label, coin }: Props) => {
             <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
           </svg>
         </div>
-        <div>{coin.symbol}</div>
+        <div>{coin?.meta.symbol}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <BalanceLabel variant="body">Balance:</BalanceLabel>
-          <BalanceValue variant="body">{coin.amount}</BalanceValue>
+          <BalanceValue variant="body">{coin?.amount.toString()}</BalanceValue>
           <Select
-            options={[
-              { name: 'SUI', value: 'sui' },
-              { name: 'USDT', value: 'usdt' },
-            ]}
+            options={options.map(o => ({ name: o.meta.symbol, value: o.meta.typeArg }))}
             style={{ padding: '0 8px', border: 'none', backgroundColor: 'inherit', width: 80 }}
             onOptionClick={handleOptionClick}
           />
