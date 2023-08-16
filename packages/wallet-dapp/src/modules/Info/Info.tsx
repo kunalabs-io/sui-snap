@@ -14,6 +14,7 @@ import { RECOGNIZED_TOKENS_PACKAGE_IDS, mainnetConnectionUrl, suiTypeArg } from 
 import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
 import { useNetwork } from 'utils/useNetworkProvider'
+import { toast } from 'react-toastify'
 
 interface Props {
   onSendClick: () => void
@@ -24,10 +25,10 @@ const Info = ({ onSendClick, infos }: Props) => {
   const { currentAccount } = useWalletKit()
   const { network } = useNetwork()
 
-  const handleAddressClick = useCallback(
-    () => navigator.clipboard.writeText(currentAccount?.address || ''),
-    [currentAccount?.address]
-  )
+  const handleAddressClick = useCallback(async () => {
+    await navigator.clipboard.writeText(currentAccount?.address || '')
+    toast.success('Address copied')
+  }, [currentAccount?.address])
 
   if (typeof infos === 'undefined') {
     return null

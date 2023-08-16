@@ -10,9 +10,11 @@ import { GlobalStyles } from 'styles/GlobalStyles'
 import { theme } from 'styles/theme'
 
 import '../index.css'
+import 'react-toastify/dist/ReactToastify.css'
 import { SuiClientProvider } from 'utils/SuiClientProvider'
 import { testnetConnectionUrl } from 'utils/const'
 import { NetworkContext } from 'utils/useNetworkProvider'
+import { Toast } from 'components/Toast/Toast'
 
 export type RootProps = {
   children: ReactNode
@@ -34,6 +36,7 @@ export const App = () => {
         <WalletKitProvider adapters={[new SuiSnapWalletAdapter()]}>
           <NetworkContext.Provider value={{ network, setNetwork: handleNetworkChange }}>
             <ThemeProvider theme={theme}>
+              <Toast />
               <Main />
               <GlobalStyles />
             </ThemeProvider>

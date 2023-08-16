@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify'
 import Jazzicon from 'react-jazzicon'
 import { useWalletKit } from '@mysten/wallet-kit'
 import { useCallback, useState } from 'react'
@@ -29,10 +30,10 @@ const Header = () => {
     setNetwork(option)
   }
 
-  const handleAddressClick = useCallback(
-    () => navigator.clipboard.writeText(currentAccount?.address || ''),
-    [currentAccount?.address]
-  )
+  const handleAddressClick = useCallback(async () => {
+    await navigator.clipboard.writeText(currentAccount?.address || '')
+    toast.success('Address copied')
+  }, [currentAccount?.address])
 
   return (
     <Wrapper>
