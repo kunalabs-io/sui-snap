@@ -1,5 +1,5 @@
 import { toast } from 'react-toastify'
-import Jazzicon from 'react-jazzicon'
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon'
 import { useWalletKit } from '@mysten/wallet-kit'
 import { useCallback, useState } from 'react'
 import { useTheme } from 'styled-components'
@@ -39,7 +39,7 @@ const Header = () => {
     <Wrapper>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div onClick={toggleModal} style={{ cursor: 'pointer' }}>
-          <Jazzicon diameter={25} seed={Math.round(Math.random() * 10000000)} />
+          <Jazzicon diameter={25} seed={jsNumberForAddress(currentAccount?.address || '')} />
         </div>
         <div style={{ cursor: 'pointer' }} onClick={handleAddressClick}>
           <Typography variant="body" style={{ marginLeft: 12, color: theme.colors.text.description }}>
