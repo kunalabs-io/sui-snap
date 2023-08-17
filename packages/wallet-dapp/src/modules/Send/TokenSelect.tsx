@@ -67,6 +67,7 @@ const TokenSelect = ({ label, coin, options, handleCoinChange }: Props) => {
             options={options.map(o => ({ name: o.meta.symbol, value: o.meta.typeArg }))}
             style={{ padding: '0 8px', border: 'none', backgroundColor: 'inherit', width: 80 }}
             onOptionClick={handleOptionClick}
+            selectedOption={coin?.meta.typeArg || ''}
           />
         </div>
       </Container>
