@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import Typography from 'components/Typography/Typography'
 import Select from 'components/Select/Select'
 import { CoinInfo } from 'utils/useWalletBalances'
+import { suiTypeArg } from 'utils/const'
+import { IconSui } from 'components/Icons/IconSui'
 
 interface Props {
   label: string
@@ -47,9 +49,15 @@ const TokenSelect = ({ label, coin, options, handleCoinChange }: Props) => {
       <Label variant="description">{label}</Label>
       <Container>
         <div style={{ marginRight: 10, display: 'flex' }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
-            <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
-          </svg>
+          {coin?.meta.typeArg === suiTypeArg ? (
+            <IconSui />
+          ) : coin?.meta.iconUrl ? (
+            <img src={coin.meta.iconUrl} style={{ width: 37, height: 37 }} />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
+              <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
+            </svg>
+          )}
         </div>
         <div>{coin?.meta.symbol}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>

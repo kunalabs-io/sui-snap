@@ -5,17 +5,17 @@ import { EstimatedLabel, EstimatedUsd, EstimatedValue, GasLabel, SendLabel } fro
 import Button from 'components/Button/Button'
 import TokenSelect from './TokenSelect'
 import { CoinInfo } from 'utils/useWalletBalances'
-import { suiTypeArg } from 'utils/const'
 
 interface Props {
   onRejectClick: () => void
   infos: Map<string, CoinInfo> | undefined
+  initialCoinInfo?: CoinInfo
 }
 
-const Send = ({ onRejectClick, infos }: Props) => {
+const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
   const [address, setAddress] = useState('')
   const [amount, setAmount] = useState('')
-  const [selectedCoin, setSelectedCoin] = useState<CoinInfo>()
+  const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
 
   const options = useMemo(() => {
     if (!infos) {
@@ -25,11 +25,8 @@ const Send = ({ onRejectClick, infos }: Props) => {
   }, [infos])
 
   useEffect(() => {
-    if (!selectedCoin && infos) {
-      const suiCoinInfo = infos?.get(suiTypeArg)
-      setSelectedCoin(suiCoinInfo)
-    }
-  }, [infos, selectedCoin])
+    setSelectedCoin(initialCoinInfo)
+  }, [initialCoinInfo])
 
   const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(e.target.value)

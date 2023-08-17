@@ -18,9 +18,10 @@ const Container = styled.div`
 
 export interface Props {
   coinInfo: CoinInfo | undefined
+  onCoinClick: (info: CoinInfo) => void
 }
 
-const CoinItem = ({ coinInfo }: Props) => {
+const CoinItem = ({ coinInfo, onCoinClick }: Props) => {
   const theme = useTheme()
 
   if (typeof coinInfo === 'undefined') {
@@ -28,7 +29,7 @@ const CoinItem = ({ coinInfo }: Props) => {
   }
 
   return (
-    <Container>
+    <Container onClick={() => onCoinClick(coinInfo)}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ marginRight: 10 }}>
           {coinInfo.meta.typeArg === suiTypeArg ? (

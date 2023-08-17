@@ -19,9 +19,10 @@ import { toast } from 'react-toastify'
 interface Props {
   onSendClick: () => void
   infos: Map<string, CoinInfo> | undefined
+  onCoinClick: (info: CoinInfo) => void
 }
 
-const Info = ({ onSendClick, infos }: Props) => {
+const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
   const { currentAccount } = useWalletKit()
   const { network } = useNetwork()
 
@@ -113,7 +114,7 @@ const Info = ({ onSendClick, infos }: Props) => {
       </div>
       <div>
         {recognizedCoins.map(c => (
-          <CoinItem coinInfo={c} key={c.meta.typeArg} />
+          <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onCoinClick} />
         ))}
       </div>
       {unrecognizedCoins.length ? (
@@ -123,7 +124,7 @@ const Info = ({ onSendClick, infos }: Props) => {
           accordionDetails={
             <div style={{ marginTop: 10 }}>
               {unrecognizedCoins.map(c => (
-                <CoinItem coinInfo={c} key={c.meta.typeArg} />
+                <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onCoinClick} />
               ))}
             </div>
           }
