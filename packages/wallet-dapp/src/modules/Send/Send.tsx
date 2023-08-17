@@ -6,6 +6,7 @@ import Button from 'components/Button/Button'
 import TokenSelect from './TokenSelect'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { useInputAmountValidate } from 'utils/input/useInputAmountValidate'
+import { Amount } from 'lib/framework/amount'
 
 interface Props {
   onRejectClick: () => void
@@ -13,12 +14,28 @@ interface Props {
   initialCoinInfo?: CoinInfo
 }
 
+const isSubmitDisabled = (amount?: Amount, tokenBalance?: Amount) => {
+  if (!amount || !tokenBalance) {
+    return true
+  }
+
+  if (amount.int === 0n) {
+    return true
+  }
+
+  if (amount.int > tokenBalance.int) {
+    return true
+  }
+
+  return false
+}
+
 const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
   const [address, setAddress] = useState('')
   const [rawInputStr, setRawInputStr] = useState('')
   const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
 
-  const { sanitizedInputValue } = useInputAmountValidate(rawInputStr, initialCoinInfo?.meta.decimals || 0)
+  const { sanitizedInputValue, amount } = useInputAmountValidate(rawInputStr, initialCoinInfo?.meta.decimals || 0)
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setRawInputStr(e.target.value)
@@ -86,7 +103,9 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
         <Button variant="outlined" onClick={onRejectClick}>
           Reject
         </Button>
-        <Button onClick={onRejectClick}>Send</Button>
+        <Button onClick={onRejectClick} disabled={isSubmitDisabled(amount, selectedCoin?.amount)}>
+          Send
+        </Button>
       </div>
     </div>
   )
