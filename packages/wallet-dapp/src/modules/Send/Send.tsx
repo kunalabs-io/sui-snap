@@ -5,6 +5,7 @@ import { EstimatedLabel, EstimatedUsd, EstimatedValue, GasLabel, SendLabel } fro
 import Button from 'components/Button/Button'
 import TokenSelect from './TokenSelect'
 import { CoinInfo } from 'utils/useWalletBalances'
+import { useInputAmountValidate } from 'utils/input/useInputAmountValidate'
 
 interface Props {
   onRejectClick: () => void
@@ -14,8 +15,21 @@ interface Props {
 
 const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
   const [address, setAddress] = useState('')
-  const [amount, setAmount] = useState('')
+  const [rawInputStr, setRawInputStr] = useState('')
   const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
+
+  const { sanitizedInputValue } = useInputAmountValidate(rawInputStr, initialCoinInfo?.meta.decimals || 0)
+
+  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setRawInputStr(e.target.value)
+  }, [])
+
+  const handleMaxClick = useCallback(() => {
+    if (!selectedCoin) {
+      return
+    }
+    setRawInputStr(selectedCoin.amount.toString())
+  }, [selectedCoin])
 
   const options = useMemo(() => {
     if (!infos) {
@@ -30,10 +44,6 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
 
   const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(e.target.value)
-  }, [])
-
-  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value)
   }, [])
 
   const handleCoinChange = useCallback((coin: CoinInfo) => {
@@ -54,12 +64,13 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
       />
       <TokenSelect label="Asset" coin={selectedCoin} handleCoinChange={handleCoinChange} options={options} />
       <Input
-        inputText={amount}
+        inputText={sanitizedInputValue}
         onChange={handleAmountChange}
         placeholder="0.00"
         label="Amount"
         style={{ marginBottom: 38 }}
         showMax
+        onMaxClick={handleMaxClick}
       />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
