@@ -35,7 +35,11 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
   const [rawInputStr, setRawInputStr] = useState('')
   const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
 
-  const { sanitizedInputValue, amount } = useInputAmountValidate(rawInputStr, initialCoinInfo?.meta.decimals || 0)
+  const { sanitizedInputValue, amount } = useInputAmountValidate(rawInputStr, selectedCoin?.meta.decimals || 0)
+
+  useEffect(() => {
+    setSelectedCoin(initialCoinInfo)
+  }, [initialCoinInfo])
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setRawInputStr(e.target.value)
@@ -54,10 +58,6 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
     }
     return Array.from(infos.values())
   }, [infos])
-
-  useEffect(() => {
-    setSelectedCoin(initialCoinInfo)
-  }, [initialCoinInfo])
 
   const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(e.target.value)
