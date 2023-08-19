@@ -90,8 +90,8 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
-        <IconButtonContainer onClick={onSendClick}>
-          <IconButton>
+        <IconButtonContainer onClick={onSendClick} disabled={!infos || infos.size === 0}>
+          <IconButton disabled={!infos || infos.size === 0}>
             <IconSend />
           </IconButton>
           <StyledTypography variant="body">Send</StyledTypography>

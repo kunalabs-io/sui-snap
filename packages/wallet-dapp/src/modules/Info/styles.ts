@@ -2,12 +2,13 @@ import styled from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
 
-export const IconButtonContainer = styled.div`
+export const IconButtonContainer = styled.div<{ disabled?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  cursor: pointer;
+  cursor: ${p => (p.disabled ? 'not-allowed' : 'pointer')};
+  opacity: ${p => (p.disabled ? 0.5 : 1)};
 `
 
 export const StyledTypography = styled(Typography)`

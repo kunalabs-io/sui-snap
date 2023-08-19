@@ -22,8 +22,10 @@ const Dashboard = () => {
   }, [network])
 
   const toggleSendClick = useCallback(() => {
-    setShowSend(!showSend)
-    setSelectedTokenToSend(infos?.get(suiTypeArg))
+    if (infos && infos.size > 0) {
+      setShowSend(!showSend)
+      setSelectedTokenToSend(infos?.get(suiTypeArg))
+    }
   }, [showSend, infos])
 
   const handleCoinInfoClick = useCallback((coinInfo: CoinInfo) => {
