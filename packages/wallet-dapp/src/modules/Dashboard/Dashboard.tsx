@@ -6,7 +6,7 @@ import Header from 'modules/Header/Header'
 import Send from 'modules/Send/Send'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
 import Spinner from 'components/Spinner/Spinner'
-import { REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
+import { REFETCH_INTERVAL } from 'utils/const'
 import { useNetwork } from 'utils/useNetworkProvider'
 
 const Dashboard = () => {
@@ -24,7 +24,7 @@ const Dashboard = () => {
   const toggleSendClick = useCallback(() => {
     if (infos && infos.size > 0) {
       setShowSend(!showSend)
-      setSelectedTokenToSend(infos?.get(suiTypeArg))
+      setSelectedTokenToSend(undefined)
     }
   }, [showSend, infos])
 

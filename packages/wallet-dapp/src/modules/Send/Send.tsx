@@ -93,6 +93,7 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
         label="Amount"
         style={{ marginBottom: 38 }}
         showMax
+        disableMax={!selectedCoin}
         onMaxClick={handleMaxClick}
       />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>

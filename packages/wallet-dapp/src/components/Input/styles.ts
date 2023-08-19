@@ -23,6 +23,11 @@ export const StyledInput = styled.input`
   }
 `
 
+export const MaxLabelContainer = styled.div<{ disabled?: boolean }>`
+  cursor: ${p => (p.disabled ? 'not-allowed' : 'pointer')};
+  opacity: ${p => (p.disabled ? 0.5 : 1)};
+`
+
 export const MaxLabel = styled(Typography)`
   position: absolute;
   right: 13px;
@@ -31,5 +36,4 @@ export const MaxLabel = styled(Typography)`
   padding: 3px 13px;
   border-radius: 46px;
   border: 1px solid ${p => p.theme.colors.divider};
-  cursor: pointer;
 `

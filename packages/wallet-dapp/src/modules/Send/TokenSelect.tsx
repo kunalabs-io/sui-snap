@@ -62,7 +62,7 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
         </div>
         <div>{coin?.meta.symbol}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-          <BalanceLabel variant="body">Balance:</BalanceLabel>
+          {coin ? <BalanceLabel variant="body">Balance:</BalanceLabel> : null}
           <BalanceValue variant="body">{coin?.amount.toString()}</BalanceValue>
           <Select
             options={options.map(o => ({ name: o.meta.symbol, value: o.meta.typeArg }))}

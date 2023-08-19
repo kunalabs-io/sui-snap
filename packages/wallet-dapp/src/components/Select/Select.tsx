@@ -22,6 +22,7 @@ const Select = ({ options, onOptionClick, style, selectedOption, disabled }: Pro
 
   return (
     <StyledSelect style={style} onChange={handleChange} value={selectedOption} disabled={disabled}>
+      {!selectedOption ? <option disabled selected value="" style={{ display: 'none' }}></option> : null}
       {options.map(o => (
         <option key={o.value} value={o.value}>
           {o.name}
