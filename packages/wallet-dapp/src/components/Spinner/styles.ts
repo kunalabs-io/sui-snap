@@ -1,9 +1,8 @@
 import styled from 'styled-components'
 
 export const StyledSpinner = styled.div`
-  position: fixed;
-  left: calc(50% - 24px);
-  top: 35%;
+  margin-top: 111px;
+  margin-left: calc(50% - 24px);
   width: 48px;
   height: 48px;
   border: 5px solid ${p => p.theme.colors.button.primary};

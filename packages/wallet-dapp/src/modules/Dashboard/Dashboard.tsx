@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { DashboardContainer } from './styles'
 import Info from 'modules/Info/Info'
@@ -7,12 +7,19 @@ import Send from 'modules/Send/Send'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
 import Spinner from 'components/Spinner/Spinner'
 import { REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
+import { useNetwork } from 'utils/useNetworkProvider'
 
 const Dashboard = () => {
   const [showSend, setShowSend] = useState(false)
   const [selectedTokenToSend, setSelectedTokenToSend] = useState<CoinInfo>()
 
+  const { network } = useNetwork()
+
   const { infos, isLoading: isLoadingWalletBalances } = useWalletBalances({ refetchInterval: REFETCH_INTERVAL })
+
+  useEffect(() => {
+    setShowSend(false)
+  }, [network])
 
   const toggleSendClick = useCallback(() => {
     setShowSend(!showSend)

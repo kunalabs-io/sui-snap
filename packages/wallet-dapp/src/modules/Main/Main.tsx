@@ -8,10 +8,9 @@ import Welcome from 'modules/Welcome/Welcome'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 100px;
   width: 360px;
   height: 553px;
   border: 1px solid ${p => p.theme.colors.divider};

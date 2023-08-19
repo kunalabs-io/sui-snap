@@ -79,7 +79,13 @@ const Send = ({ onRejectClick, infos, initialCoinInfo }: Props) => {
         label="Recipient"
         style={{ marginBottom: 20 }}
       />
-      <TokenSelect label="Asset" coin={selectedCoin} handleCoinChange={handleCoinChange} options={options} />
+      <TokenSelect
+        label="Asset"
+        coin={selectedCoin}
+        handleCoinChange={handleCoinChange}
+        options={options}
+        disabled={!infos || infos.size === 0}
+      />
       <Input
         inputText={sanitizedInputValue}
         onChange={handleAmountChange}

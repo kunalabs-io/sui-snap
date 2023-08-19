@@ -4,13 +4,14 @@ import Typography from 'components/Typography/Typography'
 import Select from 'components/Select/Select'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { suiTypeArg } from 'utils/const'
-import { IconSui } from 'components/Icons/IconSui'
+import { IconSuiSmall } from 'components/Icons/IconSui'
 
 interface Props {
   label: string
   coin?: CoinInfo
   options: CoinInfo[]
   handleCoinChange: (coin: CoinInfo) => void
+  disabled: boolean
 }
 
 const Container = styled.div`
@@ -36,7 +37,7 @@ const Label = styled(Typography)`
   color: ${p => p.theme.colors.text.description};
 `
 
-const TokenSelect = ({ label, coin, options, handleCoinChange }: Props) => {
+const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props) => {
   const handleOptionClick = (option: string) => {
     const newCoinInfo = options.find(o => o.meta.typeArg === option)
     if (newCoinInfo) {
@@ -50,12 +51,12 @@ const TokenSelect = ({ label, coin, options, handleCoinChange }: Props) => {
       <Container>
         <div style={{ marginRight: 10, display: 'flex' }}>
           {coin?.meta.typeArg === suiTypeArg ? (
-            <IconSui />
+            <IconSuiSmall />
           ) : coin?.meta.iconUrl ? (
-            <img src={coin.meta.iconUrl} style={{ width: 37, height: 37 }} />
+            <img src={coin.meta.iconUrl} style={{ width: 27, height: 27 }} />
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
-              <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="27" height="27" viewBox="0 0 27 27" fill="none">
+              <circle cx="13.5" cy="13.5" r="13.5" fill="#22A2ED" />
             </svg>
           )}
         </div>
@@ -65,9 +66,10 @@ const TokenSelect = ({ label, coin, options, handleCoinChange }: Props) => {
           <BalanceValue variant="body">{coin?.amount.toString()}</BalanceValue>
           <Select
             options={options.map(o => ({ name: o.meta.symbol, value: o.meta.typeArg }))}
-            style={{ padding: '0 8px', border: 'none', backgroundColor: 'inherit', width: 80 }}
+            style={{ padding: '0 8px', border: 'none', width: 80 }}
             onOptionClick={handleOptionClick}
             selectedOption={coin?.meta.typeArg || ''}
+            disabled={disabled}
           />
         </div>
       </Container>

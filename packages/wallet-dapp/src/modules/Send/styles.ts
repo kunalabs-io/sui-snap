@@ -20,7 +20,7 @@ export const EstimatedLabel = styled(Typography)`
 
 export const EstimatedUsd = styled(Typography)`
   color: ${p => p.theme.colors.text.description};
-  margin-right: 4px;
+  margin-right: 8px;
 `
 
 export const EstimatedValue = styled(Typography)`

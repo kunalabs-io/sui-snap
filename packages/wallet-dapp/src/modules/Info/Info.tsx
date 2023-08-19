@@ -90,26 +90,28 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
-        <IconButtonContainer>
-          <IconButton onClick={onSendClick}>
+        <IconButtonContainer onClick={onSendClick}>
+          <IconButton>
             <IconSend />
           </IconButton>
           <StyledTypography variant="body">Send</StyledTypography>
         </IconButtonContainer>
-        <IconButtonContainer>
-          <a
-            href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${getNetworkFromUrl(network)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
+
+        <a
+          href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${getNetworkFromUrl(network)}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{ textDecoration: 'none' }}
+        >
+          <IconButtonContainer>
             <IconButton>
               <IconExplore />
             </IconButton>
-          </a>
-          <StyledTypography variant="body">Explorer</StyledTypography>
-        </IconButtonContainer>
+            <StyledTypography variant="body">Explorer</StyledTypography>
+          </IconButtonContainer>
+        </a>
       </div>
-      <div style={{ marginTop: 25, textAlign: 'center' }}>
+      <div style={{ marginTop: 25, marginBottom: 8, textAlign: 'center' }}>
         <TokensLabel variant="body">Tokens</TokensLabel>
       </div>
       <div>

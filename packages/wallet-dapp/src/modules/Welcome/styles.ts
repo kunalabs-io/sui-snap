@@ -2,11 +2,10 @@ import Button from 'components/Button/Button'
 import styled from 'styled-components'
 
 export const Wrapper = styled.div`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  max-width: 250px;
   text-align: center;
+  margin: auto;
+  margin-top: 111px;
   display: flex;
   flex-direction: column;
   justify-content: center;

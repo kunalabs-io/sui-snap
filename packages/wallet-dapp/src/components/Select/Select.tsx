@@ -12,15 +12,16 @@ interface Props extends Stylable {
   options: Option[]
   onOptionClick: (option: string) => void
   selectedOption?: string
+  disabled?: boolean
 }
 
-const Select = ({ options, onOptionClick, style, selectedOption }: Props) => {
+const Select = ({ options, onOptionClick, style, selectedOption, disabled }: Props) => {
   const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onOptionClick(event.target.value)
   }
 
   return (
-    <StyledSelect style={style} onChange={handleChange} value={selectedOption}>
+    <StyledSelect style={style} onChange={handleChange} value={selectedOption} disabled={disabled}>
       {options.map(o => (
         <option key={o.value} value={o.value}>
           {o.name}
