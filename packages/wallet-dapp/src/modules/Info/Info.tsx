@@ -15,6 +15,7 @@ import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { toast } from 'react-toastify'
+import { formatNumberWithCommas } from 'utils/formatting'
 
 interface Props {
   onSendClick: () => void
@@ -81,7 +82,7 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
         ) : (
           <>
             <Typography variant="title" style={{ marginRight: 8 }}>
-              {suiCoinInfo?.amount.toString()}
+              {formatNumberWithCommas(suiCoinInfo?.amount.toString())}
             </Typography>
             <Typography variant="subtitle1" color="secondary">
               {suiCoinInfo?.meta.symbol}

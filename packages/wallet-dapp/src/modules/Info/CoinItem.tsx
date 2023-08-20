@@ -4,6 +4,7 @@ import Typography from 'components/Typography/Typography'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { IconSui } from 'components/Icons/IconSui'
 import { suiTypeArg } from 'utils/const'
+import { formatNumberWithCommas } from 'utils/formatting'
 
 const Container = styled.div`
   display: flex;
@@ -49,9 +50,9 @@ const CoinItem = ({ coinInfo, onCoinClick }: Props) => {
           </Typography>
         </div>
       </div>
-      <Typography variant="body" style={{ color: theme.colors.text.description }}>{`${coinInfo.amount.toString()} ${
-        coinInfo.meta.symbol
-      }`}</Typography>
+      <Typography variant="body" style={{ color: theme.colors.text.description }}>{`${formatNumberWithCommas(
+        coinInfo.amount.toString()
+      )} ${coinInfo.meta.symbol}`}</Typography>
     </Container>
   )
 }

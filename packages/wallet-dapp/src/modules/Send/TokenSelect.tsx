@@ -5,6 +5,7 @@ import Select from 'components/Select/Select'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
+import { formatNumberWithCommas } from 'utils/formatting'
 
 interface Props {
   label: string
@@ -63,7 +64,7 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
         <div>{coin?.meta.symbol}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           {coin ? <BalanceLabel variant="body">Balance:</BalanceLabel> : null}
-          <BalanceValue variant="body">{coin?.amount.toString()}</BalanceValue>
+          <BalanceValue variant="body">{formatNumberWithCommas(coin?.amount.toString() || '')}</BalanceValue>
           <Select
             options={options.map(o => ({ name: o.meta.symbol, value: o.meta.typeArg }))}
             style={{ padding: '0 8px', border: 'none', width: 80 }}
