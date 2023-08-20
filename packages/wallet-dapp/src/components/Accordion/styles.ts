@@ -18,13 +18,13 @@ export const AccordionSummary = styled.div<{ isOpen: boolean }>`
 export const AccordionDetails = styled.div<{ isOpen: boolean }>`
   height: 0px;
   opacity: 0;
-  transition: opacity 0.3s ease-in-out, height 0.3s 0.3s ease-in-out;
+  // transition: opacity 0.3s ease-in-out, height 0.3s 0.3s ease-in-out;
   overflow: hidden;
   ${p =>
     p.isOpen &&
     `
     opacity: 1;
-    transition: height 0.3s ease-in-out, opacity 0.3s 0.3s ease-in-out;
+    // transition: height 0.3s ease-in-out, opacity 0.3s 0.3s ease-in-out;
   `}
 `
 
