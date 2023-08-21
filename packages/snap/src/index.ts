@@ -3,22 +3,20 @@ import { heading, panel, text } from '@metamask/snaps-ui'
 import { SLIP10Node } from '@metamask/key-tree'
 import { blake2b } from '@noble/hashes/blake2b'
 
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519'
 import {
-  Ed25519Keypair,
   IntentScope,
-  JsonRpcProvider,
   Keypair,
-  RawSigner,
-  SignedMessage,
+  SignatureWithBytes,
   messageWithIntent,
-  testnetConnection,
-  toB64,
   toSerializedSignature,
-} from '@mysten/sui.js'
+} from '@mysten/sui.js/cryptography'
+import { toB64 } from '@mysten/sui.js/utils'
+import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
 
 import {
   SerializedSuiSignAndExecuteTransactionBlockInput,
-  SerializedSuiSignMessageInput,
+  SerializedSuiSignPersonalMessageInput,
   SerializedSuiSignTransactionBlockInput,
   SerializedWalletAccount,
   deserializeSuiSignAndExecuteTransactionBlockInput,
@@ -54,7 +52,10 @@ async function deriveKeypair() {
 /**
  * Sign a message using the keypair, with the `PersonalMessage` intent.
  */
-function signMessage(keypair: Keypair, message: Uint8Array): SignedMessage {
+function signMessage(
+  keypair: Keypair,
+  message: Uint8Array
+): SignatureWithBytes {
   const data = messageWithIntent(IntentScope.PersonalMessage, message)
   const pubkey = keypair.getPublicKey()
   const digest = blake2b(data, { dkLen: 32 })
@@ -68,7 +69,7 @@ function signMessage(keypair: Keypair, message: Uint8Array): SignedMessage {
   })
 
   return {
-    messageBytes: toB64(message),
+    bytes: toB64(message),
     signature: serializedSignature,
   }
 }
@@ -88,9 +89,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   request,
 }) => {
   switch (request.method) {
-    case 'signMessage': {
-      console.log(JSON.stringify(request.params, null, 2))
-      if (!is(request.params, SerializedSuiSignMessageInput)) {
+    case 'signPersonalMessage': {
+      if (!is(request.params, SerializedSuiSignPersonalMessageInput)) {
         throw new Error('Invalid request params.')
       }
       const input = deserializeSuiSignMessageInput(request.params)
@@ -121,12 +121,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
       const input = deserializeSuiSignTransactionBlockInput(request.params)
 
-      const keypair = await deriveKeypair()
-      const connection = testnetConnection
-
-      const provider = new JsonRpcProvider(connection)
-      const signer = new RawSigner(keypair, provider)
-
       const response = await snap.request({
         method: 'snap_dialog',
         params: {
@@ -142,9 +136,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw new Error('User rejected the transaction.')
       }
 
-      return await signer.signTransactionBlock({
-        transactionBlock: input.transactionBlock,
+      const keypair = await deriveKeypair()
+      const url = getFullnodeUrl('testnet')
+
+      const client = new SuiClient({ url })
+      const transactionBlockBytes = await input.transactionBlock.build({
+        client,
       })
+
+      return await keypair.signTransactionBlock(transactionBlockBytes)
     }
 
     case 'signAndExecuteTransactionBlock': {
@@ -156,12 +156,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const input = deserializeSuiSignAndExecuteTransactionBlockInput(
         request.params
       )
-
-      const keypair = await deriveKeypair()
-      const connection = testnetConnection
-
-      const provider = new JsonRpcProvider(connection)
-      const signer = new RawSigner(keypair, provider)
 
       const response = await snap.request({
         method: 'snap_dialog',
@@ -178,8 +172,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw new Error('User rejected the transaction.')
       }
 
-      return await signer.signAndExecuteTransactionBlock({
-        transactionBlock: input.transactionBlock,
+      const keypair = await deriveKeypair()
+      const url = getFullnodeUrl('testnet')
+      const client = new SuiClient({ url })
+
+      return await client.signAndExecuteTransactionBlock({
+        signer: keypair,
+        ...input,
       })
     }
 

@@ -1,7 +1,7 @@
 import { ReactNode, useCallback, useState } from 'react'
 import { ThemeProvider } from 'styled-components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
-import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet-adapter'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
@@ -22,6 +22,8 @@ export type RootProps = {
 
 const queryClient = new QueryClient()
 
+registerSuiSnapWallet()
+
 export const App = () => {
   const [network, setNetwork] = useState(testnetConnectionUrl)
 
@@ -33,7 +35,7 @@ export const App = () => {
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={true} />
       <SuiClientProvider connectionUrl={network}>
-        <WalletKitProvider adapters={[new SuiSnapWalletAdapter()]}>
+        <WalletKitProvider>
           <NetworkContext.Provider value={{ network, setNetwork: handleNetworkChange }}>
             <ThemeProvider theme={theme}>
               <Toast />

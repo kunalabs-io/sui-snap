@@ -1,14 +1,12 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode } from 'react'
 import { Footer } from './components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
-import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
-import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-wallet-standard'
 
 import Main from 'modules/Main'
 import '../index.css'
 import styled, { ThemeProvider } from 'styled-components'
-import { getThemePreference } from 'utils'
-import { GlobalStyle, dark, light } from 'config/theme'
+import { GlobalStyle, theme } from 'config/theme'
+import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet-adapter'
 
 export type RootProps = {
   children: ReactNode
@@ -22,12 +20,12 @@ const Wrapper = styled.div`
   max-width: 100vw;
 `
 
-export const App = () => {
-  const [darkTheme] = useState(getThemePreference())
+registerSuiSnapWallet()
 
+export const App = () => {
   return (
-    <ThemeProvider theme={darkTheme ? dark : light}>
-      <WalletKitProvider adapters={[new WalletStandardAdapterProvider(), new SuiSnapWalletAdapter()]}>
+    <ThemeProvider theme={theme}>
+      <WalletKitProvider>
         <GlobalStyle />
         <Wrapper>
           <Main />

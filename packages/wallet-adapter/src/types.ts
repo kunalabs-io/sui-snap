@@ -1,18 +1,17 @@
 import {
   ExecuteTransactionRequestType,
   SuiTransactionBlockResponseOptions,
-  TransactionBlock,
-  fromB64,
-  toB64,
-} from '@mysten/sui.js'
+} from '@mysten/sui.js/client'
+import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { fromB64, toB64 } from '@mysten/sui.js/utils'
 import {
   SuiSignAndExecuteTransactionBlockInput,
-  SuiSignMessageInput,
+  SuiSignPersonalMessageInput,
   SuiSignTransactionBlockInput,
   WalletAccount,
   WalletIcon,
 } from '@mysten/wallet-standard'
-import { Infer, array, object, optional, string } from 'superstruct'
+import { Infer, Describe, array, object, optional, string, boolean } from 'superstruct'
 
 export { is } from 'superstruct'
 
@@ -58,15 +57,15 @@ export function deserializeWalletAccount(account: SerializedWalletAccount): Wall
 
 /* ======== SerializedSuiSignMessageInput ======== */
 
-export const SerializedSuiSignMessageInput = object({
+export const SerializedSuiSignPersonalMessageInput = object({
   message: string(),
   account: SerializedWalletAccount,
 })
 
-export type SerializedSuiSignMessageInput = Infer<typeof SerializedSuiSignMessageInput>
+export type SerializedSuiSignMessageInput = Infer<typeof SerializedSuiSignPersonalMessageInput>
 
 export function serializeSuiSignMessageInput(
-  input: SuiSignMessageInput
+  input: SuiSignPersonalMessageInput
 ): SerializedSuiSignMessageInput {
   return {
     message: toB64(input.message),
@@ -76,7 +75,7 @@ export function serializeSuiSignMessageInput(
 
 export function deserializeSuiSignMessageInput(
   input: SerializedSuiSignMessageInput
-): SuiSignMessageInput {
+): SuiSignPersonalMessageInput {
   return {
     message: fromB64(input.message),
     account: deserializeWalletAccount(input.account),
@@ -116,6 +115,15 @@ export function deserializeSuiSignTransactionBlockInput(
 }
 
 /* ======== SerializedSuiSignAndExecuteTransactionBlockInput ======== */
+
+const SuiTransactionBlockResponseOptions: Describe<SuiTransactionBlockResponseOptions> = object({
+  showBalanceChanges: optional(boolean()),
+  showEffects: optional(boolean()),
+  showEvents: optional(boolean()),
+  showInput: optional(boolean()),
+  showObjectChanges: optional(boolean()),
+  showRawInput: optional(boolean()),
+})
 
 export const SerializedSuiSignAndExecuteTransactionBlockInput = object({
   transactionBlock: string(),

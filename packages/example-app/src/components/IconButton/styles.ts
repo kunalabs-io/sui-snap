@@ -2,7 +2,7 @@ import styled from 'styled-components'
 
 export const StyledIconButton = styled.div<{ disabled?: boolean }>`
   border-radius: 50%;
-  background-color: ${p => p.theme.colors.button.primary};
+  background-color: ${p => p.theme.colors.primary};
   width: 36px;
   height: 36px;
   opacity: ${p => (p.disabled ? '0.5' : 1)};

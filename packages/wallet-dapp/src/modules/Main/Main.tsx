@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
 import { useWalletKit } from '@mysten/wallet-kit'
 import styled from 'styled-components'
 
 import Dashboard from 'modules/Dashboard/Dashboard'
 import Welcome from 'modules/Welcome/Welcome'
+import { flaskAvailable } from '@kunalabs-io/sui-snap-wallet-adapter'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -23,7 +23,7 @@ const Main = () => {
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
 
   useEffect(() => {
-    SuiSnapWalletAdapter.flaskAvailable()
+    flaskAvailable()
       .then((isAvailable?: boolean) => setFlaskInstalled(!!isAvailable))
       .catch(e => {
         setFlaskInstalled(false)

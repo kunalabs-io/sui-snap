@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import { SuiSnapWalletAdapter } from '@kunalabs-io/sui-snap-wallet-adapter'
-import { TransactionBlock } from '@mysten/sui.js'
+import { SuiSnapWallet, flaskAvailable } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { useWalletKit } from '@mysten/wallet-kit'
 
 const Main = () => {
@@ -12,7 +12,7 @@ const Main = () => {
 
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
   useEffect(() => {
-    SuiSnapWalletAdapter.flaskAvailable()
+    flaskAvailable()
       .then(setFlaskInstalled)
       .catch(e => {
         setFlaskInstalled(false)
@@ -28,7 +28,7 @@ const Main = () => {
     }
 
     try {
-      await kit.connect('Sui MetaMask Snap')
+      await kit.connect(SuiSnapWallet.NAME)
     } catch (e) {
       if (typeof e === 'string') {
         setError(e)
@@ -44,9 +44,7 @@ const Main = () => {
     }
 
     try {
-      const adapter = new SuiSnapWalletAdapter()
-
-      const signed = await adapter.signMessage({
+      const signed = await kit.signMessage({
         message: new Uint8Array([1, 2, 3]),
         account: kit.currentAccount,
       })
@@ -67,13 +65,11 @@ const Main = () => {
     }
 
     try {
-      const adapter = new SuiSnapWalletAdapter()
-
       const txb = new TransactionBlock()
       const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
       txb.transferObjects([coin], txb.pure('0x072c32563f7a8f625f1f78a7f0a38417fc99357a34fc4d2c8fe7fbf93cba2322'))
 
-      const signed = await adapter.signTransactionBlock({
+      const signed = await kit.signTransactionBlock({
         transactionBlock: txb,
         account: kit.currentAccount,
         chain: 'sui:mainnet',
@@ -95,13 +91,11 @@ const Main = () => {
     }
 
     try {
-      const adapter = new SuiSnapWalletAdapter()
-
       const txb = new TransactionBlock()
       const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
       txb.transferObjects([coin], txb.pure('0x072c32563f7a8f625f1f78a7f0a38417fc99357a34fc4d2c8fe7fbf93cba2322'))
 
-      const result = await adapter.signAndExecuteTransactionBlock({
+      const result = await kit.signAndExecuteTransactionBlock({
         transactionBlock: txb,
         account: kit.currentAccount,
         chain: 'sui:mainnet',

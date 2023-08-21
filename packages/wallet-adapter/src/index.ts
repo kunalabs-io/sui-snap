@@ -1,16 +1,33 @@
-import { SignedMessage, SignedTransaction, SuiTransactionBlockResponse } from '@mysten/sui.js'
-import { WalletAdapter, WalletAdapterEvents } from '@mysten/wallet-adapter-base'
 import {
   ReadonlyWalletAccount,
+  SUI_CHAINS,
+  StandardConnectFeature,
+  StandardConnectMethod,
+  StandardDisconnectFeature,
+  StandardDisconnectMethod,
+  StandardEventsFeature,
+  SuiFeatures,
+  SuiSignAndExecuteTransactionBlockMethod,
+  SuiSignAndExecuteTransactionBlockOutput,
   SuiSignMessageInput,
+  SuiSignMessageMethod,
+  SuiSignMessageOutput,
+  SuiSignPersonalMessageInput,
+  SuiSignPersonalMessageMethod,
+  SuiSignPersonalMessageOutput,
   SuiSignTransactionBlockInput,
+  SuiSignTransactionBlockMethod,
+  SuiSignTransactionBlockOutput,
+  Wallet,
   WalletAccount,
+  getWallets,
 } from '@mysten/wallet-standard'
 import { ICON } from './icon'
 import { BaseProvider } from '@metamask/providers'
 import {
   SerializedWalletAccount,
   deserializeWalletAccount,
+  serializeSuiSignAndExecuteTransactionBlockInput,
   serializeSuiSignMessageInput,
   serializeSuiSignTransactionBlockInput,
 } from './types'
@@ -18,6 +35,17 @@ import {
 export * from './types'
 
 export const snapOrigin = 'local:http://localhost:8080'
+
+export function registerSuiSnapWallet(): SuiSnapWallet {
+  const wallets = getWallets()
+  if (wallets.get().find(w => w.name === SuiSnapWallet.NAME)) {
+    console.warn('SuiSnapWallet already registered')
+  }
+
+  const wallet = new SuiSnapWallet()
+  wallets.register(wallet)
+  return wallet
+}
 
 export async function getAccount(provider: BaseProvider): Promise<ReadonlyWalletAccount> {
   const res = (await provider.request({
@@ -33,10 +61,10 @@ export async function getAccount(provider: BaseProvider): Promise<ReadonlyWallet
   return new ReadonlyWalletAccount(deserializeWalletAccount(res))
 }
 
-export async function signMessage(
+export async function signPersonalMessage(
   provider: BaseProvider,
-  messageInput: SuiSignMessageInput
-): Promise<SignedMessage> {
+  messageInput: SuiSignPersonalMessageInput
+): Promise<SuiSignPersonalMessageOutput> {
   const serialized = serializeSuiSignMessageInput(messageInput)
 
   const res = (await provider.request({
@@ -44,21 +72,33 @@ export async function signMessage(
     params: {
       snapId: snapOrigin,
       request: {
-        method: 'signMessage',
+        method: 'signPersonalMessage',
         params: {
           ...serialized,
         },
       },
     },
-  })) as SignedMessage
+  })) as SuiSignPersonalMessageOutput
 
   return res
+}
+
+export async function signMessage(
+  provider: BaseProvider,
+  messageInput: SuiSignMessageInput
+): Promise<SuiSignMessageOutput> {
+  const res = await signPersonalMessage(provider, messageInput)
+
+  return {
+    messageBytes: res.bytes,
+    signature: res.signature,
+  }
 }
 
 export async function signTransactionBlock(
   provider: BaseProvider,
   transactionInput: SuiSignTransactionBlockInput
-): Promise<SignedTransaction> {
+): Promise<SuiSignTransactionBlockOutput> {
   const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
 
   const res = (await provider.request({
@@ -72,7 +112,7 @@ export async function signTransactionBlock(
         },
       },
     },
-  })) as SignedTransaction
+  })) as SuiSignTransactionBlockOutput
 
   return res
 }
@@ -80,8 +120,8 @@ export async function signTransactionBlock(
 export async function signAndExecuteTransactionBlock(
   provider: BaseProvider,
   transactionInput: SuiSignTransactionBlockInput
-): Promise<SuiTransactionBlockResponse> {
-  const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
+): Promise<SuiSignAndExecuteTransactionBlockOutput> {
+  const serialized = serializeSuiSignAndExecuteTransactionBlockInput(transactionInput)
 
   const res = (await provider.request({
     method: 'wallet_invokeSnap',
@@ -94,38 +134,106 @@ export async function signAndExecuteTransactionBlock(
         },
       },
     },
-  })) as SuiTransactionBlockResponse
+  })) as SuiSignAndExecuteTransactionBlockOutput
 
   return res
 }
 
-export class SuiSnapWalletAdapter implements WalletAdapter {
-  name = 'Sui MetaMask Snap'
-  icon = ICON
+export async function flaskAvailable(): Promise<boolean> {
+  const provider = window.ethereum
+  const version = await provider?.request<string>({ method: 'web3_clientVersion' })
+  return !!version?.includes('flask')
+}
 
-  connecting: boolean
-  connected: boolean
+export class SuiSnapWallet implements Wallet {
+  #connecting: boolean
+  static NAME = 'Sui MetaMask Snap'
+  #connected: boolean
 
   #account: WalletAccount | null = null
 
   constructor() {
-    this.connecting = false
-    this.connected = true
+    this.#connecting = false
+    this.#connected = true
   }
 
-  static async flaskAvailable() {
-    const provider = window.ethereum
-    const version = await provider?.request<string>({ method: 'web3_clientVersion' })
-    return version?.includes('flask')
+  get version() {
+    return '1.0.0' as const
   }
 
-  async connect() {
-    this.connecting = true
-    this.connected = false
+  get name() {
+    return SuiSnapWallet.NAME
+  }
+
+  get icon() {
+    return ICON
+  }
+
+  get chains() {
+    return SUI_CHAINS
+  }
+
+  get connecting() {
+    return this.#connecting
+  }
+
+  get accounts() {
+    if (this.#connected && this.#account) {
+      return [this.#account]
+    } else {
+      return []
+    }
+  }
+
+  get features(): StandardConnectFeature &
+    StandardDisconnectFeature &
+    SuiFeatures &
+    StandardEventsFeature {
+    return {
+      'standard:connect': {
+        version: '1.0.0',
+        connect: this.#connect,
+      },
+      'standard:disconnect': {
+        version: '1.0.0',
+        disconnect: this.#disconnect,
+      },
+      'sui:signPersonalMessage': {
+        version: '1.0.0',
+        signPersonalMessage: this.#signPersonalMessage,
+      },
+      'sui:signMessage': {
+        version: '1.0.0',
+        signMessage: this.#signMessage,
+      },
+      'sui:signTransactionBlock': {
+        version: '1.0.0',
+        signTransactionBlock: this.#signTransactionBlock,
+      },
+      'sui:signAndExecuteTransactionBlock': {
+        version: '1.0.0',
+        signAndExecuteTransactionBlock: this.#signAndExecuteTransactionBlock,
+      },
+      'standard:events': {
+        version: '1.0.0',
+        on: () => {
+          return () => {}
+        },
+      },
+    }
+  }
+
+  #connect: StandardConnectMethod = async () => {
+    if (this.#connecting) {
+      throw new Error('Already connecting')
+    }
+
+    this.#connecting = true
+    this.#connected = false
 
     try {
       const provider = window.ethereum
-      if (!(await SuiSnapWalletAdapter.flaskAvailable())) {
+      if (!(await flaskAvailable())) {
         throw new Error('MetaMask Flask not detected!')
       }
 
@@ -138,44 +246,34 @@ export class SuiSnapWalletAdapter implements WalletAdapter {
 
       this.#account = await getAccount(provider)
 
-      this.connecting = false
-      this.connected = true
+      this.#connecting = false
+      this.#connected = true
+
+      return {
+        accounts: this.accounts,
+      }
     } catch (e) {
-      this.connecting = false
-      this.connected = false
+      this.#connecting = false
+      this.#connected = false
       throw e
     }
   }
 
-  async disconnect() {
-    this.connecting = false
-    this.connected = false
+  #disconnect: StandardDisconnectMethod = async () => {
+    this.#connecting = false
+    this.#connected = false
     this.#account = null
   }
 
-  async getAccounts() {
-    if (this.connected && this.#account) {
-      return [this.#account]
-    } else {
-      return []
-    }
-  }
+  #signPersonalMessage: SuiSignPersonalMessageMethod = async messageInput =>
+    signPersonalMessage(window.ethereum, messageInput)
 
-  signMessage: WalletAdapter['signMessage'] = async messageInput =>
+  #signMessage: SuiSignMessageMethod = async messageInput =>
     signMessage(window.ethereum, messageInput)
 
-  signTransactionBlock: WalletAdapter['signTransactionBlock'] = async transactionInput =>
+  #signTransactionBlock: SuiSignTransactionBlockMethod = async transactionInput =>
     signTransactionBlock(window.ethereum, transactionInput)
 
-  signAndExecuteTransactionBlock: WalletAdapter['signAndExecuteTransactionBlock'] =
+  #signAndExecuteTransactionBlock: SuiSignAndExecuteTransactionBlockMethod =
     async transactionInput => signAndExecuteTransactionBlock(window.ethereum, transactionInput)
-
-  on: <E extends keyof WalletAdapterEvents>(
-    event: E,
-    callback: WalletAdapterEvents[E]
-  ) => () => void = () => {
-    return () => {
-      /* noop */
-    }
-  }
 }

@@ -8,8 +8,8 @@ export const GlobalStyles = createGlobalStyle`
 
   body {
      font-family: ${({ theme }) => theme.typography.family.Roboto} !important;
-     background: ${({ theme }) => theme.colors.background.primary};
-     color: ${({ theme }) => theme.colors.text.primary};
+     background: ${({ theme }) => theme.colors.background.default};
+     color: ${({ theme }) => theme.colors.text.default};
   }
 
   ::-webkit-scrollbar {
