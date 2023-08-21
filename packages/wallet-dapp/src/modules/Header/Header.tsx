@@ -5,14 +5,14 @@ import { useCallback, useState } from 'react'
 import { useTheme } from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
-import Select from 'components/Select/Select'
 import { Wrapper } from './styles'
-import { ellipsizeTokenAddress } from 'utils/helpers'
+import { ellipsizeTokenAddress, getNetworkFromUrl } from 'utils/helpers'
 import Modal from 'components/Modal/Modal'
 import ModalTitle from 'components/Modal/components/ModalTitle'
 import ModalBody from 'components/Modal/components/ModalBody'
 import { devnetConnectionUrl, mainnetConnectionUrl, testnetConnectionUrl } from 'utils/const'
 import { useNetwork } from 'utils/useNetworkProvider'
+import CustomSelect, { Option } from 'components/Select/Select'
 
 const Header = () => {
   const { network, setNetwork } = useNetwork()
@@ -26,8 +26,10 @@ const Header = () => {
     setIsOpenInfoModal(!isOpenInfoModal)
   }, [isOpenInfoModal])
 
-  const handleOptionClick = (option: string) => {
-    setNetwork(option)
+  const handleOptionClick = (option: Option | null) => {
+    if (option) {
+      setNetwork(option.value)
+    }
   }
 
   const handleAddressClick = useCallback(async () => {
@@ -47,14 +49,17 @@ const Header = () => {
           </Typography>
         </div>
       </div>
-      <Select
+      <CustomSelect
         options={[
-          { name: 'Mainnet', value: mainnetConnectionUrl },
-          { name: 'Testnet', value: testnetConnectionUrl },
-          { name: 'Devnet', value: devnetConnectionUrl },
+          { label: 'Mainnet', value: mainnetConnectionUrl },
+          { label: 'Testnet', value: testnetConnectionUrl },
+          { label: 'Devnet', value: devnetConnectionUrl },
         ]}
-        onOptionClick={handleOptionClick}
-        selectedOption={network}
+        handleChange={handleOptionClick}
+        selectedOption={{
+          label: getNetworkFromUrl(network),
+          value: network,
+        }}
       />
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>

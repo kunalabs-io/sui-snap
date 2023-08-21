@@ -1,11 +1,11 @@
 import styled from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
-import Select from 'components/Select/Select'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
 import { formatNumberWithCommas } from 'utils/formatting'
+import CustomSelect, { Option } from 'components/Select/Select'
 
 interface Props {
   label: string
@@ -39,8 +39,11 @@ const Label = styled(Typography)`
 `
 
 const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props) => {
-  const handleOptionClick = (option: string) => {
-    const newCoinInfo = options.find(o => o.meta.typeArg === option)
+  const handleOptionClick = (option: Option | null) => {
+    if (!option) {
+      return
+    }
+    const newCoinInfo = options.find(o => o.meta.typeArg === option.value)
     if (newCoinInfo) {
       handleCoinChange(newCoinInfo)
     }
@@ -65,12 +68,20 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           {coin ? <BalanceLabel variant="body">Balance:</BalanceLabel> : null}
           <BalanceValue variant="body">{formatNumberWithCommas(coin?.amount.toString() || '')}</BalanceValue>
-          <Select
-            options={options.map(o => ({ name: o.meta.symbol, value: o.meta.typeArg }))}
-            style={{ padding: '0 8px', border: 'none', width: 80 }}
-            onOptionClick={handleOptionClick}
-            selectedOption={coin?.meta.typeArg || ''}
+          <CustomSelect
+            options={options.map(o => ({ label: o.meta.symbol, value: o.meta.typeArg }))}
+            handleChange={handleOptionClick}
+            selectedOption={{
+              label: coin?.meta.symbol || '',
+              value: coin?.meta.typeArg || '',
+            }}
             disabled={disabled}
+            hideBorder
+            width="70px"
+            fontSize="14px"
+            padding="0px"
+            indicatorPadding="0px"
+            controlMarginLeft="4px"
           />
         </div>
       </Container>
