@@ -9,21 +9,25 @@ import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypogra
 import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { ellipsizeTokenAddress, getNetworkFromUrl } from 'utils/helpers'
-import { CoinInfo } from 'utils/useWalletBalances'
-import { RECOGNIZED_TOKENS_PACKAGE_IDS, mainnetConnectionUrl, suiTypeArg } from 'utils/const'
+import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
+import {
+  RECOGNIZED_TOKENS_PACKAGE_IDS,
+  WALLET_BALANCES_REFETCH_INTERVAL,
+  mainnetConnectionUrl,
+  suiTypeArg,
+} from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { toast } from 'react-toastify'
 import { formatNumberWithCommas } from 'utils/formatting'
+import Spinner from 'components/Spinner/Spinner'
 
 interface Props {
-  onSendClick: () => void
-  infos: Map<string, CoinInfo> | undefined
-  onCoinClick: (info: CoinInfo) => void
+  onSendClick: (selectedCoin?: CoinInfo) => void
 }
 
-const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
+const Info = ({ onSendClick }: Props) => {
   const { currentAccount } = useWalletKit()
   const { network } = useNetwork()
 
@@ -32,8 +36,12 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
     toast.success('Address copied')
   }, [currentAccount?.address])
 
-  if (typeof infos === 'undefined') {
-    return null
+  const { infos, isLoading: isLoadingWalletBalances } = useWalletBalances({
+    refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
+  })
+
+  if (isLoadingWalletBalances || infos === undefined) {
+    return <Spinner />
   }
 
   const suiCoinInfo = infos.get(suiTypeArg)
@@ -91,7 +99,7 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
-        <IconButtonContainer onClick={onSendClick} disabled={!infos || infos.size === 0}>
+        <IconButtonContainer onClick={() => onSendClick()} disabled={!infos || infos.size === 0}>
           <IconButton disabled={!infos || infos.size === 0}>
             <IconSend />
           </IconButton>
@@ -117,7 +125,7 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
       </div>
       <div>
         {recognizedCoins.map(c => (
-          <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onCoinClick} />
+          <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onSendClick} />
         ))}
       </div>
       {unrecognizedCoins.length ? (
@@ -127,7 +135,7 @@ const Info = ({ onSendClick, infos, onCoinClick }: Props) => {
           accordionDetails={
             <div style={{ marginTop: 10 }}>
               {unrecognizedCoins.map(c => (
-                <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onCoinClick} />
+                <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onSendClick} />
               ))}
             </div>
           }
