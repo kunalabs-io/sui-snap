@@ -90,7 +90,8 @@ function genTxBlockTransactionsText(txb: TransactionBlock): string[] {
   for (const tx of txb.blockData.transactions) {
     switch (tx.kind) {
       case 'MoveCall': {
-        txStrings.push(`**Call** ${tx.target}`)
+        const target = tx.target.split('::')
+        txStrings.push(`**Call** ${target[0]}::${target[1]}::**${target[2]}**`)
         continue
       }
       case 'MergeCoins': {
@@ -98,7 +99,7 @@ function genTxBlockTransactionsText(txb: TransactionBlock): string[] {
         continue
       }
       case 'SplitCoins': {
-        txStrings.push(`**Split** (${tx.amounts.length}) coins`)
+        txStrings.push(`**Split** a coin into (${tx.amounts.length}) objects`)
         continue
       }
       case 'TransferObjects': {

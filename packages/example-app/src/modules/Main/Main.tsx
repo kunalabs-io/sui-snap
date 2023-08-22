@@ -68,7 +68,7 @@ const Main = () => {
     try {
       const txb = new TransactionBlock()
       const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
-      txb.transferObjects([coin], txb.pure('0x072c32563f7a8f625f1f78a7f0a38417fc99357a34fc4d2c8fe7fbf93cba2322'))
+      txb.transferObjects([coin], txb.pure(kit.currentAccount.address))
 
       const signed = await kit.signTransactionBlock({
         transactionBlock: txb,
@@ -93,8 +93,17 @@ const Main = () => {
 
     try {
       const txb = new TransactionBlock()
-      const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
-      txb.transferObjects([coin], txb.pure('0x072c32563f7a8f625f1f78a7f0a38417fc99357a34fc4d2c8fe7fbf93cba2322'))
+      const [coin1, coin2] = txb.splitCoins(txb.gas, [txb.pure(100n), txb.pure(200n)])
+      txb.moveCall({
+        target: '0x2::transfer::public_transfer',
+        typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
+        arguments: [coin1, txb.pure(kit.currentAccount.address)],
+      })
+      txb.moveCall({
+        target: '0x2::transfer::public_transfer',
+        typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
+        arguments: [coin2, txb.pure(kit.currentAccount.address)],
+      })
 
       const result = await kit.signAndExecuteTransactionBlock({
         transactionBlock: txb,
