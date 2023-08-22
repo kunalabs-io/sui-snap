@@ -60,6 +60,7 @@ const Header = () => {
           label: getNetworkFromUrl(network),
           value: network,
         }}
+        isSearchable={false}
       />
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>

@@ -17,6 +17,7 @@ interface Props {
   padding?: string
   indicatorPadding?: string
   controlMarginLeft?: string
+  isSearchable?: boolean
 }
 
 const CustomSelect = ({
@@ -30,6 +31,7 @@ const CustomSelect = ({
   padding,
   indicatorPadding,
   controlMarginLeft,
+  isSearchable,
 }: Props) => {
   const theme = useTheme()
   return (
@@ -38,6 +40,7 @@ const CustomSelect = ({
       value={selectedOption}
       onChange={handleChange}
       options={options}
+      isSearchable={typeof isSearchable === 'undefined' ? true : isSearchable}
       styles={{
         control: provided => ({
           ...provided,
