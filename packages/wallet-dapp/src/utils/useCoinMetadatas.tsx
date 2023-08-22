@@ -4,7 +4,7 @@ import { CoinMetadata } from 'lib/framework/coin'
 import { Type, tagToType } from 'lib/framework/type'
 import { useSuiClientProvider } from './useSuiClientProvider'
 import { ONE_DAY } from './const'
-import { getTokenSymbolFromTypeArg } from './helpers'
+import { getTokenSymbolAndNameFromTypeArg } from './helpers'
 import { useNetwork } from './useNetworkProvider'
 
 export interface UseCoinMetadataResult {
@@ -25,12 +25,12 @@ export const useCoinMetadatas = (coinTypes: Type[]) => {
     }
     const res = await suiClient.getCoinMetadata({ coinType: typeStr })
     if (res === null) {
-      const coinSymbol = getTokenSymbolFromTypeArg(typeStr)
+      const { symbol, name } = getTokenSymbolAndNameFromTypeArg(typeStr)
       return new CoinMetadata(typeStr, {
         id: '',
         decimals: 0,
-        name: coinSymbol,
-        symbol: coinSymbol,
+        name,
+        symbol,
         description: '',
       })
     } else {

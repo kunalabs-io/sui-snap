@@ -1,12 +1,27 @@
 import { devnetConnectionUrl, testnetConnectionUrl } from './const'
+import { parseStructTag } from '@mysten/sui.js/utils'
 
-export const getTokenSymbolFromTypeArg = (typeArg: string, separator = '::') => {
-  const lastIndexOfSeparator = typeArg.lastIndexOf(separator)
-  if (lastIndexOfSeparator >= 0) {
-    return typeArg.substring(lastIndexOfSeparator + separator.length)
+export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
+  const tag = parseStructTag(typeArg)
+
+  const params = []
+  for (const param of tag.typeParams) {
+    if (typeof param === 'string') {
+      params.push(param)
+    } else {
+      params.push(param.name)
+    }
   }
 
-  return ''
+  let name = tag.name
+  if (params.length > 0) {
+    name += `<${params.join(', ')}>`
+  }
+
+  return {
+    name: name,
+    symbol: tag.name,
+  }
 }
 
 export const ellipsizeTokenAddress = (tokenAddress: string) =>
