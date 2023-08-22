@@ -162,13 +162,24 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       const keypair = await deriveKeypair()
 
+      let decodedMessage = new TextDecoder().decode(input.message)
+      let info = `**${origin}** is requesting to sign the following message:`
+      /* eslint-disable-next-line no-control-regex */
+      if (/[\x00-\x09\x0E-\x1F]/.test(decodedMessage)) {
+        decodedMessage = toB64(input.message)
+        info = `**${origin}** is requesting to sign the following message (base64 encoded):`
+      }
+
       const response = await snap.request({
         method: 'snap_dialog',
         params: {
           type: 'confirmation',
           content: panel([
             heading('Sign Message'),
-            text(`**${origin}** is requesting to sign a message.`),
+            text(info),
+            divider(),
+            text(decodedMessage),
+            divider(),
           ]),
         },
       })
@@ -212,7 +223,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           content: panel([
             heading('Sign a Transaction'),
             text(
-              `**${origin}** is requesting to **sign** a transaction block for **${input.chain}**`
+              `**${origin}** is requesting to **sign** a transaction block for **${input.chain}**.`
             ),
             divider(),
             text('**Operations:**'),

@@ -44,8 +44,9 @@ const Main = () => {
     }
 
     try {
-      const signed = await kit.signMessage({
-        message: new Uint8Array([1, 2, 3]),
+      const signed = await kit.signPersonalMessage({
+        // message: new Uint8Array([1, 2, 3]),
+        message: new TextEncoder().encode('Hello World!'),
         account: kit.currentAccount,
       })
 
