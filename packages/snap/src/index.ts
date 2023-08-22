@@ -1,5 +1,5 @@
 import { OnRpcRequestHandler } from '@metamask/snaps-types'
-import { heading, panel, text } from '@metamask/snaps-ui'
+import { divider, heading, panel, text } from '@metamask/snaps-ui'
 import { SLIP10Node } from '@metamask/key-tree'
 import { blake2b } from '@noble/hashes/blake2b'
 
@@ -12,7 +12,12 @@ import {
   toSerializedSignature,
 } from '@mysten/sui.js/cryptography'
 import { toB64 } from '@mysten/sui.js/utils'
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
+import {
+  DryRunTransactionBlockResponse,
+  SuiClient,
+  getFullnodeUrl,
+} from '@mysten/sui.js/client'
+import { TransactionBlock } from '@mysten/sui.js/transactions'
 
 import {
   SerializedSuiSignAndExecuteTransactionBlockInput,
@@ -25,6 +30,7 @@ import {
   validate,
 } from '@kunalabs-io/sui-snap-wallet-adapter/dist/types'
 import {
+  DryRunFailedError,
   InvalidParamsError,
   InvalidRequestMethodError,
   UserRejectionError,
@@ -77,6 +83,56 @@ function signMessage(
     bytes: toB64(message),
     signature: serializedSignature,
   }
+}
+
+function genTxBlockTransactionsText(txb: TransactionBlock): string[] {
+  const txStrings = []
+  for (const tx of txb.blockData.transactions) {
+    switch (tx.kind) {
+      case 'MoveCall': {
+        txStrings.push(`**Call** ${tx.target}`)
+        continue
+      }
+      case 'MergeCoins': {
+        txStrings.push(`**Merge** (${tx.sources.length + 1}) coin objects`)
+        continue
+      }
+      case 'SplitCoins': {
+        txStrings.push(`**Split** (${tx.amounts.length}) coins`)
+        continue
+      }
+      case 'TransferObjects': {
+        let recipient = undefined
+        if (
+          tx.address.kind === 'Input' &&
+          typeof tx.address.value === 'string'
+        ) {
+          recipient = tx.address.value
+        }
+        let str = `**Transfer** (${tx.objects.length}) objects`
+        if (recipient) {
+          str += ` to ${recipient}`
+        }
+
+        txStrings.push(str)
+      }
+    }
+  }
+
+  return txStrings
+}
+
+function calcTotalGasFeesDec(
+  dryRunRes: DryRunTransactionBlockResponse
+): number {
+  const gasUsed = dryRunRes.effects.gasUsed
+  const totalGasFeesInt =
+    BigInt(gasUsed.computationCost) +
+    BigInt(gasUsed.nonRefundableStorageFee) +
+    BigInt(gasUsed.storageCost) -
+    BigInt(gasUsed.storageRebate)
+
+  return Number(totalGasFeesInt.toString()) / 1e9
 }
 
 /**
@@ -134,13 +190,39 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
       const input = deserializeSuiSignTransactionBlockInput(serialized)
 
+      const keypair = await deriveKeypair()
+      const url = getFullnodeUrl('testnet')
+      const client = new SuiClient({ url })
+
+      input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
+      const transactionBlockBytes = await input.transactionBlock.build({
+        client,
+      })
+      const dryRunRes = await client.dryRunTransactionBlock({
+        transactionBlock: transactionBlockBytes,
+      })
+      if (dryRunRes.effects.status.status === 'failure') {
+        throw DryRunFailedError.asSimpleError()
+      }
+
       const response = await snap.request({
         method: 'snap_dialog',
         params: {
           type: 'confirmation',
           content: panel([
             heading('Sign a Transaction'),
-            text(`**${origin}** is requesting to sign a transaction block.`),
+            text(
+              `**${origin}** is requesting to **sign** a transaction block for **${input.chain}**`
+            ),
+            divider(),
+            text('**Operations:**'),
+            ...genTxBlockTransactionsText(input.transactionBlock).map(
+              (str, n) => text(`[${n + 1}] ${str}`)
+            ),
+            divider(),
+            text(
+              `Estimated gas fees: **${calcTotalGasFeesDec(dryRunRes)} SUI**`
+            ),
           ]),
         },
       })
@@ -148,14 +230,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (response !== true) {
         throw UserRejectionError.asSimpleError()
       }
-
-      const keypair = await deriveKeypair()
-      const url = getFullnodeUrl('testnet')
-
-      const client = new SuiClient({ url })
-      const transactionBlockBytes = await input.transactionBlock.build({
-        client,
-      })
 
       return await keypair.signTransactionBlock(transactionBlockBytes)
     }
@@ -172,13 +246,36 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const input =
         deserializeSuiSignAndExecuteTransactionBlockInput(serialized)
 
+      const keypair = await deriveKeypair()
+      const url = getFullnodeUrl('testnet')
+      const client = new SuiClient({ url })
+
+      input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
+      const dryRunRes = await client.dryRunTransactionBlock({
+        transactionBlock: await input.transactionBlock.build({ client }),
+      })
+      if (dryRunRes.effects.status.status === 'failure') {
+        throw DryRunFailedError.asSimpleError()
+      }
+
       const response = await snap.request({
         method: 'snap_dialog',
         params: {
           type: 'confirmation',
           content: panel([
             heading('Approve a Transaction'),
-            text(`**${origin}** is requesting to execute a transaction block.`),
+            text(
+              `**${origin}** is requesting to **execute** a transaction block on **${input.chain}**.`
+            ),
+            divider(),
+            text('**Operations:**'),
+            ...genTxBlockTransactionsText(input.transactionBlock).map(
+              (str, n) => text(`[${n + 1}] ${str}`)
+            ),
+            divider(),
+            text(
+              `Estimated gas fees: **${calcTotalGasFeesDec(dryRunRes)} SUI**`
+            ),
           ]),
         },
       })
@@ -186,10 +283,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (response !== true) {
         throw UserRejectionError.asSimpleError()
       }
-
-      const keypair = await deriveKeypair()
-      const url = getFullnodeUrl('testnet')
-      const client = new SuiClient({ url })
 
       return await client.signAndExecuteTransactionBlock({
         signer: keypair,

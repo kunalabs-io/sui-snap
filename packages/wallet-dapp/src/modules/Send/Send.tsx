@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import Input from 'components/Input/Input'
-import { EstimatedLabel, EstimatedUsd, EstimatedValue, GasLabel, SendLabel } from './styles'
+import { SendLabel } from './styles'
 import Button from 'components/Button/Button'
 import TokenSelect from './TokenSelect'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
@@ -203,17 +203,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         disableMax={!selectedCoin}
         onMaxClick={handleMaxClick}
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <GasLabel variant="body">Gas</GasLabel>
-          <EstimatedLabel variant="caption">(estimated)</EstimatedLabel>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <EstimatedUsd variant="body">$0.02</EstimatedUsd>
-          <EstimatedValue variant="body">0.023330372 SUI</EstimatedValue>
-        </div>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 40 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 110 }}>
         <Button variant="outlined" onClick={openInfoScreen}>
           Reject
         </Button>

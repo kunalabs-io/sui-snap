@@ -57,6 +57,23 @@ export class InvalidRequestMethodError extends Error {
   }
 }
 
+export class DryRunFailedError extends Error {
+  static readonly type = 'DRY_RUN_FAILED'
+  readonly type = DryRunFailedError.type
+
+  constructor() {
+    super(DryRunFailedError.type)
+  }
+
+  static asSimpleError() {
+    return new Error(DryRunFailedError.type)
+  }
+
+  static isSimpleErrorMessage(message: string) {
+    return message === DryRunFailedError.type
+  }
+}
+
 function isMetaMaskError(obj: unknown): obj is { message: string } {
   return typeof obj === 'object' && obj !== null && 'message' in obj
 }
@@ -72,6 +89,8 @@ export function convertError(error: unknown) {
     return new UserRejectionError()
   } else if (InvalidRequestMethodError.isSimpleErrorMessage(error.message)) {
     return InvalidRequestMethodError.fromSimpleErrorMessage(error.message)
+  } else if (DryRunFailedError.isSimpleErrorMessage(error.message)) {
+    return new DryRunFailedError()
   }
 
   return error
