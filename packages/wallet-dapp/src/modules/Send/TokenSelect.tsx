@@ -5,7 +5,7 @@ import { CoinInfo } from 'utils/useWalletBalances'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
 import { formatNumberWithCommas } from 'utils/formatting'
-import CustomSelect, { Option } from 'components/Select/Select'
+import { FilterOption, Option, SelectToken } from 'components/Select/Select'
 
 interface Props {
   label: string
@@ -49,6 +49,14 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
     }
   }
 
+  const customFilterOption = (option: FilterOption, inputValue: string) => {
+    const inputValueLower = inputValue.toLowerCase()
+    const optionLabelLower = option.label.toLowerCase()
+    const optionNameLower = option.data.name?.toLowerCase() || ''
+
+    return optionLabelLower.includes(inputValueLower) || optionNameLower.includes(inputValueLower)
+  }
+
   return (
     <div>
       <Label variant="description">{label}</Label>
@@ -68,20 +76,24 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           {coin ? <BalanceLabel variant="body">Balance:</BalanceLabel> : null}
           <BalanceValue variant="body">{formatNumberWithCommas(coin?.amount.toString() || '')}</BalanceValue>
-          <CustomSelect
-            options={options.map(o => ({ label: o.meta.symbol, value: o.meta.typeArg }))}
+          <SelectToken
+            options={options.map(o => ({
+              label: o.meta.symbol,
+              value: o.meta.typeArg,
+              image: o.meta.iconUrl,
+              balance: formatNumberWithCommas(o.amount.toString()),
+              name: o.meta.name,
+            }))}
             handleChange={handleOptionClick}
+            customFilterOption={customFilterOption}
             selectedOption={{
               label: coin?.meta.symbol || '',
               value: coin?.meta.typeArg || '',
+              image: coin?.meta.iconUrl || '',
+              balance: formatNumberWithCommas(coin?.amount.toString() || ''),
+              name: coin?.meta.name || '',
             }}
             disabled={disabled}
-            hideBorder
-            width="70px"
-            fontSize="14px"
-            padding="0px"
-            indicatorPadding="0px"
-            controlMarginLeft="4px"
           />
         </div>
       </Container>

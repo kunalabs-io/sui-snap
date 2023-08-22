@@ -12,7 +12,7 @@ import ModalTitle from 'components/Modal/components/ModalTitle'
 import ModalBody from 'components/Modal/components/ModalBody'
 import { devnetConnectionUrl, mainnetConnectionUrl, testnetConnectionUrl } from 'utils/const'
 import { useNetwork } from 'utils/useNetworkProvider'
-import CustomSelect, { Option } from 'components/Select/Select'
+import { NetworkSelect, Option } from 'components/Select/Select'
 
 const Header = () => {
   const { network, setNetwork } = useNetwork()
@@ -49,7 +49,7 @@ const Header = () => {
           </Typography>
         </div>
       </div>
-      <CustomSelect
+      <NetworkSelect
         options={[
           { label: 'Mainnet', value: mainnetConnectionUrl },
           { label: 'Testnet', value: testnetConnectionUrl },
@@ -60,7 +60,6 @@ const Header = () => {
           label: getNetworkFromUrl(network),
           value: network,
         }}
-        isSearchable={false}
       />
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>

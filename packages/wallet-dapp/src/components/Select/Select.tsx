@@ -1,58 +1,51 @@
 import Select from 'react-select'
 import { useTheme } from 'styled-components'
+import { OptionWithImage } from './styles'
+import { suiTypeArg } from 'utils/const'
+import { IconSuiSmall } from 'components/Icons/IconSui'
 
 export interface Option {
   value: string
   label: string
+  image?: string
+  balance?: string
+  name?: string
 }
 
-interface Props {
+interface NetworkSelectProps {
   selectedOption: Option | null
   handleChange: (selectedOption: Option | null) => void
   options: Option[]
-  disabled?: boolean
-  hideBorder?: boolean
-  width?: string
-  fontSize?: string
-  padding?: string
-  indicatorPadding?: string
-  controlMarginLeft?: string
-  isSearchable?: boolean
 }
 
-const CustomSelect = ({
-  selectedOption,
-  handleChange,
-  options,
-  disabled,
-  hideBorder,
-  width,
-  fontSize,
-  padding,
-  indicatorPadding,
-  controlMarginLeft,
-  isSearchable,
-}: Props) => {
+export interface FilterOption {
+  readonly label: string
+  readonly value: string
+  readonly data: Option
+}
+
+interface SelectTokenProps extends NetworkSelectProps {
+  customFilterOption: (option: FilterOption, inputValue: string) => boolean
+  disabled?: boolean
+}
+
+export const NetworkSelect = ({ selectedOption, handleChange, options }: NetworkSelectProps) => {
   const theme = useTheme()
   return (
     <Select
-      isDisabled={disabled}
       value={selectedOption}
       onChange={handleChange}
       options={options}
-      isSearchable={typeof isSearchable === 'undefined' ? true : isSearchable}
+      isSearchable={false}
       styles={{
         control: provided => ({
           ...provided,
           borderColor: theme.colors.divider,
           minHeight: '28px',
           height: '28px',
-          width: width || '100px',
+          width: '100px',
           borderRadius: '22px',
-          fontSize: fontSize || '12px',
-          border: hideBorder ? 'none' : '',
-          boxShadow: hideBorder ? 'none' : '',
-          marginLeft: controlMarginLeft || '',
+          fontSize: '12px',
         }),
         singleValue: provided => ({
           ...provided,
@@ -67,7 +60,7 @@ const CustomSelect = ({
             : state.isSelected
             ? theme.colors.background.hover
             : 'transparent',
-          fontSize: fontSize || '12px',
+          fontSize: '12px',
           cursor: 'pointer',
           '&:active': {
             backgroundColor: theme.colors.background.hover,
@@ -77,7 +70,7 @@ const CustomSelect = ({
         valueContainer: provided => ({
           ...provided,
           height: '26px',
-          padding: padding || '0 6px',
+          padding: '0 6px',
         }),
 
         input: provided => ({
@@ -98,11 +91,137 @@ const CustomSelect = ({
           '&:hover': {
             color: theme.colors.text.description,
           },
-          padding: indicatorPadding || '8px',
+          padding: '8px',
         }),
       }}
     />
   )
 }
 
-export default CustomSelect
+export const SelectToken = ({
+  selectedOption,
+  handleChange,
+  options,
+  disabled,
+  customFilterOption,
+}: SelectTokenProps) => {
+  const theme = useTheme()
+  return (
+    <Select
+      isDisabled={disabled}
+      value={selectedOption}
+      onChange={handleChange}
+      options={options}
+      menuPosition="fixed"
+      styles={{
+        menu: provided => ({
+          ...provided,
+          width: '200px',
+          marginRight: 30,
+          right: -40,
+        }),
+        menuList: provided => ({
+          ...provided,
+          width: '200px',
+        }),
+        control: provided => ({
+          ...provided,
+          borderColor: theme.colors.divider,
+          minHeight: '28px',
+          height: '28px',
+          width: '70px',
+          fontSize: '14px',
+          border: 'none',
+          boxShadow: 'none',
+          marginLeft: '4px',
+        }),
+        singleValue: provided => ({
+          ...provided,
+          color: theme.colors.text.description,
+          textTransform: 'capitalize',
+        }),
+        option: (provided, state) => ({
+          ...provided,
+          color: state.isSelected ? theme.colors.text.description : theme.colors.text.description,
+          backgroundColor: state.isFocused
+            ? theme.colors.background.hover
+            : state.isSelected
+            ? theme.colors.background.hover
+            : 'transparent',
+          fontSize: '14px',
+          cursor: 'pointer',
+          '&:active': {
+            backgroundColor: theme.colors.background.hover,
+          },
+        }),
+
+        valueContainer: provided => ({
+          ...provided,
+          height: '26px',
+          padding: '0px',
+        }),
+
+        input: provided => ({
+          ...provided,
+          margin: '0px',
+        }),
+        indicatorSeparator: () => ({
+          display: 'none',
+        }),
+        indicatorsContainer: provided => ({
+          ...provided,
+          height: '26px',
+        }),
+        dropdownIndicator: base => ({
+          ...base,
+          color: theme.colors.text.description,
+          cursor: 'pointer',
+          '&:hover': {
+            color: theme.colors.text.description,
+          },
+          padding: '0px',
+        }),
+      }}
+      components={{
+        Option: ({ innerProps, innerRef, data, isSelected }) => (
+          <div
+            {...innerProps}
+            ref={innerRef}
+            style={{ backgroundColor: isSelected ? theme.colors.background.hover : '' }}
+          >
+            <OptionWithImage>
+              <div>
+                {data.value === suiTypeArg ? (
+                  <div style={{ marginRight: 8 }}>
+                    <IconSuiSmall />
+                  </div>
+                ) : data.image ? (
+                  <img src={data.image} width={27} height={27} style={{ marginRight: 8 }} />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="27"
+                    height="27"
+                    viewBox="0 0 27 27"
+                    fill="none"
+                    style={{ marginRight: 8 }}
+                  >
+                    <circle cx="13.5" cy="13.5" r="13.5" fill="#22A2ED" />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <div>{data.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ marginRight: 4, color: theme.colors.text.secondary, fontSize: 10 }}>{data.balance}</div>
+                  <div style={{ color: theme.colors.text.secondary, fontSize: 10 }}>{data.label}</div>
+                </div>
+              </div>
+            </OptionWithImage>
+          </div>
+        ),
+      }}
+      filterOption={customFilterOption}
+    />
+  )
+}
