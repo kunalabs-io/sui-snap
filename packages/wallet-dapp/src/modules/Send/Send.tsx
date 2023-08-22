@@ -15,6 +15,7 @@ import { TransactionArgument, TransactionBlock } from '@mysten/sui.js/transactio
 import { SUI_TYPE_ARG } from '@mysten/sui.js/utils'
 import { getNetworkFromUrl } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
+import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet-adapter'
 
 interface Props {
   openInfoScreen: () => void
@@ -158,6 +159,11 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       triggerWalletBalancesUpdate()
       openInfoScreen()
     } catch (e) {
+      if (e instanceof UserRejectionError) {
+        toast.warn('Transaction rejected')
+        return
+      }
+
       toast.error('Transaction failed')
       console.error(e)
       return

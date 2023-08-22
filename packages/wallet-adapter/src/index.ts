@@ -31,8 +31,10 @@ import {
   serializeSuiSignMessageInput,
   serializeSuiSignTransactionBlockInput,
 } from './types'
+import { convertError } from './errors'
 
 export * from './types'
+export * from './errors'
 
 export const snapOrigin = 'local:http://localhost:8080'
 
@@ -67,20 +69,22 @@ export async function signPersonalMessage(
 ): Promise<SuiSignPersonalMessageOutput> {
   const serialized = serializeSuiSignMessageInput(messageInput)
 
-  const res = (await provider.request({
-    method: 'wallet_invokeSnap',
-    params: {
-      snapId: snapOrigin,
-      request: {
-        method: 'signPersonalMessage',
-        params: {
-          ...serialized,
+  try {
+    return (await provider.request({
+      method: 'wallet_invokeSnap',
+      params: {
+        snapId: snapOrigin,
+        request: {
+          method: 'signPersonalMessage',
+          params: {
+            ...serialized,
+          },
         },
       },
-    },
-  })) as SuiSignPersonalMessageOutput
-
-  return res
+    })) as SuiSignPersonalMessageOutput
+  } catch (e) {
+    throw convertError(e)
+  }
 }
 
 export async function signMessage(
@@ -101,20 +105,22 @@ export async function signTransactionBlock(
 ): Promise<SuiSignTransactionBlockOutput> {
   const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
 
-  const res = (await provider.request({
-    method: 'wallet_invokeSnap',
-    params: {
-      snapId: snapOrigin,
-      request: {
-        method: 'signTransactionBlock',
-        params: {
-          ...serialized,
+  try {
+    return (await provider.request({
+      method: 'wallet_invokeSnap',
+      params: {
+        snapId: snapOrigin,
+        request: {
+          method: 'signTransactionBlock',
+          params: {
+            ...serialized,
+          },
         },
       },
-    },
-  })) as SuiSignTransactionBlockOutput
-
-  return res
+    })) as SuiSignTransactionBlockOutput
+  } catch (e) {
+    throw convertError(e)
+  }
 }
 
 export async function signAndExecuteTransactionBlock(
@@ -123,20 +129,22 @@ export async function signAndExecuteTransactionBlock(
 ): Promise<SuiSignAndExecuteTransactionBlockOutput> {
   const serialized = serializeSuiSignAndExecuteTransactionBlockInput(transactionInput)
 
-  const res = (await provider.request({
-    method: 'wallet_invokeSnap',
-    params: {
-      snapId: snapOrigin,
-      request: {
-        method: 'signAndExecuteTransactionBlock',
-        params: {
-          ...serialized,
+  try {
+    return (await provider.request({
+      method: 'wallet_invokeSnap',
+      params: {
+        snapId: snapOrigin,
+        request: {
+          method: 'signAndExecuteTransactionBlock',
+          params: {
+            ...serialized,
+          },
         },
       },
-    },
-  })) as SuiSignAndExecuteTransactionBlockOutput
-
-  return res
+    })) as SuiSignAndExecuteTransactionBlockOutput
+  } catch (e) {
+    throw convertError(e)
+  }
 }
 
 export async function flaskAvailable(): Promise<boolean> {

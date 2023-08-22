@@ -13,7 +13,7 @@ import {
 } from '@mysten/wallet-standard'
 import { Infer, Describe, array, object, optional, string, boolean } from 'superstruct'
 
-export { is } from 'superstruct'
+export { is, validate } from 'superstruct'
 
 /**
  * Passing in objects directly to the Snap sometimes doesn't work correctly so we need to serialize to primitive values

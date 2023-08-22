@@ -22,8 +22,13 @@ import {
   deserializeSuiSignAndExecuteTransactionBlockInput,
   deserializeSuiSignMessageInput,
   deserializeSuiSignTransactionBlockInput,
-  is,
+  validate,
 } from '@kunalabs-io/sui-snap-wallet-adapter/dist/types'
+import {
+  InvalidParamsError,
+  InvalidRequestMethodError,
+  UserRejectionError,
+} from '@kunalabs-io/sui-snap-wallet-adapter/dist/errors'
 
 /**
  * Derive the Ed25519 keypair from user's MetaMask seed phrase.
@@ -90,10 +95,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 }) => {
   switch (request.method) {
     case 'signPersonalMessage': {
-      if (!is(request.params, SerializedSuiSignPersonalMessageInput)) {
-        throw new Error('Invalid request params.')
+      const [err, serialized] = validate(
+        request.params,
+        SerializedSuiSignPersonalMessageInput
+      )
+      if (err !== undefined) {
+        throw InvalidParamsError.asSimpleError(err.message)
       }
-      const input = deserializeSuiSignMessageInput(request.params)
+      const input = deserializeSuiSignMessageInput(serialized)
 
       const keypair = await deriveKeypair()
 
@@ -109,17 +118,21 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       })
 
       if (response !== true) {
-        throw new Error('User rejected the signing.')
+        throw UserRejectionError.asSimpleError()
       }
 
       return signMessage(keypair, input.message)
     }
 
     case 'signTransactionBlock': {
-      if (!is(request.params, SerializedSuiSignTransactionBlockInput)) {
-        throw new Error('Invalid request params.')
+      const [err, serialized] = validate(
+        request.params,
+        SerializedSuiSignTransactionBlockInput
+      )
+      if (err !== undefined) {
+        throw InvalidParamsError.asSimpleError(err.message)
       }
-      const input = deserializeSuiSignTransactionBlockInput(request.params)
+      const input = deserializeSuiSignTransactionBlockInput(serialized)
 
       const response = await snap.request({
         method: 'snap_dialog',
@@ -133,7 +146,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       })
 
       if (response !== true) {
-        throw new Error('User rejected the transaction.')
+        throw UserRejectionError.asSimpleError()
       }
 
       const keypair = await deriveKeypair()
@@ -148,14 +161,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     }
 
     case 'signAndExecuteTransactionBlock': {
-      if (
-        !is(request.params, SerializedSuiSignAndExecuteTransactionBlockInput)
-      ) {
-        throw new Error('Invalid request params.')
-      }
-      const input = deserializeSuiSignAndExecuteTransactionBlockInput(
-        request.params
+      const [err, serialized] = validate(
+        request.params,
+        SerializedSuiSignAndExecuteTransactionBlockInput
       )
+      if (err !== undefined) {
+        throw InvalidParamsError.asSimpleError(err.message)
+      }
+
+      const input =
+        deserializeSuiSignAndExecuteTransactionBlockInput(serialized)
 
       const response = await snap.request({
         method: 'snap_dialog',
@@ -169,7 +184,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       })
 
       if (response !== true) {
-        throw new Error('User rejected the transaction.')
+        throw UserRejectionError.asSimpleError()
       }
 
       const keypair = await deriveKeypair()
@@ -200,6 +215,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     }
 
     default:
-      throw new Error(`Invalid request method: ${request.method}`)
+      throw InvalidRequestMethodError.asSimpleError(request.method)
   }
 }
