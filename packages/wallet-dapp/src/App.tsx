@@ -9,7 +9,6 @@ import Main from 'modules/Main'
 import { GlobalStyles } from 'styles/GlobalStyles'
 import { theme } from 'styles/theme'
 
-import '../index.css'
 import 'react-toastify/dist/ReactToastify.css'
 import { SuiClientProvider } from 'utils/SuiClientProvider'
 import { NETWORK, NetworkContext, chainFromNetwork, fullnodeUrlFromNetwork } from 'utils/useNetworkProvider'

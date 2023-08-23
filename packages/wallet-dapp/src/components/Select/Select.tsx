@@ -43,9 +43,9 @@ export const NetworkSelect = ({ selectedOption, handleChange, options }: Network
           borderColor: theme.colors.divider,
           minHeight: '28px',
           height: '28px',
-          width: '100px',
+          width: '105px',
           borderRadius: '22px',
-          fontSize: '12px',
+          fontSize: '13px',
         }),
         singleValue: provided => ({
           ...provided,
@@ -138,6 +138,7 @@ export const SelectToken = ({
         singleValue: provided => ({
           ...provided,
           color: theme.colors.text.description,
+          fontWeight: 500,
           textTransform: 'capitalize',
         }),
         option: (provided, state) => ({

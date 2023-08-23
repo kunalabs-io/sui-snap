@@ -43,7 +43,7 @@ const Header = () => {
           <Jazzicon diameter={25} seed={jsNumberForAddress(currentAccount?.address || '')} />
         </div>
         <div style={{ cursor: 'pointer' }} onClick={toggleModal}>
-          <Typography variant="body" style={{ marginLeft: 12, color: theme.colors.text.description }}>
+          <Typography variant="body-description" style={{ marginLeft: 12, color: theme.colors.text.description }}>
             {ellipsizeTokenAddress(currentAccount?.address || '')}
           </Typography>
         </div>

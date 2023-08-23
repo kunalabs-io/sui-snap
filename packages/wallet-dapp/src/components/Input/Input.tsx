@@ -14,7 +14,11 @@ interface Props extends Stylable {
 const Input = ({ inputText, onChange, label, placeholder, showMax, style, onMaxClick, disableMax }: Props) => {
   return (
     <InputContainer style={style}>
-      {label ? <InputLabel variant="description">{label}</InputLabel> : null}
+      {label ? (
+        <InputLabel variant="description" fontWeight="medium">
+          {label}
+        </InputLabel>
+      ) : null}
       <div style={{ display: 'flex', position: 'relative' }}>
         <StyledInput value={inputText} onChange={onChange} placeholder={placeholder} />
         {showMax && (

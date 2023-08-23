@@ -43,16 +43,20 @@ const CoinItem = ({ coinInfo, onCoinClick }: Props) => {
             </svg>
           )}
         </div>
-        <div>
-          <Typography variant="body">{coinInfo.meta.name}</Typography>
-          <Typography variant="caption" color="secondary">
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 37 }}>
+          <Typography variant="body" fontWeight="medium">
+            {coinInfo.meta.name}
+          </Typography>
+          <Typography variant="caption" color="secondary" fontWeight="medium">
             {coinInfo.meta.symbol}
           </Typography>
         </div>
       </div>
-      <Typography variant="body" style={{ color: theme.colors.text.description }}>{`${formatNumberWithCommas(
-        coinInfo.amount.toString()
-      )} ${coinInfo.meta.symbol}`}</Typography>
+      <Typography
+        variant="body"
+        fontWeight="medium"
+        style={{ color: theme.colors.text.description }}
+      >{`${formatNumberWithCommas(coinInfo.amount.toString())} ${coinInfo.meta.symbol}`}</Typography>
     </Container>
   )
 }

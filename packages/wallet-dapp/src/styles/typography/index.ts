@@ -4,6 +4,7 @@ export enum FontSize {
   Subtitle2 = 20,
   Description = 16,
   Body = 14,
+  BodyDescription = 13,
   Caption = 12,
 }
 

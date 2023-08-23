@@ -17,6 +17,8 @@ export const StyledTypography = styled.div<StyledProps>`
         return `${p.theme.typography.size.Description}px`
       case 'body':
         return `${p.theme.typography.size.Body}px`
+      case 'body-description':
+        return `${p.theme.typography.size.BodyDescription}px`
       case 'caption':
         return `${p.theme.typography.size.Caption}px`
       default:

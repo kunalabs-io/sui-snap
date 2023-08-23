@@ -9,17 +9,18 @@ export const InputContainer = styled.div`
 
 export const InputLabel = styled(Typography)`
   margin-bottom: 7px;
-  color: ${p => p.theme.colors.text.description};
+  color: ${p => p.theme.colors.text.alternative};
 `
 
 export const StyledInput = styled.input`
+  font-family: ${({ theme }) => theme.typography.family.Roboto} !important;
   width: 100%;
   border-radius: 6px;
   border: 1px solid ${p => p.theme.colors.divider};
   padding: 13px 10px;
-
   &::placeholder {
     color: ${p => p.theme.colors.text.secondary};
+    font-size: 14px;
   }
 `
 

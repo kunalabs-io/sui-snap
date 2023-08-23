@@ -66,28 +66,28 @@ const Info = ({ onSendClick }: Props) => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <AddressContainer onClick={handleAddressClick}>
-          <AddressTypography variant="body" color="primary">
+          <AddressTypography variant="body-description" color="primary">
             {ellipsizeTokenAddress(currentAccount?.address || '')}
             <IconCopy />
           </AddressTypography>
         </AddressContainer>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'end', marginTop: 25 }}>
         {typeof suiCoinInfo === 'undefined' ? (
           <>
-            <Typography variant="title" style={{ marginRight: 8 }}>
+            <Typography variant="title" style={{ marginRight: 8 }} fontWeight="medium">
               0
             </Typography>
-            <Typography variant="subtitle1" color="secondary">
+            <Typography variant="subtitle1" color="secondary" style={{ marginBottom: 3 }} fontWeight="medium">
               SUI
             </Typography>
           </>
         ) : (
           <>
-            <Typography variant="title" style={{ marginRight: 8 }}>
+            <Typography variant="title" style={{ marginRight: 8 }} fontWeight="medium">
               {formatNumberWithCommas(suiCoinInfo?.amount.toString())}
             </Typography>
-            <Typography variant="subtitle1" color="secondary">
+            <Typography variant="subtitle1" color="secondary" style={{ marginBottom: 3 }} fontWeight="medium">
               {suiCoinInfo?.meta.symbol}
             </Typography>
           </>

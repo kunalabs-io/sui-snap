@@ -175,7 +175,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
   return (
     <div>
-      <SendLabel variant="subtitle2" color="primary">
+      <SendLabel variant="subtitle2" color="primary" fontWeight="medium">
         Send
       </SendLabel>
       <Input

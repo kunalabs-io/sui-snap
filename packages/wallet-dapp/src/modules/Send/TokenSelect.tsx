@@ -35,7 +35,7 @@ const BalanceValue = styled(Typography)`
 
 const Label = styled(Typography)`
   margin-bottom: 7px;
-  color: ${p => p.theme.colors.text.description};
+  color: ${p => p.theme.colors.text.alternative};
 `
 
 const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props) => {
@@ -59,7 +59,9 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
 
   return (
     <div>
-      <Label variant="description">{label}</Label>
+      <Label variant="description" fontWeight="medium">
+        {label}
+      </Label>
       <Container>
         <div style={{ marginRight: 10, display: 'flex' }}>
           {coin?.meta.typeArg === suiTypeArg ? (
@@ -72,10 +74,14 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
             </svg>
           )}
         </div>
-        <div>{coin?.meta.symbol}</div>
+        <Typography variant="description" fontWeight="medium" style={{ color: '#24272A' }}>
+          {coin?.meta.symbol}
+        </Typography>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           {coin ? <BalanceLabel variant="body">Balance:</BalanceLabel> : null}
-          <BalanceValue variant="body">{formatNumberWithCommas(coin?.amount.toString() || '')}</BalanceValue>
+          <BalanceValue variant="body" fontWeight="medium">
+            {formatNumberWithCommas(coin?.amount.toString() || '')}
+          </BalanceValue>
           <SelectToken
             options={options.map(o => ({
               label: o.meta.symbol,
