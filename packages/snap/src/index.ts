@@ -35,6 +35,22 @@ import {
   InvalidRequestMethodError,
   UserRejectionError,
 } from '@kunalabs-io/sui-snap-wallet-adapter/dist/errors'
+import { SuiChain } from '@mysten/wallet-standard'
+
+function getFullnodeUrlForChain(chain: SuiChain | `${string}:${string}`) {
+  switch (chain) {
+    case 'sui:mainnet':
+      return getFullnodeUrl('mainnet')
+    case 'sui:testnet':
+      return getFullnodeUrl('testnet')
+    case 'sui:devnet':
+      return getFullnodeUrl('devnet')
+    case 'sui:localnet':
+      return getFullnodeUrl('localnet')
+    default:
+      throw new Error(`Unsupported chain: ${chain}`)
+  }
+}
 
 /**
  * Derive the Ed25519 keypair from user's MetaMask seed phrase.
@@ -203,7 +219,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const input = deserializeSuiSignTransactionBlockInput(serialized)
 
       const keypair = await deriveKeypair()
-      const url = getFullnodeUrl('testnet')
+      const url = getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
       input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
@@ -259,7 +275,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         deserializeSuiSignAndExecuteTransactionBlockInput(serialized)
 
       const keypair = await deriveKeypair()
-      const url = getFullnodeUrl('testnet')
+      const url = getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
       input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
@@ -308,7 +324,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const account: SerializedWalletAccount = {
         address: keypair.getPublicKey().toSuiAddress(),
         publicKey: keypair.getPublicKey().toBase64(),
-        chains: ['sui:devnet', 'sui:testnet', 'sui:localnet', 'sui:mainnet'],
+        chains: ['sui:mainnet', 'sui:testnet', 'sui:devnet', 'sui:localnet'],
         features: [
           'sui:signAndExecuteTransactionBlock',
           'sui:signTransactionBlock',
