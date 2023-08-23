@@ -1,6 +1,6 @@
 export const suiTypeArg = '0x2::sui::SUI'
 
-export const WALLET_BALANCES_REFETCH_INTERVAL = 10000
+export const WALLET_BALANCES_REFETCH_INTERVAL = 3000
 
 export const ONE_DAY = 1000 * 60 * 60 * 24
 
