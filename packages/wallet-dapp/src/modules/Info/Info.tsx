@@ -8,17 +8,12 @@ import Typography from 'components/Typography/Typography'
 import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, TokensLabel } from './styles'
 import CoinItem from './CoinItem'
 import { IconCopy } from 'components/Icons/IconCopy'
-import { ellipsizeTokenAddress, getNetworkFromUrl } from 'utils/helpers'
+import { ellipsizeTokenAddress } from 'utils/helpers'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
-import {
-  RECOGNIZED_TOKENS_PACKAGE_IDS,
-  WALLET_BALANCES_REFETCH_INTERVAL,
-  mainnetConnectionUrl,
-  suiTypeArg,
-} from 'utils/const'
+import { RECOGNIZED_TOKENS_PACKAGE_IDS, WALLET_BALANCES_REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
 import Accordion from 'components/Accordion/Accordion'
-import { useNetwork } from 'utils/useNetworkProvider'
+import { NETWORK_MAINNET, useNetwork } from 'utils/useNetworkProvider'
 import { toast } from 'react-toastify'
 import { formatNumberWithCommas } from 'utils/formatting'
 import Spinner from 'components/Spinner/Spinner'
@@ -51,7 +46,7 @@ const Info = ({ onSendClick }: Props) => {
   const recognizedCoins: CoinInfo[] = []
 
   infosKeys.forEach(typeArg => {
-    if (network === mainnetConnectionUrl) {
+    if (network === NETWORK_MAINNET) {
       const packageId = getPackageIdFromTypeArg(typeArg)
       if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
         recognizedCoins.push(infos.get(typeArg)!)
@@ -107,7 +102,7 @@ const Info = ({ onSendClick }: Props) => {
         </IconButtonContainer>
 
         <a
-          href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${getNetworkFromUrl(network)}`}
+          href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${network}`}
           target="_blank"
           rel="noreferrer"
           style={{ textDecoration: 'none' }}

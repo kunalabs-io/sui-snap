@@ -13,7 +13,6 @@ import { useSuiClientProvider } from 'utils/useSuiClientProvider'
 import { useWalletKit } from '@mysten/wallet-kit'
 import { TransactionArgument, TransactionBlock } from '@mysten/sui.js/transactions'
 import { SUI_TYPE_ARG } from '@mysten/sui.js/utils'
-import { getNetworkFromUrl } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet-adapter'
 
@@ -81,7 +80,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
   const client = useSuiClientProvider()
   const walletKit = useWalletKit()
-  const { network } = useNetwork()
+  const { network, chain } = useNetwork()
 
   const onSendClick = useCallback(async () => {
     // invariants
@@ -144,9 +143,9 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       const res = await walletKit.signAndExecuteTransactionBlock({
         transactionBlock: txb,
         requestType: 'WaitForLocalExecution',
-        chain: 'sui:mainnet',
+        chain,
       })
-      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${getNetworkFromUrl(network)}`
+      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
       toast.success(
         <div>
           Transaction succeeded:{' '}
@@ -168,7 +167,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       console.error(e)
       return
     }
-  }, [recipient, amount, selectedCoin, walletKit, client, network, triggerWalletBalancesUpdate, openInfoScreen])
+  }, [recipient, amount, selectedCoin, walletKit, client, network, chain, triggerWalletBalancesUpdate, openInfoScreen])
 
   if (isLoadingWalletBalances) {
     return <Spinner />

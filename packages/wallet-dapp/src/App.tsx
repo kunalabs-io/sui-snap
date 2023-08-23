@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useState } from 'react'
+import { ReactNode } from 'react'
 import { ThemeProvider } from 'styled-components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
 import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet-adapter'
@@ -12,9 +12,9 @@ import { theme } from 'styles/theme'
 import '../index.css'
 import 'react-toastify/dist/ReactToastify.css'
 import { SuiClientProvider } from 'utils/SuiClientProvider'
-import { testnetConnectionUrl } from 'utils/const'
-import { NetworkContext } from 'utils/useNetworkProvider'
+import { NETWORK, NetworkContext, chainFromNetwork, fullnodeUrlFromNetwork } from 'utils/useNetworkProvider'
 import { Toast } from 'components/Toast/Toast'
+import { useLocalStorage } from 'utils/useLocalStorage'
 
 export type RootProps = {
   children: ReactNode
@@ -25,18 +25,16 @@ const queryClient = new QueryClient()
 registerSuiSnapWallet()
 
 export const App = () => {
-  const [network, setNetwork] = useState(testnetConnectionUrl)
-
-  const handleNetworkChange = useCallback((newNetwork: string) => {
-    setNetwork(newNetwork)
-  }, [])
+  const [network, setNetwork] = useLocalStorage<NETWORK>('network', 'mainnet')
+  const fullnodeUrl = fullnodeUrlFromNetwork(network)
+  const chain = chainFromNetwork(network)
 
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={true} />
-      <SuiClientProvider connectionUrl={network}>
+      <SuiClientProvider connectionUrl={fullnodeUrl}>
         <WalletKitProvider>
-          <NetworkContext.Provider value={{ network, setNetwork: handleNetworkChange }}>
+          <NetworkContext.Provider value={{ network, fullnodeUrl, chain, setNetwork }}>
             <ThemeProvider theme={theme}>
               <Toast />
               <Main />

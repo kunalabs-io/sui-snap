@@ -1,4 +1,3 @@
-import { devnetConnectionUrl, testnetConnectionUrl } from './const'
 import { parseStructTag } from '@mysten/sui.js/utils'
 
 export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
@@ -33,15 +32,4 @@ export const getPackageIdFromTypeArg = (typeArg: string, separator = '::') => {
     return typeArg.substring(0, firstIndexOfSeparator)
   }
   return ''
-}
-
-export const getNetworkFromUrl = (networkUrl: string) => {
-  switch (networkUrl) {
-    case testnetConnectionUrl:
-      return 'testnet'
-    case devnetConnectionUrl:
-      return 'devnet'
-    default:
-      return 'mainnet'
-  }
 }

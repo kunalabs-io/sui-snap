@@ -6,12 +6,18 @@ import { useTheme } from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
 import { Wrapper } from './styles'
-import { ellipsizeTokenAddress, getNetworkFromUrl } from 'utils/helpers'
+import { ellipsizeTokenAddress } from 'utils/helpers'
 import Modal from 'components/Modal/Modal'
 import ModalTitle from 'components/Modal/components/ModalTitle'
 import ModalBody from 'components/Modal/components/ModalBody'
-import { devnetConnectionUrl, mainnetConnectionUrl, testnetConnectionUrl } from 'utils/const'
-import { useNetwork } from 'utils/useNetworkProvider'
+import {
+  NETWORK,
+  NETWORK_DEVNET,
+  NETWORK_LOCAL,
+  NETWORK_MAINNET,
+  NETWORK_TESTNET,
+  useNetwork,
+} from 'utils/useNetworkProvider'
 import { NetworkSelect, Option } from 'components/Select/Select'
 
 const Header = () => {
@@ -28,7 +34,7 @@ const Header = () => {
 
   const handleOptionClick = (option: Option | null) => {
     if (option) {
-      setNetwork(option.value)
+      setNetwork(option.value as NETWORK)
     }
   }
 
@@ -51,13 +57,14 @@ const Header = () => {
       </div>
       <NetworkSelect
         options={[
-          { label: 'Mainnet', value: mainnetConnectionUrl },
-          { label: 'Testnet', value: testnetConnectionUrl },
-          { label: 'Devnet', value: devnetConnectionUrl },
+          { label: 'Mainnet', value: NETWORK_MAINNET },
+          { label: 'Testnet', value: NETWORK_TESTNET },
+          { label: 'Devnet', value: NETWORK_DEVNET },
+          { label: 'Localnet', value: NETWORK_LOCAL },
         ]}
         handleChange={handleOptionClick}
         selectedOption={{
-          label: getNetworkFromUrl(network),
+          label: network,
           value: network,
         }}
       />

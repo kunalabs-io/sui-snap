@@ -1,11 +1,5 @@
 export const suiTypeArg = '0x2::sui::SUI'
 
-export const testnetConnectionUrl = 'https://fullnode.testnet.sui.io:443/'
-
-export const devnetConnectionUrl = 'https://fullnode.devnet.sui.io:443/'
-
-export const mainnetConnectionUrl = 'https://fullnode.mainnet.sui.io:443/'
-
 export const WALLET_BALANCES_REFETCH_INTERVAL = 10000
 
 export const ONE_DAY = 1000 * 60 * 60 * 24
