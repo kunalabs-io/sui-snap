@@ -17,6 +17,7 @@ export const StyledInput = styled.input`
   width: 100%;
   border-radius: 6px;
   border: 1px solid ${p => p.theme.colors.divider};
+  font-size: 14px;
   padding: 13px 10px;
   &::placeholder {
     color: ${p => p.theme.colors.text.secondary};
