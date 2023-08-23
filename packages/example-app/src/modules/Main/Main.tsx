@@ -72,8 +72,7 @@ const Main = () => {
 
       const signed = await kit.signTransactionBlock({
         transactionBlock: txb,
-        account: kit.currentAccount,
-        chain: 'sui:mainnet',
+        chain: 'sui:testnet',
       })
 
       console.log(signed)
@@ -107,8 +106,7 @@ const Main = () => {
 
       const result = await kit.signAndExecuteTransactionBlock({
         transactionBlock: txb,
-        account: kit.currentAccount,
-        chain: 'sui:mainnet',
+        chain: 'sui:testnet',
       })
 
       console.log(result)

@@ -223,15 +223,58 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const client = new SuiClient({ url })
 
       input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
+
+      let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
+      const dryRunError = { hasError: false, message: '' }
+      try {
+        dryRunRes = await client.dryRunTransactionBlock({
+          transactionBlock: await input.transactionBlock.build({ client }),
+        })
+        if (dryRunRes.effects.status.status === 'failure') {
+          dryRunError.hasError = true
+          dryRunError.message = dryRunRes.effects.status.error || ''
+        }
+      } catch (e) {
+        dryRunError.hasError = true
+        dryRunError.message =
+          typeof e === 'object' &&
+          'message' in e &&
+          typeof e.message === 'string'
+            ? e.message
+            : ''
+      }
+      if (!dryRunRes || dryRunError.hasError) {
+        let resultText = 'Dry run failed.'
+        if (dryRunError.message) {
+          resultText = `Dry run failed with the following error: **${dryRunError.message}**`
+        }
+
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: panel([
+              heading('Transaction failed.'),
+              text(
+                `**${origin}** is requesting to **sign** a transaction block for **${input.chain}** but the **dry run failed**.`
+              ),
+              divider(),
+              text('**Operations:**'),
+              ...genTxBlockTransactionsText(input.transactionBlock).map(
+                (str, n) => text(`[${n + 1}] ${str}`)
+              ),
+              divider(),
+              text(resultText),
+            ]),
+          },
+        })
+
+        throw DryRunFailedError.asSimpleError(dryRunError.message)
+      }
+
       const transactionBlockBytes = await input.transactionBlock.build({
         client,
       })
-      const dryRunRes = await client.dryRunTransactionBlock({
-        transactionBlock: transactionBlockBytes,
-      })
-      if (dryRunRes.effects.status.status === 'failure') {
-        throw DryRunFailedError.asSimpleError()
-      }
 
       const response = await snap.request({
         method: 'snap_dialog',
@@ -279,11 +322,53 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const client = new SuiClient({ url })
 
       input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
-      const dryRunRes = await client.dryRunTransactionBlock({
-        transactionBlock: await input.transactionBlock.build({ client }),
-      })
-      if (dryRunRes.effects.status.status === 'failure') {
-        throw DryRunFailedError.asSimpleError()
+
+      let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
+      const dryRunError = { hasError: false, message: '' }
+      try {
+        dryRunRes = await client.dryRunTransactionBlock({
+          transactionBlock: await input.transactionBlock.build({ client }),
+        })
+        if (dryRunRes.effects.status.status === 'failure') {
+          dryRunError.hasError = true
+          dryRunError.message = dryRunRes.effects.status.error || ''
+        }
+      } catch (e) {
+        dryRunError.hasError = true
+        dryRunError.message =
+          typeof e === 'object' &&
+          'message' in e &&
+          typeof e.message === 'string'
+            ? e.message
+            : ''
+      }
+      if (!dryRunRes || dryRunError.hasError) {
+        let resultText = 'Dry run failed.'
+        if (dryRunError.message) {
+          resultText = `Dry run failed with the following error: **${dryRunError.message}**`
+        }
+
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: panel([
+              heading('Transaction failed.'),
+              text(
+                `**${origin}** is requesting to **execute** a transaction block on **${input.chain}** but the **dry run failed**.`
+              ),
+              divider(),
+              text('**Operations:**'),
+              ...genTxBlockTransactionsText(input.transactionBlock).map(
+                (str, n) => text(`[${n + 1}] ${str}`)
+              ),
+              divider(),
+              text(resultText),
+            ]),
+          },
+        })
+
+        throw DryRunFailedError.asSimpleError(dryRunError.message)
       }
 
       const response = await snap.request({

@@ -61,16 +61,28 @@ export class DryRunFailedError extends Error {
   static readonly type = 'DRY_RUN_FAILED'
   readonly type = DryRunFailedError.type
 
-  constructor() {
-    super(DryRunFailedError.type)
+  constructor(message?: string) {
+    let msg = DryRunFailedError.type
+    if (message) {
+      msg += ': ' + message
+    }
+    super(msg)
   }
 
-  static asSimpleError() {
-    return new Error(DryRunFailedError.type)
+  static asSimpleError(message?: string) {
+    let msg = DryRunFailedError.type
+    if (message) {
+      msg += ': ' + message
+    }
+    return new Error(msg)
   }
 
   static isSimpleErrorMessage(message: string) {
-    return message === DryRunFailedError.type
+    return message.startsWith(DryRunFailedError.type)
+  }
+
+  static fromSimpleErrorMessage(message: string) {
+    return new DryRunFailedError(message.slice(DryRunFailedError.type.length + 2))
   }
 }
 
@@ -90,7 +102,7 @@ export function convertError(error: unknown) {
   } else if (InvalidRequestMethodError.isSimpleErrorMessage(error.message)) {
     return InvalidRequestMethodError.fromSimpleErrorMessage(error.message)
   } else if (DryRunFailedError.isSimpleErrorMessage(error.message)) {
-    return new DryRunFailedError()
+    return DryRunFailedError.fromSimpleErrorMessage(error.message)
   }
 
   return error
