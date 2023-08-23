@@ -1,4 +1,3 @@
-import { toast } from 'react-toastify'
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon'
 import { useWalletKit } from '@mysten/wallet-kit'
 import { useCallback, useState } from 'react'
@@ -8,7 +7,6 @@ import Typography from 'components/Typography/Typography'
 import { Wrapper } from './styles'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import Modal from 'components/Modal/Modal'
-import ModalTitle from 'components/Modal/components/ModalTitle'
 import ModalBody from 'components/Modal/components/ModalBody'
 import {
   NETWORK,
@@ -38,18 +36,13 @@ const Header = () => {
     }
   }
 
-  const handleAddressClick = useCallback(async () => {
-    await navigator.clipboard.writeText(currentAccount?.address || '')
-    toast.success('Address copied')
-  }, [currentAccount?.address])
-
   return (
     <Wrapper>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div onClick={toggleModal} style={{ cursor: 'pointer' }}>
           <Jazzicon diameter={25} seed={jsNumberForAddress(currentAccount?.address || '')} />
         </div>
-        <div style={{ cursor: 'pointer' }} onClick={handleAddressClick}>
+        <div style={{ cursor: 'pointer' }} onClick={toggleModal}>
           <Typography variant="body" style={{ marginLeft: 12, color: theme.colors.text.description }}>
             {ellipsizeTokenAddress(currentAccount?.address || '')}
           </Typography>
@@ -70,8 +63,21 @@ const Header = () => {
       />
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>
-          <ModalTitle onClose={toggleModal}>Info</ModalTitle>
-          <ModalBody>Info details</ModalBody>
+          <ModalBody>
+            <div>Address:</div>
+            <div>{currentAccount?.address}</div>
+            <br />
+            <div>
+              This address was generated from your MetaMask Secret Recovery Phrase using the{' '}
+              <code>m/44&apos;/784&apos;/0&apos;/0&apos;/0&apos;</code> SLIP-10 derivation path for the{' '}
+              <code>ed25519</code> curve.
+            </div>
+            <br />
+            <div>
+              This means that, if the access to your MetaMask wallet is lost, when you recover it using the Recovery
+              Phrase, you will be able to access the same Sui address.
+            </div>
+          </ModalBody>
         </Modal>
       )}
     </Wrapper>
