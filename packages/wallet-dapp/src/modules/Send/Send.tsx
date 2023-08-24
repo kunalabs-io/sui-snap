@@ -23,6 +23,10 @@ interface Props {
   initialCoinInfo: CoinInfo | undefined
 }
 
+function isValidSuiAddress(value: string): boolean {
+  return /^0x[a-fA-F0-9]+$/.test(value) && value.length - 2 <= 64
+}
+
 const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   const [recipient, setRecipient] = useState('')
   const [rawInputStr, setRawInputStr] = useState('')
@@ -76,6 +80,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   let sendEnabled = false
   if (
     recipient &&
+    isValidSuiAddress(recipient) &&
     amount &&
     selectedCoin &&
     amount.int > 0n &&
