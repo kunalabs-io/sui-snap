@@ -3,6 +3,7 @@ import { InputContainer, InputLabel, MaxLabel, MaxLabelContainer, StyledInput } 
 
 interface Props extends Stylable {
   inputText: string
+  disabled?: boolean
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   label?: string
   placeholder?: string
@@ -11,7 +12,23 @@ interface Props extends Stylable {
   onMaxClick?: () => void
 }
 
-const Input = ({ inputText, onChange, label, placeholder, showMax, style, onMaxClick, disableMax }: Props) => {
+const Input = ({
+  inputText,
+  onChange,
+  disabled,
+  label,
+  placeholder,
+  showMax,
+  style,
+  onMaxClick,
+  disableMax,
+}: Props) => {
+  const handleMaxClick = () => {
+    if (disableMax || disabled) {
+      return
+    }
+    onMaxClick?.()
+  }
   return (
     <InputContainer style={style}>
       {label ? (
@@ -20,9 +37,9 @@ const Input = ({ inputText, onChange, label, placeholder, showMax, style, onMaxC
         </InputLabel>
       ) : null}
       <div style={{ display: 'flex', position: 'relative' }}>
-        <StyledInput value={inputText} onChange={onChange} placeholder={placeholder} />
+        <StyledInput value={inputText} onChange={onChange} placeholder={placeholder} disabled={disabled} />
         {showMax && (
-          <MaxLabelContainer onClick={onMaxClick} disabled={disableMax}>
+          <MaxLabelContainer onClick={handleMaxClick} disabled={disableMax}>
             <MaxLabel variant="caption">Max</MaxLabel>
           </MaxLabelContainer>
         )}

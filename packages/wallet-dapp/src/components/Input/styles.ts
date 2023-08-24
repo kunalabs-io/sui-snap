@@ -23,6 +23,9 @@ export const StyledInput = styled.input`
     color: ${p => p.theme.colors.text.secondary};
     font-size: 14px;
   }
+  &:disabled {
+    background-color: #f2f2f2;
+  }
 `
 
 export const MaxLabelContainer = styled.div<{ disabled?: boolean }>`

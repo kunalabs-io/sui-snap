@@ -27,6 +27,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   const [recipient, setRecipient] = useState('')
   const [rawInputStr, setRawInputStr] = useState('')
   const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
+  const [isSending, setIsSending] = useState(false)
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -89,6 +90,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   const { network, chain } = useNetwork()
 
   const onSendClick = useCallback(async () => {
+    setIsSending(true)
     // invariants
     if (!recipient || !amount || !selectedCoin || !walletKit.currentAccount) {
       toast.error('Something went wrong')
@@ -126,6 +128,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
       if (acc < amount.int || coinIds.length === 0) {
         toast.error('Not enough balance')
+        setIsSending(false)
         return
       }
 
@@ -172,6 +175,8 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       toast.error('Transaction failed')
       console.error(e)
       return
+    } finally {
+      setIsSending(false)
     }
   }, [recipient, amount, selectedCoin, walletKit, client, network, chain, triggerWalletBalancesUpdate, openInfoScreen])
 
@@ -191,13 +196,14 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         placeholder="Enter Address"
         label="Recipient"
         style={{ marginBottom: 18 }}
+        disabled={isSending}
       />
       <TokenSelect
         label="Asset"
         coin={selectedCoin}
         handleCoinChange={handleCoinChange}
         options={options}
-        disabled={!infos || infos.size === 0}
+        disabled={!infos || infos.size === 0 || isSending}
       />
       <Input
         inputText={sanitizedInputValue}
@@ -206,15 +212,29 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         label="Amount"
         style={{ marginBottom: 38 }}
         showMax
-        disableMax={!selectedCoin}
+        disableMax={!selectedCoin || isSending}
         onMaxClick={handleMaxClick}
+        disabled={isSending}
       />
       <SubmitButtonsContainer>
-        <Button variant="outlined" onClick={openInfoScreen} style={{ marginRight: 18 }}>
+        <Button variant="outlined" onClick={openInfoScreen} style={{ marginRight: 18 }} disabled={isSending}>
           Reject
         </Button>
         <Button onClick={onSendClick} disabled={!sendEnabled}>
-          Send
+          {isSending ? (
+            <Spinner
+              style={{
+                marginTop: 0,
+                marginLeft: 0,
+                border: '5px solid #ffffff',
+                borderBottomColor: 'transparent',
+                width: 32,
+                height: 32,
+              }}
+            />
+          ) : (
+            'Send'
+          )}
         </Button>
       </SubmitButtonsContainer>
       <div style={{ height: 20, backgroundColor: '#ffffff', position: 'absolute', bottom: 0, width: '100%' }} />

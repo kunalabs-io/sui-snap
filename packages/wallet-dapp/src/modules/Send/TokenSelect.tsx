@@ -15,7 +15,7 @@ interface Props {
   disabled: boolean
 }
 
-const Container = styled.div`
+const Container = styled.div<{ disabled: boolean }>`
   border-radius: 6px;
   border: 1px solid ${p => p.theme.colors.divider};
   height: 44px;
@@ -23,6 +23,7 @@ const Container = styled.div`
   align-items: center;
   margin-bottom: 20px;
   padding: 0 10px;
+  ${p => p.disabled && `background-color: #f2f2f2;`}
 `
 
 const BalanceLabel = styled(Typography)`
@@ -62,7 +63,7 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
       <Label variant="description" fontWeight="medium">
         {label}
       </Label>
-      <Container>
+      <Container disabled={disabled}>
         <div style={{ marginRight: 10, display: 'flex' }}>
           {coin?.meta.typeArg === suiTypeArg ? (
             <IconSuiSmall />

@@ -3,6 +3,7 @@ import { TextAreaLabel, Textarea as StyledTextarea } from './styles'
 
 interface Props extends Stylable {
   value: string
+  disabled?: boolean
   textAreaRef: React.RefObject<HTMLTextAreaElement>
   onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   rows?: number
@@ -10,7 +11,7 @@ interface Props extends Stylable {
   placeholder?: string
 }
 
-const Textarea = ({ onChange, textAreaRef, rows, value, placeholder, label, style }: Props) => {
+const Textarea = ({ onChange, textAreaRef, disabled, rows, value, placeholder, label, style }: Props) => {
   return (
     <div style={style}>
       {label ? (
@@ -18,7 +19,15 @@ const Textarea = ({ onChange, textAreaRef, rows, value, placeholder, label, styl
           {label}
         </TextAreaLabel>
       ) : null}
-      <StyledTextarea onChange={onChange} placeholder={placeholder} ref={textAreaRef} rows={rows || 1} value={value} />
+      <StyledTextarea
+        onChange={onChange}
+        placeholder={placeholder}
+        ref={textAreaRef}
+        rows={rows || 1}
+        value={value}
+        disabled={disabled}
+        style={disabled ? { backgroundColor: '#f2f2f2' } : {}}
+      />
     </div>
   )
 }
