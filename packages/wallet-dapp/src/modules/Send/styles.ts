@@ -27,3 +27,11 @@ export const EstimatedValue = styled(Typography)`
   color: ${p => p.theme.colors.text.description};
   font-weight: 700;
 `
+
+export const SubmitButtonsContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  bottom: 20px;
+  background-color: ${p => p.theme.colors.background.primary};
+`

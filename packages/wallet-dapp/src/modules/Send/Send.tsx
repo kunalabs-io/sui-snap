@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Input from 'components/Input/Input'
-import { SendLabel } from './styles'
+import { SendLabel, SubmitButtonsContainer } from './styles'
 import Button from 'components/Button/Button'
 import TokenSelect from './TokenSelect'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
@@ -15,6 +15,8 @@ import { TransactionArgument, TransactionBlock } from '@mysten/sui.js/transactio
 import { SUI_TYPE_ARG } from '@mysten/sui.js/utils'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet-adapter'
+import Textarea from 'components/Textarea/Textarea'
+import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 
 interface Props {
   openInfoScreen: () => void
@@ -25,6 +27,10 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   const [recipient, setRecipient] = useState('')
   const [rawInputStr, setRawInputStr] = useState('')
   const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
+
+  const textAreaRef = useRef<HTMLTextAreaElement>(null)
+
+  useAutoSizeTextarea(textAreaRef.current, recipient)
 
   const {
     infos,
@@ -58,7 +64,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     return Array.from(infos.values())
   }, [infos])
 
-  const handleRecipientChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRecipientChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setRecipient(e.target.value)
   }, [])
 
@@ -174,16 +180,17 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   }
 
   return (
-    <div>
+    <div style={{ height: 472, position: 'relative' }}>
       <SendLabel variant="subtitle2" color="primary" fontWeight="medium">
         Send
       </SendLabel>
-      <Input
-        inputText={recipient}
+      <Textarea
+        value={recipient}
+        textAreaRef={textAreaRef}
         onChange={handleRecipientChange}
         placeholder="Enter Address"
         label="Recipient"
-        style={{ marginBottom: 20 }}
+        style={{ marginBottom: 18 }}
       />
       <TokenSelect
         label="Asset"
@@ -202,14 +209,15 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         disableMax={!selectedCoin}
         onMaxClick={handleMaxClick}
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 110 }}>
-        <Button variant="outlined" onClick={openInfoScreen}>
+      <SubmitButtonsContainer>
+        <Button variant="outlined" onClick={openInfoScreen} style={{ marginRight: 18 }}>
           Reject
         </Button>
         <Button onClick={onSendClick} disabled={!sendEnabled}>
           Send
         </Button>
-      </div>
+      </SubmitButtonsContainer>
+      <div style={{ height: 20, backgroundColor: '#ffffff', position: 'absolute', bottom: 0, width: '100%' }} />
     </div>
   )
 }
