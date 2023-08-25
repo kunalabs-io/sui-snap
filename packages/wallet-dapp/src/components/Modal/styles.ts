@@ -3,15 +3,14 @@ import styled from 'styled-components'
 export const ModalContainer = styled.div`
   padding: 16px;
   position: fixed;
-  top: 50%;
+  top: 300px;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1010;
-  width: calc(100% - 96px);
-  max-width: 300px;
+  width: 400px;
   background-color: ${p => p.theme.colors.background.primary};
   border: 1px solid ${p => p.theme.colors.divider};
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 `

@@ -225,7 +225,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         <Button variant="outlined" onClick={openInfoScreen} style={{ marginRight: 18 }} disabled={isSending}>
           Reject
         </Button>
-        <Button onClick={onSendClick} disabled={!sendEnabled}>
+        <Button onClick={onSendClick} disabled={!sendEnabled || isSending}>
           {isSending ? (
             <Spinner
               style={{

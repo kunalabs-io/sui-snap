@@ -1,3 +1,4 @@
+import Typography from 'components/Typography/Typography'
 import styled from 'styled-components'
 
 export const Wrapper = styled.div`
@@ -7,4 +8,9 @@ export const Wrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+`
+
+export const Info = styled(Typography)`
+  font-size: 10px;
+  color: ${p => p.theme.colors.text.secondary};
 `

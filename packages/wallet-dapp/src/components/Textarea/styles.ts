@@ -8,6 +8,7 @@ export const TextAreaLabel = styled(Typography)`
 `
 
 export const Textarea = styled.textarea`
+  overflow: hidden;
   background: #ffffff;
   border-radius: 0;
   border: none;

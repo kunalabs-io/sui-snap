@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useTheme } from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
-import { Wrapper } from './styles'
+import { Info, Wrapper } from './styles'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import Modal from 'components/Modal/Modal'
 import ModalBody from 'components/Modal/components/ModalBody'
@@ -17,6 +17,8 @@ import {
   useNetwork,
 } from 'utils/useNetworkProvider'
 import { NetworkSelect, Option } from 'components/Select/Select'
+import ModalActions from 'components/Modal/components/ModalActions'
+import Button from 'components/Button/Button'
 
 const Header = () => {
   const { network, setNetwork } = useNetwork()
@@ -48,36 +50,46 @@ const Header = () => {
           </Typography>
         </div>
       </div>
-      <NetworkSelect
-        options={[
-          { label: 'Mainnet', value: NETWORK_MAINNET },
-          { label: 'Testnet', value: NETWORK_TESTNET },
-          { label: 'Devnet', value: NETWORK_DEVNET },
-          { label: 'Localnet', value: NETWORK_LOCAL },
-        ]}
-        handleChange={handleOptionClick}
-        selectedOption={{
-          label: network,
-          value: network,
-        }}
-      />
+      <div style={{ marginLeft: 'auto' }}>
+        <NetworkSelect
+          options={[
+            { label: 'Mainnet', value: NETWORK_MAINNET },
+            { label: 'Testnet', value: NETWORK_TESTNET },
+            { label: 'Devnet', value: NETWORK_DEVNET },
+            { label: 'Localnet', value: NETWORK_LOCAL },
+          ]}
+          handleChange={handleOptionClick}
+          selectedOption={{
+            label: network,
+            value: network,
+          }}
+        />
+      </div>
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>
           <ModalBody>
-            <div>Address:</div>
-            <div>{currentAccount?.address}</div>
+            <Typography variant="caption" style={{ marginBottom: 4 }}>
+              Address:
+            </Typography>
+            <Typography variant="body" style={{ wordWrap: 'break-word' }} fontWeight="medium">
+              {currentAccount?.address}
+            </Typography>
             <br />
-            <div>
+            <Info>
               This address was generated from your MetaMask Secret Recovery Phrase using the{' '}
               <code>m/44&apos;/784&apos;/0&apos;/0&apos;/0&apos;</code> SLIP-10 derivation path for the{' '}
               <code>ed25519</code> curve.
-            </div>
-            <br />
-            <div>
-              This means that, if the access to your MetaMask wallet is lost, when you recover it using the Recovery
-              Phrase, you will be able to access the same Sui address.
-            </div>
+              <br />
+              <br />
+              <div>
+                This means that, if the access to your MetaMask wallet is lost, when you recover it using the Recovery
+                Phrase, you will be able to access the same Sui address.
+              </div>
+            </Info>
           </ModalBody>
+          <ModalActions style={{ textAlign: 'center' }}>
+            <Button onClick={toggleModal}>Got it</Button>
+          </ModalActions>
         </Modal>
       )}
     </Wrapper>
