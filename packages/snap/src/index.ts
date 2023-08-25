@@ -285,6 +285,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             text(
               `**${origin}** is requesting to **sign** a transaction block for **${input.chain}**.`
             ),
+            text('Hint: you can manage your wallet at https://suisnap.com/'),
             divider(),
             text('**Operations:**'),
             ...genTxBlockTransactionsText(input.transactionBlock).map(
@@ -380,6 +381,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             text(
               `**${origin}** is requesting to **execute** a transaction block on **${input.chain}**.`
             ),
+            text('Hint: you can manage your wallet at https://suisnap.com/'),
             divider(),
             text('**Operations:**'),
             ...genTxBlockTransactionsText(input.transactionBlock).map(
