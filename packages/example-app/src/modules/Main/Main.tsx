@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import { SuiSnapWallet, flaskAvailable } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { SuiSnapWallet, flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { useWalletKit } from '@mysten/wallet-kit'
 

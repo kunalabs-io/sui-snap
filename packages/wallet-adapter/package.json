@@ -1,5 +1,5 @@
 {
-  "name": "@kunalabs-io/sui-snap-wallet-adapter",
+  "name": "@kunalabs-io/sui-snap-wallet",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "author": "Kuna Labs <build@kunalabs.io>",

@@ -4,7 +4,7 @@ import styled from 'styled-components'
 
 import Dashboard from 'modules/Dashboard/Dashboard'
 import Welcome from 'modules/Welcome/Welcome'
-import { flaskAvailable } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};

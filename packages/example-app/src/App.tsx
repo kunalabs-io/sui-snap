@@ -6,7 +6,7 @@ import Main from 'modules/Main'
 import '../index.css'
 import styled, { ThemeProvider } from 'styled-components'
 import { GlobalStyle, theme } from 'config/theme'
-import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet'
 
 export type RootProps = {
   children: ReactNode

@@ -14,7 +14,7 @@ import { useWalletKit } from '@mysten/wallet-kit'
 import { TransactionArgument, TransactionBlock } from '@mysten/sui.js/transactions'
 import { SUI_TYPE_ARG } from '@mysten/sui.js/utils'
 import { useNetwork } from 'utils/useNetworkProvider'
-import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 

@@ -28,13 +28,13 @@ import {
   deserializeSuiSignMessageInput,
   deserializeSuiSignTransactionBlockInput,
   validate,
-} from '@kunalabs-io/sui-snap-wallet-adapter/dist/types'
+} from '@kunalabs-io/sui-snap-wallet/dist/types'
 import {
   DryRunFailedError,
   InvalidParamsError,
   InvalidRequestMethodError,
   UserRejectionError,
-} from '@kunalabs-io/sui-snap-wallet-adapter/dist/errors'
+} from '@kunalabs-io/sui-snap-wallet/dist/errors'
 import { SuiChain } from '@mysten/wallet-standard'
 
 function getFullnodeUrlForChain(chain: SuiChain | `${string}:${string}`) {

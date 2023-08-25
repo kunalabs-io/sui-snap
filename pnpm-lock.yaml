@@ -8,7 +8,7 @@ importers:
 
   packages/example-app:
     dependencies:
-      '@kunalabs-io/sui-snap-wallet-adapter':
+      '@kunalabs-io/sui-snap-wallet':
         specifier: workspace:*
         version: link:../wallet-adapter
       '@mysten/sui.js':
@@ -90,7 +90,7 @@ importers:
 
   packages/snap:
     dependencies:
-      '@kunalabs-io/sui-snap-wallet-adapter':
+      '@kunalabs-io/sui-snap-wallet':
         specifier: workspace:*
         version: link:../wallet-adapter
       '@metamask/key-tree':
@@ -230,7 +230,7 @@ importers:
 
   packages/wallet-dapp:
     dependencies:
-      '@kunalabs-io/sui-snap-wallet-adapter':
+      '@kunalabs-io/sui-snap-wallet':
         specifier: workspace:*
         version: link:../wallet-adapter
       '@mysten/bcs':

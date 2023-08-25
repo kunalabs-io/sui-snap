@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { ThemeProvider } from 'styled-components'
 import { WalletKitProvider } from '@mysten/wallet-kit'
-import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet-adapter'
+import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
