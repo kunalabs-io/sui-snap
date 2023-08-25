@@ -126,7 +126,7 @@ const Info = ({ onSendClick }: Props) => {
       {unrecognizedCoins.length ? (
         <Accordion
           isOpenInitial
-          accordionSummary={`${unrecognizedCoins.length} Unrecognized Token`}
+          accordionSummary={`${unrecognizedCoins.length} Unrecognized Token${unrecognizedCoins.length > 1 ? 's' : ''}`}
           accordionDetails={
             <div style={{ marginTop: 10 }}>
               {unrecognizedCoins.map(c => (
