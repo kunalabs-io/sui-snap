@@ -35,6 +35,13 @@ const Info = ({ onSendClick }: Props) => {
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
+  const handleSendClick = useCallback(() => {
+    if (!infos || infos.size === 0) {
+      return
+    }
+    onSendClick()
+  }, [infos, onSendClick])
+
   if (isLoadingWalletBalances || infos === undefined) {
     return <Spinner />
   }
@@ -94,7 +101,7 @@ const Info = ({ onSendClick }: Props) => {
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 25, gap: 20 }}>
-        <IconButtonContainer onClick={() => onSendClick()} disabled={!infos || infos.size === 0}>
+        <IconButtonContainer onClick={handleSendClick} disabled={!infos || infos.size === 0}>
           <IconButton disabled={!infos || infos.size === 0}>
             <IconSend />
           </IconButton>
