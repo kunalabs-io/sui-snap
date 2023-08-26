@@ -11,6 +11,6 @@ export const Wrapper = styled.div`
 `
 
 export const Info = styled(Typography)`
-  font-size: 10px;
-  color: ${p => p.theme.colors.text.secondary};
+  font-size: 14px;
+  color: ${p => p.theme.colors.text.description};
 `

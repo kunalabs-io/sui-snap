@@ -19,6 +19,7 @@ import {
 import { NetworkSelect, Option } from 'components/Select/Select'
 import ModalActions from 'components/Modal/components/ModalActions'
 import Button from 'components/Button/Button'
+import { toast } from 'react-toastify'
 
 const Header = () => {
   const { network, setNetwork } = useNetwork()
@@ -27,6 +28,11 @@ const Header = () => {
   const [isOpenInfoModal, setIsOpenInfoModal] = useState(false)
 
   const theme = useTheme()
+
+  const handleAddressClick = useCallback(async () => {
+    await navigator.clipboard.writeText(currentAccount?.address || '')
+    toast.success('Address copied')
+  }, [currentAccount?.address])
 
   const toggleModal = useCallback(() => {
     setIsOpenInfoModal(!isOpenInfoModal)
@@ -68,12 +74,14 @@ const Header = () => {
       {isOpenInfoModal && (
         <Modal onClose={toggleModal}>
           <ModalBody>
-            <Typography variant="caption" style={{ marginBottom: 4 }}>
-              Address:
+            <Typography variant="caption" style={{ marginBottom: 4, fontSize: '16px' }}>
+              Your address:
             </Typography>
-            <Typography variant="body" style={{ wordWrap: 'break-word' }} fontWeight="medium">
-              {currentAccount?.address}
-            </Typography>
+            <div onClick={handleAddressClick} style={{ cursor: 'pointer' }}>
+              <Typography variant="body" style={{ wordWrap: 'break-word', fontSize: '17px' }} fontWeight="bold">
+                {currentAccount?.address}
+              </Typography>
+            </div>
             <br />
             <Info>
               This address was generated from your MetaMask Secret Recovery Phrase using the{' '}
