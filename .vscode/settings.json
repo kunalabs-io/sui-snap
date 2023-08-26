@@ -5,6 +5,7 @@
       "url": "https://raw.githubusercontent.com/MetaMask/SIPs/main/assets/sip-9/snap.manifest.schema.json"
     }
   ],
+  "json.schemaDownload.enable": true,
   "editor.formatOnSave": true,
   "eslint.format.enable": true,
   "eslint.validate": [
