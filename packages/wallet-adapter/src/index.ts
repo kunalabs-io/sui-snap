@@ -147,10 +147,40 @@ export async function signAndExecuteTransactionBlock(
   }
 }
 
-export async function flaskAvailable(): Promise<boolean> {
+export interface FlaskStatus {
+  flaskAvailable: boolean
+  flaskVersion?: string
+  overriden: boolean // whether window.ethereum is overriden by another wallet
+}
+
+export async function flaskAvailable(): Promise<FlaskStatus> {
   const provider = window.ethereum
-  const version = await provider?.request<string>({ method: 'web3_clientVersion' })
-  return !!version?.includes('flask')
+  if (!provider) {
+    return {
+      flaskAvailable: false,
+      overriden: false,
+    }
+  }
+  if (!provider.isMetaMask) {
+    return {
+      flaskAvailable: false,
+      overriden: true,
+    }
+  }
+  try {
+    const version = await provider.request<string>({ method: 'web3_clientVersion' })
+    return {
+      flaskAvailable: true,
+      flaskVersion: version!,
+      overriden: false,
+    }
+  } catch (e) {
+    console.warn(e)
+    return {
+      flaskAvailable: false,
+      overriden: true,
+    }
+  }
 }
 
 export class SuiSnapWallet implements Wallet {

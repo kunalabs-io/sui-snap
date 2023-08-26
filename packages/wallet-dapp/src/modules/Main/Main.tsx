@@ -4,7 +4,7 @@ import styled from 'styled-components'
 
 import Dashboard from 'modules/Dashboard/Dashboard'
 import Welcome from 'modules/Welcome/Welcome'
-import { flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
+import { FlaskStatus, flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -21,27 +21,23 @@ const Wrapper = styled.div`
 const Main = () => {
   const kit = useWalletKit()
 
-  const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
+  const [flaskStatus, setFlaskStatus] = useState<FlaskStatus>()
 
   useEffect(() => {
     flaskAvailable()
-      .then((isAvailable?: boolean) => setFlaskInstalled(!!isAvailable))
+      .then(status => setFlaskStatus(status))
       .catch(e => {
-        setFlaskInstalled(false)
+        setFlaskStatus(undefined)
         console.error(e)
       })
   }, [])
 
   const connectedToSnap = kit.isConnected && kit.currentWallet?.name === 'Sui MetaMask Snap'
+  const showDashboard = flaskStatus && flaskStatus.flaskAvailable && connectedToSnap
 
-  const showWelcomeScreen = !flaskInstalled || !connectedToSnap
   return (
     <Wrapper>
-      {showWelcomeScreen ? (
-        <Welcome flaskInstalled={flaskInstalled} connectedToSnap={connectedToSnap} />
-      ) : (
-        <Dashboard />
-      )}
+      {showDashboard ? <Dashboard /> : <Welcome flaskStatus={flaskStatus} connectedToSnap={connectedToSnap} />}
     </Wrapper>
   )
 }

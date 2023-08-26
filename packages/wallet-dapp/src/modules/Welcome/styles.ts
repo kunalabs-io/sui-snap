@@ -2,7 +2,7 @@ import Button from 'components/Button/Button'
 import styled from 'styled-components'
 
 export const Wrapper = styled.div`
-  max-width: 250px;
+  max-width: 270px;
   text-align: center;
   margin: auto;
   margin-top: 111px;
