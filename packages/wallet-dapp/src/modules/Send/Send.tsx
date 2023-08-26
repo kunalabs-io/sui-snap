@@ -24,7 +24,7 @@ interface Props {
 }
 
 function isValidSuiAddress(value: string): boolean {
-  return /^0x[a-fA-F0-9]+$/.test(value) && value.length - 2 <= 64
+  return /^0x[a-fA-F0-9]+$/.test(value) && value.length - 2 === 64
 }
 
 const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
