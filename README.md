@@ -1,5 +1,15 @@
 # Sui MetaMask Snap
 
+![](./packages/wallet-dapp/public/favicon.svg)
+
+This Snap allows MetaMask users to interact with the Sui blockchain.
+
+## Usage
+
+The Snap can be installed by visiting [https://suisnap.com](https://suisnap.com) or any app that has integrated the Snap (see below for integration instructions).
+
+Since Snaps are not yet supported in the stable version of MetaMask (coming soon), you will need to install [MetaMask Flask](https://metamask.io/flask/) (a developer preview version of MetaMask) to use the Snap. For apps to be able to connect to Flask, you will need to disable MetaMask and any other wallets that might be overriding the `window.ethereum` object.
+
 ## Enable Sui Snap in your app
 
 Since MetaMask Snaps don't support the wallet standard, the Sui Snap wallet needs to be registered manually.
