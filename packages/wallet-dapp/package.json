@@ -2,6 +2,7 @@
   "name": "wallet-ui",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
   "dependencies": {
     "@kunalabs-io/sui-snap-wallet": "workspace:*",
     "@mysten/bcs": "^0.7.3",

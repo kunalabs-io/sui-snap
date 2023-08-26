@@ -20,7 +20,8 @@
   },
   "files": [
     "dist/",
-    "src/"
+    "src/",
+    "LICENSE"
   ],
   "scripts": {
     "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
