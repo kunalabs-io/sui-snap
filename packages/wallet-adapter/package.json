@@ -1,6 +1,6 @@
 {
   "name": "@kunalabs-io/sui-snap-wallet",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "author": "Kuna Labs <build@kunalabs.io>",
   "main": "./dist/index.js",
@@ -23,6 +23,10 @@
     "src/",
     "LICENSE"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kunalabs-io/sui-snap"
+  },
   "scripts": {
     "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
     "build": "pnpm clean && pnpm tsc --build && pnpm tsup ./src/index.ts ./src/types.ts --format esm,cjs --sourcemap",
