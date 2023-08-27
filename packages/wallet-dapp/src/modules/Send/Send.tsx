@@ -17,7 +17,6 @@ import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
-import Typography from 'components/Typography/Typography'
 
 interface Props {
   openInfoScreen: () => void
@@ -215,6 +214,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         label="Recipient"
         style={{ marginBottom: 18 }}
         disabled={isSending}
+        errorMessage={!sendEnabled ? recipientError : undefined}
       />
       <TokenSelect
         label="Asset"
@@ -233,17 +233,8 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         disableMax={!selectedCoin || isSending}
         onMaxClick={handleMaxClick}
         disabled={isSending}
+        errorMessage={!sendEnabled ? amountError : undefined}
       />
-      {!sendEnabled && recipientError && (
-        <Typography variant="description" color="danger" style={{ fontSize: 14, marginLeft: 5 }}>
-          &bull; {recipientError}
-        </Typography>
-      )}
-      {!sendEnabled && amountError && (
-        <Typography variant="description" color="danger" style={{ fontSize: 14, marginLeft: 5, marginTop: 5 }}>
-          &bull; {amountError}
-        </Typography>
-      )}
       <SubmitButtonsContainer>
         <Button variant="outlined" onClick={openInfoScreen} style={{ marginRight: 18 }} disabled={isSending}>
           Reject

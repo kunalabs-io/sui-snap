@@ -7,12 +7,12 @@ export const TextAreaLabel = styled(Typography)`
   color: ${p => p.theme.colors.text.alternative};
 `
 
-export const Textarea = styled.textarea`
+export const Textarea = styled.textarea<{ error: boolean }>`
   overflow: hidden;
   background: #ffffff;
   border-radius: 0;
   border: none;
-  border: 1px solid ${p => p.theme.colors.divider};
+  border: 1px solid ${p => (p.error ? p.theme.colors.text.danger : p.theme.colors.divider)};
   font-size: 14px;
   line-height: 1.5;
   padding: 8px 0;
@@ -25,16 +25,22 @@ export const Textarea = styled.textarea`
   font-size: 14px;
   font-family: ${({ theme }) => theme.typography.family.Roboto} !important;
   &:hover {
-    border-color: ${p => p.theme.colors.divider};
+    border-color: ${p => (p.error ? p.theme.colors.text.danger : p.theme.colors.divider)};
   }
 
   &:focus {
     outline: none;
-    border-color: ${p => p.theme.colors.divider};
+    border-color: ${p => (p.error ? p.theme.colors.text.danger : p.theme.colors.divider)};
   }
 
   &::placeholder {
     color: ${p => p.theme.colors.text.secondary};
     font-size: 14px;
   }
+`
+
+export const ErrorMessage = styled(Typography)`
+  color: ${p => p.theme.colors.text.danger};
+  position: absolute;
+  font-size: 10px;
 `

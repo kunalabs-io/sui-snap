@@ -1,5 +1,5 @@
 import { Stylable } from 'utils/types'
-import { TextAreaLabel, Textarea as StyledTextarea } from './styles'
+import { TextAreaLabel, Textarea as StyledTextarea, ErrorMessage } from './styles'
 
 interface Props extends Stylable {
   value: string
@@ -9,9 +9,11 @@ interface Props extends Stylable {
   rows?: number
   label?: string
   placeholder?: string
+  errorMessage?: string
 }
 
-const Textarea = ({ onChange, textAreaRef, disabled, rows, value, placeholder, label, style }: Props) => {
+const Textarea = ({ onChange, textAreaRef, disabled, rows, value, placeholder, label, style, errorMessage }: Props) => {
+  const error = !!errorMessage
   return (
     <div style={style}>
       {label ? (
@@ -27,7 +29,9 @@ const Textarea = ({ onChange, textAreaRef, disabled, rows, value, placeholder, l
         value={value}
         disabled={disabled}
         style={disabled ? { backgroundColor: '#f2f2f2' } : {}}
+        error={error}
       />
+      {error && <ErrorMessage>{errorMessage}</ErrorMessage>}
     </div>
   )
 }

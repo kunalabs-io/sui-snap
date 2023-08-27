@@ -12,11 +12,11 @@ export const InputLabel = styled(Typography)`
   color: ${p => p.theme.colors.text.alternative};
 `
 
-export const StyledInput = styled.input`
+export const StyledInput = styled.input<{ error: boolean }>`
   font-family: ${({ theme }) => theme.typography.family.Roboto} !important;
   width: 100%;
   border-radius: 6px;
-  border: 1px solid ${p => p.theme.colors.divider};
+  border: 1px solid ${p => (p.error ? p.theme.colors.text.danger : p.theme.colors.divider)};
   font-size: 14px;
   padding: 13px 10px;
   &::placeholder {
@@ -41,4 +41,11 @@ export const MaxLabel = styled(Typography)`
   padding: 3px 13px;
   border-radius: 46px;
   border: 1px solid ${p => p.theme.colors.divider};
+`
+
+export const ErrorMessage = styled(Typography)`
+  color: ${p => p.theme.colors.text.danger};
+  position: absolute;
+  font-size: 10px;
+  bottom: -15px;
 `

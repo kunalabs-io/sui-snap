@@ -1,5 +1,5 @@
 import { Stylable } from 'utils/types'
-import { InputContainer, InputLabel, MaxLabel, MaxLabelContainer, StyledInput } from './styles'
+import { ErrorMessage, InputContainer, InputLabel, MaxLabel, MaxLabelContainer, StyledInput } from './styles'
 
 interface Props extends Stylable {
   inputText: string
@@ -10,6 +10,7 @@ interface Props extends Stylable {
   showMax?: boolean
   disableMax?: boolean
   onMaxClick?: () => void
+  errorMessage?: string
 }
 
 const Input = ({
@@ -22,7 +23,10 @@ const Input = ({
   style,
   onMaxClick,
   disableMax,
+  errorMessage,
 }: Props) => {
+  const error = !!errorMessage
+
   const handleMaxClick = () => {
     if (disableMax || disabled) {
       return
@@ -37,12 +41,19 @@ const Input = ({
         </InputLabel>
       ) : null}
       <div style={{ display: 'flex', position: 'relative' }}>
-        <StyledInput value={inputText} onChange={onChange} placeholder={placeholder} disabled={disabled} />
+        <StyledInput
+          value={inputText}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          error={error}
+        />
         {showMax && (
           <MaxLabelContainer onClick={handleMaxClick} disabled={disableMax}>
             <MaxLabel variant="caption">Max</MaxLabel>
           </MaxLabelContainer>
         )}
+        {error && <ErrorMessage>{errorMessage}</ErrorMessage>}
       </div>
     </InputContainer>
   )
