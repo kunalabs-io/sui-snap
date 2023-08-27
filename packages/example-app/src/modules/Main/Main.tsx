@@ -13,7 +13,9 @@ const Main = () => {
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
   useEffect(() => {
     flaskAvailable()
-      .then(setFlaskInstalled)
+      .then(flaskState => {
+        setFlaskInstalled(flaskState.flaskAvailable)
+      })
       .catch(e => {
         setFlaskInstalled(false)
         console.error(e)
