@@ -17,6 +17,7 @@ import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
+import { CoinStruct } from '@mysten/sui.js/client'
 
 interface Props {
   openInfoScreen: () => void
@@ -123,7 +124,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       coin = txb.splitCoins(txb.gas, [txb.pure(amount.int)])
     } else {
       let acc = 0n
-      const coinIds = []
+      const coins: Array<CoinStruct> = []
       let cursor = undefined
       let hasNextPage = true
       while (hasNextPage && acc < amount.int) {
@@ -134,19 +135,28 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         })
         for (const coin of coinsResult.data) {
           acc += BigInt(coin.balance)
-          coinIds.push(coin.coinObjectId)
-          if (acc >= amount.int) {
-            break
-          }
+          coins.push(coin)
         }
         cursor = coinsResult.nextCursor
         hasNextPage = coinsResult.hasNextPage
       }
 
-      if (acc < amount.int || coinIds.length === 0) {
+      if (acc < amount.int || coins.length === 0) {
         toast.error('Not enough balance')
         setIsSending(false)
         return
+      }
+
+      const coinIds: Array<string> = []
+      let selectedAmount = 0n
+      while (selectedAmount < amount.int) {
+        // select random coin from the array
+        const idx = Math.floor(Math.random() * coins.length)
+        const coin = coins[idx]
+        selectedAmount += BigInt(coin.balance)
+        coinIds.push(coin.coinObjectId)
+        // remove the coin from the array
+        coins.splice(idx, 1)
       }
 
       // merge all coins into a single object
@@ -158,7 +168,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       }
       coin = txb.object(coinIds[0])
       // split the coin to the exact amount if necessary
-      if (acc > amount.int) {
+      if (selectedAmount > amount.int) {
         coin = txb.splitCoins(txb.object(coinIds[0]), [txb.pure(amount.int)])
       }
     }
