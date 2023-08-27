@@ -7,7 +7,7 @@ export interface Props extends Stylable {
   children: ReactNode
   variant?: 'title' | 'subtitle1' | 'subtitle2' | 'description' | 'body' | 'caption' | 'body-description'
   fontWeight?: 'bold' | 'medium' | 'regular'
-  color?: 'primary' | 'secondary'
+  color?: 'primary' | 'secondary' | 'danger'
 }
 
 const Typography = ({

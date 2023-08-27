@@ -33,5 +33,16 @@ export const StyledTypography = styled.div<StyledProps>`
       ? p.theme.typography.weight.Medium
       : p.theme.typography.weight.Regular};
 
-  color: ${p => (p.color === 'primary' ? p.theme.colors.text.primary : p.theme.colors.text.secondary)};
+  color: ${p => {
+    switch (p.color) {
+      case 'primary':
+        return p.theme.colors.text.primary
+      case 'secondary':
+        return p.theme.colors.text.secondary
+      case 'danger':
+        return p.theme.colors.text.danger
+      default:
+        return p.theme.colors.text.primary
+    }
+  }};
 `
