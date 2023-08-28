@@ -70,7 +70,7 @@ const Info = ({ onSendClick }: Props) => {
   })
 
   return (
-    <div>
+    <div style={{ marginTop: 25 }}>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <AddressContainer onClick={handleAddressClick}>
           <AddressTypography variant="body-description" color="primary">
@@ -122,7 +122,7 @@ const Info = ({ onSendClick }: Props) => {
           </IconButtonContainer>
         </a>
       </div>
-      <div style={{ marginTop: 25, marginBottom: 8, textAlign: 'center' }}>
+      <div style={{ marginTop: 25, marginBottom: 8, textAlign: 'center', padding: '0 14px' }}>
         <TokensLabel variant="body">Tokens</TokensLabel>
       </div>
       <div>
@@ -134,6 +134,7 @@ const Info = ({ onSendClick }: Props) => {
         <Accordion
           isOpenInitial
           accordionSummary={`${unrecognizedCoins.length} Unrecognized Token${unrecognizedCoins.length > 1 ? 's' : ''}`}
+          accordionSummaryStyles={{ padding: '0 14px' }}
           accordionDetails={
             <div style={{ marginTop: 10 }}>
               {unrecognizedCoins.map(c => (

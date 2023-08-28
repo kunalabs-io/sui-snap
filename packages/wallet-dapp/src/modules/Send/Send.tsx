@@ -202,8 +202,8 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   }
 
   return (
-    <div style={{ height: 472, position: 'relative' }}>
-      <SendLabel variant="subtitle2" color="primary" fontWeight="medium">
+    <div style={{ height: '468px', position: 'relative' }}>
+      <SendLabel variant="subtitle2" color="primary" fontWeight="medium" style={{ marginTop: 25 }}>
         Send
       </SendLabel>
       <Textarea
@@ -212,7 +212,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         onChange={handleRecipientChange}
         placeholder="Enter Address"
         label="Recipient"
-        style={{ marginBottom: 18 }}
+        style={{ marginBottom: 18, padding: '0 14px' }}
         disabled={isSending}
         errorMessage={!sendEnabled ? recipientError : undefined}
       />
@@ -228,14 +228,14 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         onChange={handleAmountChange}
         placeholder="0.00"
         label="Amount"
-        style={{ marginBottom: 20 }}
+        style={{ marginBottom: 20, padding: '0 14px' }}
         showMax
         disableMax={!selectedCoin || isSending}
         onMaxClick={handleMaxClick}
         disabled={isSending}
         errorMessage={!sendEnabled ? amountError : undefined}
       />
-      <SubmitButtonsContainer>
+      <SubmitButtonsContainer style={{ padding: '0 14px' }}>
         <Button variant="outlined" onClick={openInfoScreen} style={{ marginRight: 18 }} disabled={isSending}>
           Reject
         </Button>

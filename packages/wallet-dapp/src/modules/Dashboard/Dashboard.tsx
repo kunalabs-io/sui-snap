@@ -30,7 +30,6 @@ const Dashboard = () => {
     <div>
       <Header />
       <DashboardContainer>
-        <div style={{ height: 25 }} />
         {currentScreen === 'send' ? (
           <Send openInfoScreen={openInfoScreen} initialCoinInfo={selectedTokenToSend} />
         ) : (

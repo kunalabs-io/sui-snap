@@ -59,7 +59,7 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
   }
 
   return (
-    <div>
+    <div style={{ padding: '0 14px' }}>
       <Label variant="description" fontWeight="medium">
         {label}
       </Label>

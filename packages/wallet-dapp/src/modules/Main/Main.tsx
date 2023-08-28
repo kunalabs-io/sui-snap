@@ -15,7 +15,6 @@ const Wrapper = styled.div`
   height: 553px;
   border: 1px solid ${p => p.theme.colors.divider};
   border-radius: 7px;
-  overflow: auto;
 `
 
 const Main = () => {

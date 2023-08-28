@@ -5,12 +5,13 @@ import { CoinInfo } from 'utils/useWalletBalances'
 import { IconSui } from 'components/Icons/IconSui'
 import { suiTypeArg } from 'utils/const'
 import { formatNumberWithCommas } from 'utils/formatting'
+import { IconMissingImg } from 'components/Icons/IconMissingImg'
 
 const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0;
+  padding: 10px 14px;
   &:hover {
     background-color: ${p => p.theme.colors.background.hover};
   }
@@ -38,9 +39,7 @@ const CoinItem = ({ coinInfo, onCoinClick }: Props) => {
           ) : coinInfo.meta.iconUrl ? (
             <img src={coinInfo.meta.iconUrl} style={{ width: 37, height: 37 }} />
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
-              <circle cx="18.5" cy="18.5" r="18.5" fill="#22A2ED" />
-            </svg>
+            <IconMissingImg />
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 37 }}>

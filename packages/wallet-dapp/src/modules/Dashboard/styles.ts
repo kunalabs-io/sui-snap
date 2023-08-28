@@ -3,7 +3,11 @@ import styled from 'styled-components'
 import Typography from 'components/Typography/Typography'
 
 export const DashboardContainer = styled.div`
-  padding: 0 14px;
+  position: absolute;
+  top: 157px;
+  width: 360px;
+  height: 493px;
+  overflow: auto;
 `
 
 export const AddressContainer = styled.div`
