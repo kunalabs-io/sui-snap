@@ -3,6 +3,7 @@ import { useTheme } from 'styled-components'
 import { OptionWithImage } from './styles'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
+import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 
 export interface Option {
   value: string
@@ -108,6 +109,7 @@ export const SelectToken = ({
   const theme = useTheme()
   return (
     <Select
+      autoFocus
       isDisabled={disabled}
       value={selectedOption}
       onChange={handleChange}
@@ -199,16 +201,9 @@ export const SelectToken = ({
                 ) : data.image ? (
                   <img src={data.image} width={27} height={27} style={{ marginRight: 8 }} />
                 ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="27"
-                    height="27"
-                    viewBox="0 0 27 27"
-                    fill="none"
-                    style={{ marginRight: 8 }}
-                  >
-                    <circle cx="13.5" cy="13.5" r="13.5" fill="#22A2ED" />
-                  </svg>
+                  <div style={{ marginRight: 8 }}>
+                    <IconMissingImgSmall />
+                  </div>
                 )}
               </div>
               <div>

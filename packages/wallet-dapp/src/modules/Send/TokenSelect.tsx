@@ -6,6 +6,7 @@ import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
 import { formatNumberWithCommas } from 'utils/formatting'
 import { FilterOption, Option, SelectToken } from 'components/Select/Select'
+import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 
 interface Props {
   label: string
@@ -69,11 +70,9 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
             <IconSuiSmall />
           ) : coin?.meta.iconUrl ? (
             <img src={coin.meta.iconUrl} style={{ width: 27, height: 27 }} />
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="27" height="27" viewBox="0 0 27 27" fill="none">
-              <circle cx="13.5" cy="13.5" r="13.5" fill="#22A2ED" />
-            </svg>
-          )}
+          ) : typeof coin !== 'undefined' ? (
+            <IconMissingImgSmall />
+          ) : null}
         </div>
         <Typography variant="description" fontWeight="medium" style={{ color: '#24272A' }}>
           {coin?.meta.symbol}
