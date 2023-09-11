@@ -415,6 +415,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         features: [
           'sui:signAndExecuteTransactionBlock',
           'sui:signTransactionBlock',
+          'sui:signPersonalMessage',
           'sui:signMessage',
         ],
       }
