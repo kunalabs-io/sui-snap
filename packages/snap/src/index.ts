@@ -11,7 +11,7 @@ import {
   messageWithIntent,
   toSerializedSignature,
 } from '@mysten/sui.js/cryptography'
-import { toB64 } from '@mysten/sui.js/utils'
+import { parseStructTag, toB64 } from '@mysten/sui.js/utils'
 import {
   DryRunTransactionBlockResponse,
   SuiClient,
@@ -168,6 +168,82 @@ function signMessage(
   }
 }
 
+export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
+  const tag = parseStructTag(typeArg)
+
+  const params = []
+  for (const param of tag.typeParams) {
+    if (typeof param === 'string') {
+      params.push(param)
+    } else {
+      params.push(param.name)
+    }
+  }
+
+  let name = tag.name
+  if (params.length > 0) {
+    name += `<${params.join(', ')}>`
+  }
+
+  return {
+    name: name,
+    symbol: tag.name,
+  }
+}
+
+async function getBalanceChanges(
+  client: SuiClient,
+  dryRunRes: DryRunTransactionBlockResponse,
+  sender: string
+) {
+  const changes: Map<string, bigint> = new Map()
+  for (const change of dryRunRes.balanceChanges) {
+    if (
+      change.owner === 'Immutable' ||
+      !('AddressOwner' in change.owner) ||
+      change.owner.AddressOwner !== sender
+    ) {
+      continue
+    }
+    const value = changes.get(change.coinType) ?? 0n
+    changes.set(change.coinType, value + BigInt(change.amount))
+  }
+
+  const res = await Promise.all(
+    Array.from(changes.entries()).map(async ([coinType, amount]) => {
+      const metadata = await client.getCoinMetadata({ coinType })
+      if (metadata === null) {
+        return {
+          symbol: getTokenSymbolAndNameFromTypeArg(coinType).name,
+          amount: amount.toString(),
+        }
+      } else {
+        const positive = amount >= 0n
+        const abs = positive ? amount : -amount
+        const integral = abs / 10n ** BigInt(metadata.decimals)
+        const fractional = abs % 10n ** BigInt(metadata.decimals)
+
+        let value = positive ? '+' : '-'
+        value += integral.toString()
+        if (fractional > 0n) {
+          value += '.'
+          value += fractional
+            .toString()
+            .padStart(metadata.decimals, '0')
+            .replace(/0+$/, '')
+        }
+
+        return {
+          symbol: metadata.symbol,
+          amount: value,
+        }
+      }
+    })
+  )
+
+  return res
+}
+
 function genTxBlockTransactionsText(txb: TransactionBlock): string[] {
   const txStrings = []
   for (const tx of txb.blockData.transactions) {
@@ -289,9 +365,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const url = await getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
-      input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
+      const sender = keypair.getPublicKey().toSuiAddress()
+      input.transactionBlock.setSender(sender)
 
       let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
+      let balanceChanges = undefined
       const dryRunError = { hasError: false, message: '' }
       try {
         dryRunRes = await client.dryRunTransactionBlock({
@@ -301,6 +379,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           dryRunError.hasError = true
           dryRunError.message = dryRunRes.effects.status.error || ''
         }
+        balanceChanges = await getBalanceChanges(client, dryRunRes, sender)
       } catch (e) {
         dryRunError.hasError = true
         dryRunError.message =
@@ -310,7 +389,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             ? e.message
             : ''
       }
-      if (!dryRunRes || dryRunError.hasError) {
+      if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
         let resultText = 'Dry run failed.'
         if (dryRunError.message) {
           resultText = `Dry run failed with the following error: **${dryRunError.message}**`
@@ -354,6 +433,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             ),
             text('Hint: you can manage your wallet at https://suisnap.com/'),
             divider(),
+            text('**Balance Changes:**'),
+            ...balanceChanges.map(change =>
+              text(`${change.amount} ${change.symbol}`)
+            ),
+            divider(),
             text('**Operations:**'),
             ...genTxBlockTransactionsText(input.transactionBlock).map(
               (str, n) => text(`[${n + 1}] ${str}`)
@@ -389,9 +473,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const url = await getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
-      input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
+      const sender = keypair.getPublicKey().toSuiAddress()
+      input.transactionBlock.setSender(sender)
 
       let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
+      let balanceChanges = undefined
       const dryRunError = { hasError: false, message: '' }
       try {
         dryRunRes = await client.dryRunTransactionBlock({
@@ -401,6 +487,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           dryRunError.hasError = true
           dryRunError.message = dryRunRes.effects.status.error || ''
         }
+        balanceChanges = await getBalanceChanges(client, dryRunRes, sender)
       } catch (e) {
         dryRunError.hasError = true
         dryRunError.message =
@@ -410,7 +497,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             ? e.message
             : ''
       }
-      if (!dryRunRes || dryRunError.hasError) {
+      if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
         let resultText = 'Dry run failed.'
         if (dryRunError.message) {
           resultText = `Dry run failed with the following error: **${dryRunError.message}**`
@@ -449,6 +536,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               `**${origin}** is requesting to **execute** a transaction block on **${input.chain}**.`
             ),
             text('Hint: you can manage your wallet at https://suisnap.com/'),
+            divider(),
+            text('**Balance Changes:**'),
+            ...balanceChanges.map(change =>
+              text(`${change.amount} ${change.symbol}`)
+            ),
             divider(),
             text('**Operations:**'),
             ...genTxBlockTransactionsText(input.transactionBlock).map(
