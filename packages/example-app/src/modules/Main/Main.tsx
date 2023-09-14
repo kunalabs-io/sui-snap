@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import { SuiSnapWallet, flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
+import { SuiSnapWallet, admin_getStoredState, admin_setFullnodeUrl, flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { useWalletKit } from '@mysten/wallet-kit'
+import { SuiClient } from '@mysten/sui.js/client'
 
 const Main = () => {
   const [error, setError] = useState<string | undefined>(undefined)
@@ -121,6 +122,47 @@ const Main = () => {
     }
   }
 
+  const getStoredState = async () => {
+    if (!connectedToSnap) {
+      return
+    }
+
+    try {
+      console.log(await admin_getStoredState(window.ethereum))
+    } catch (e) {
+      if (typeof e === 'string') {
+        setError(e)
+      } else {
+        setError((e as Error).message)
+      }
+    }
+  }
+
+  const overrideTestnetUrl = async () => {
+    if (!connectedToSnap) {
+      return
+    }
+
+    const client = new SuiClient({ url: 'https://fullnode.testnet.sui.io:443' })
+    const version = await client.getRpcApiVersion()
+    console.log(version)
+
+    try {
+      const state = await admin_getStoredState(window.ethereum)
+      const newUrl =
+        state.testnetUrl === 'https://fullnode.testnet.sui.io:443'
+          ? 'http://localhost:9000'
+          : 'https://fullnode.testnet.sui.io:443'
+      await admin_setFullnodeUrl(window.ethereum, 'testnet', newUrl)
+    } catch (e) {
+      if (typeof e === 'string') {
+        setError(e)
+      } else {
+        setError((e as Error).message)
+      }
+    }
+  }
+
   return (
     <Container>
       <Heading>
@@ -200,6 +242,30 @@ const Main = () => {
             button: (
               <Button onClick={signAndExecuteTransactionBlock} disabled={!connectedToSnap}>
                 Sign and execute
+              </Button>
+            ),
+          }}
+          disabled={!connectedToSnap}
+        />
+        <Card
+          content={{
+            title: 'Admin get stored state',
+            description: 'Get the stored state of the Snap.',
+            button: (
+              <Button onClick={getStoredState} disabled={!connectedToSnap}>
+                Get
+              </Button>
+            ),
+          }}
+          disabled={!connectedToSnap}
+        />
+        <Card
+          content={{
+            title: 'Admin override testnet RPC URL',
+            description: 'Override the testnet RPC URL.',
+            button: (
+              <Button onClick={overrideTestnetUrl} disabled={!connectedToSnap}>
+                Override
               </Button>
             ),
           }}

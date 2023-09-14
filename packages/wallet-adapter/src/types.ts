@@ -11,7 +11,17 @@ import {
   WalletAccount,
   WalletIcon,
 } from '@mysten/wallet-standard'
-import { Infer, Describe, array, object, optional, string, boolean } from 'superstruct'
+import {
+  Infer,
+  Describe,
+  array,
+  object,
+  optional,
+  string,
+  boolean,
+  literal,
+  union,
+} from 'superstruct'
 
 export { is, validate } from 'superstruct'
 
@@ -158,3 +168,21 @@ export function deserializeSuiSignAndExecuteTransactionBlockInput(
     requestType: input.requestType as ExecuteTransactionRequestType | undefined,
   }
 }
+
+/* ======== StoredState ======== */
+
+export interface StoredState {
+  mainnetUrl: string
+  testnetUrl: string
+  devnetUrl: string
+  localnetUrl: string
+}
+
+/* ======== SerializedAdminSetFullnodeUrl ======== */
+
+export const SerializedAdminSetFullnodeUrl = object({
+  network: union([literal('mainnet'), literal('testnet'), literal('devnet'), literal('localnet')]),
+  url: string(),
+})
+
+export type SerializedAdminSetFullnodeUrl = Infer<typeof SerializedAdminSetFullnodeUrl>

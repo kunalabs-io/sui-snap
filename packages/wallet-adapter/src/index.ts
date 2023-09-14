@@ -25,7 +25,9 @@ import {
 import { ICON } from './icon'
 import { BaseProvider } from '@metamask/providers'
 import {
+  SerializedAdminSetFullnodeUrl,
   SerializedWalletAccount,
+  StoredState,
   deserializeWalletAccount,
   serializeSuiSignAndExecuteTransactionBlockInput,
   serializeSuiSignMessageInput,
@@ -49,18 +51,53 @@ export function registerSuiSnapWallet(): SuiSnapWallet {
   return wallet
 }
 
-export async function getAccount(provider: BaseProvider): Promise<ReadonlyWalletAccount> {
+export async function getAccounts(provider: BaseProvider): Promise<ReadonlyWalletAccount[]> {
   const res = (await provider.request({
     method: 'wallet_invokeSnap',
     params: {
       snapId: snapOrigin,
       request: {
-        method: 'getAccount',
+        method: 'getAccounts',
       },
     },
-  })) as SerializedWalletAccount
+  })) as [SerializedWalletAccount]
 
-  return new ReadonlyWalletAccount(deserializeWalletAccount(res))
+  return res.map(acc => new ReadonlyWalletAccount(deserializeWalletAccount(acc)))
+}
+
+export async function admin_getStoredState(provider: BaseProvider) {
+  const res = (await provider.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: snapOrigin,
+      request: {
+        method: 'admin_getStoredState',
+      },
+    },
+  })) as StoredState
+
+  return res
+}
+
+export async function admin_setFullnodeUrl(
+  provider: BaseProvider,
+  network: 'mainnet' | 'testnet' | 'devnet' | 'localnet',
+  url: string
+) {
+  const params: SerializedAdminSetFullnodeUrl = {
+    network,
+    url,
+  }
+  await provider.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: snapOrigin,
+      request: {
+        method: 'admin_setFullnodeUrl',
+        params,
+      },
+    },
+  })
 }
 
 export async function signPersonalMessage(
@@ -184,15 +221,15 @@ export async function flaskAvailable(): Promise<FlaskStatus> {
 }
 
 export class SuiSnapWallet implements Wallet {
-  #connecting: boolean
   static NAME = 'Sui MetaMask Snap'
+  #connecting: boolean
   #connected: boolean
 
-  #account: WalletAccount | null = null
+  #accounts: WalletAccount[] | null = null
 
   constructor() {
     this.#connecting = false
-    this.#connected = true
+    this.#connected = false
   }
 
   get version() {
@@ -216,8 +253,8 @@ export class SuiSnapWallet implements Wallet {
   }
 
   get accounts() {
-    if (this.#connected && this.#account) {
-      return [this.#account]
+    if (this.#connected && this.#accounts) {
+      return this.#accounts
     } else {
       return []
     }
@@ -282,7 +319,7 @@ export class SuiSnapWallet implements Wallet {
         },
       })
 
-      this.#account = await getAccount(provider)
+      this.#accounts = await getAccounts(provider)
 
       this.#connecting = false
       this.#connected = true
@@ -300,7 +337,7 @@ export class SuiSnapWallet implements Wallet {
   #disconnect: StandardDisconnectMethod = async () => {
     this.#connecting = false
     this.#connected = false
-    this.#account = null
+    this.#accounts = null
   }
 
   #signPersonalMessage: SuiSignPersonalMessageMethod = async messageInput =>

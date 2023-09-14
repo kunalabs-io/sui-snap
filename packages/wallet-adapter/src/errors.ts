@@ -86,6 +86,23 @@ export class DryRunFailedError extends Error {
   }
 }
 
+export class NonAdminOrigin extends Error {
+  static readonly type = 'NON_ADMIN_ORIGIN'
+  readonly type = UserRejectionError.type
+
+  constructor() {
+    super(NonAdminOrigin.type)
+  }
+
+  static asSimpleError() {
+    return new Error(NonAdminOrigin.type)
+  }
+
+  static isSimpleErrorMessage(message: string) {
+    return message === NonAdminOrigin.type
+  }
+}
+
 function isMetaMaskError(obj: unknown): obj is { message: string } {
   return typeof obj === 'object' && obj !== null && 'message' in obj
 }
@@ -103,6 +120,8 @@ export function convertError(error: unknown) {
     return InvalidRequestMethodError.fromSimpleErrorMessage(error.message)
   } else if (DryRunFailedError.isSimpleErrorMessage(error.message)) {
     return DryRunFailedError.fromSimpleErrorMessage(error.message)
+  } else if (NonAdminOrigin.isSimpleErrorMessage(error.message)) {
+    return new NonAdminOrigin()
   }
 
   return error

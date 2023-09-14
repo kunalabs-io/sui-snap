@@ -15,7 +15,6 @@ import { toB64 } from '@mysten/sui.js/utils'
 import {
   DryRunTransactionBlockResponse,
   SuiClient,
-  getFullnodeUrl,
 } from '@mysten/sui.js/client'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 
@@ -28,28 +27,29 @@ import {
   deserializeSuiSignMessageInput,
   deserializeSuiSignTransactionBlockInput,
   validate,
+  SerializedAdminSetFullnodeUrl,
 } from '@kunalabs-io/sui-snap-wallet/dist/types'
 import {
   DryRunFailedError,
   InvalidParamsError,
   InvalidRequestMethodError,
+  NonAdminOrigin,
   UserRejectionError,
 } from '@kunalabs-io/sui-snap-wallet/dist/errors'
 import { SuiChain } from '@mysten/wallet-standard'
 
-function getFullnodeUrlForChain(chain: SuiChain | `${string}:${string}`) {
-  switch (chain) {
-    case 'sui:mainnet':
-      return getFullnodeUrl('mainnet')
-    case 'sui:testnet':
-      return getFullnodeUrl('testnet')
-    case 'sui:devnet':
-      return getFullnodeUrl('devnet')
-    case 'sui:localnet':
-      return getFullnodeUrl('localnet')
-    default:
-      throw new Error(`Unsupported chain: ${chain}`)
-  }
+type StoredState = {
+  mainnetUrl: string
+  testnetUrl: string
+  devnetUrl: string
+  localnetUrl: string
+}
+
+const DEFAULT_FULLNODE_URLS = {
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  devnet: 'https://fullnode.devnet.sui.io:443',
+  localnet: 'http://127.0.0.1:9000',
 }
 
 /**
@@ -74,6 +74,73 @@ async function deriveKeypair() {
   }
 
   return Ed25519Keypair.fromSecretKey(node.privateKeyBytes)
+}
+
+async function getStoredState(): Promise<StoredState> {
+  const state = await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'get' },
+  })
+
+  if (state === null) {
+    return {
+      mainnetUrl: DEFAULT_FULLNODE_URLS.mainnet,
+      testnetUrl: DEFAULT_FULLNODE_URLS.testnet,
+      devnetUrl: DEFAULT_FULLNODE_URLS.devnet,
+      localnetUrl: DEFAULT_FULLNODE_URLS.localnet,
+    }
+  }
+
+  return state as StoredState
+}
+
+async function getFullnodeUrlForChain(chain: SuiChain | `${string}:${string}`) {
+  const state = await getStoredState()
+  switch (chain) {
+    case 'sui:mainnet':
+      return state.mainnetUrl
+    case 'sui:testnet':
+      return state.testnetUrl
+    case 'sui:devnet':
+      return state.devnetUrl
+    case 'sui:localnet':
+      return state.localnetUrl
+    default:
+      throw new Error(`Unsupported chain: ${chain}`)
+  }
+}
+
+async function updateState(newState: StoredState): Promise<void> {
+  await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'update', newState },
+  })
+}
+
+function isAdminOrigin(origin: string) {
+  return origin === 'https://suisnap.com'
+}
+
+function assertAdminOrigin(origin: string) {
+  if (!isAdminOrigin(origin)) {
+    throw NonAdminOrigin.asSimpleError()
+  }
+}
+
+function serialiedWalletAccountForKeypair(
+  keypair: Ed25519Keypair
+): SerializedWalletAccount {
+  return {
+    address: keypair.getPublicKey().toSuiAddress(),
+    publicKey: keypair.getPublicKey().toBase64(),
+    chains: ['sui:mainnet', 'sui:testnet', 'sui:devnet', 'sui:localnet'],
+    features: [
+      'sui:signAndExecuteTransactionBlock',
+      'sui:signTransactionBlock',
+      'sui:signPersonalMessage',
+      'sui:signMessage',
+    ],
+  }
 }
 
 /**
@@ -219,7 +286,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const input = deserializeSuiSignTransactionBlockInput(serialized)
 
       const keypair = await deriveKeypair()
-      const url = getFullnodeUrlForChain(input.chain)
+      const url = await getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
       input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
@@ -319,7 +386,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         deserializeSuiSignAndExecuteTransactionBlockInput(serialized)
 
       const keypair = await deriveKeypair()
-      const url = getFullnodeUrlForChain(input.chain)
+      const url = await getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
       input.transactionBlock.setSender(keypair.getPublicKey().toSuiAddress())
@@ -405,22 +472,47 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       })
     }
 
-    case 'getAccount': {
+    case 'getAccounts': {
       const keypair = await deriveKeypair()
+      return [serialiedWalletAccountForKeypair(keypair)]
+    }
 
-      const account: SerializedWalletAccount = {
-        address: keypair.getPublicKey().toSuiAddress(),
-        publicKey: keypair.getPublicKey().toBase64(),
-        chains: ['sui:mainnet', 'sui:testnet', 'sui:devnet', 'sui:localnet'],
-        features: [
-          'sui:signAndExecuteTransactionBlock',
-          'sui:signTransactionBlock',
-          'sui:signPersonalMessage',
-          'sui:signMessage',
-        ],
+    case 'admin_getStoredState': {
+      assertAdminOrigin(origin)
+
+      const ret = await getStoredState()
+      return ret
+    }
+
+    case 'admin_setFullnodeUrl': {
+      assertAdminOrigin(origin)
+
+      const [err, params] = validate(
+        request.params,
+        SerializedAdminSetFullnodeUrl
+      )
+      if (err !== undefined) {
+        throw InvalidParamsError.asSimpleError(err.message)
       }
 
-      return account
+      const state = await getStoredState()
+      switch (params.network) {
+        case 'mainnet':
+          state.mainnetUrl = params.url
+          break
+        case 'testnet':
+          state.testnetUrl = params.url
+          break
+        case 'devnet':
+          state.devnetUrl = params.url
+          break
+        case 'localnet':
+          state.localnetUrl = params.url
+          break
+      }
+      await updateState(state)
+
+      return
     }
 
     default:
