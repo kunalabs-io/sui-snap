@@ -288,7 +288,6 @@ function calcTotalGasFeesDec(
   const gasUsed = dryRunRes.effects.gasUsed
   const totalGasFeesInt =
     BigInt(gasUsed.computationCost) +
-    BigInt(gasUsed.nonRefundableStorageFee) +
     BigInt(gasUsed.storageCost) -
     BigInt(gasUsed.storageRebate)
 
