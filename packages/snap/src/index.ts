@@ -3,7 +3,10 @@ import { divider, heading, panel, text } from '@metamask/snaps-ui'
 import { SLIP10Node } from '@metamask/key-tree'
 import { blake2b } from '@noble/hashes/blake2b'
 
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519'
+import {
+  Ed25519Keypair,
+  Ed25519PublicKey,
+} from '@mysten/sui.js/keypairs/ed25519'
 import {
   IntentScope,
   Keypair,
@@ -11,11 +14,8 @@ import {
   messageWithIntent,
   toSerializedSignature,
 } from '@mysten/sui.js/cryptography'
-import { parseStructTag, toB64 } from '@mysten/sui.js/utils'
-import {
-  DryRunTransactionBlockResponse,
-  SuiClient,
-} from '@mysten/sui.js/client'
+import { toB64 } from '@mysten/sui.js/utils'
+import { SuiClient } from '@mysten/sui.js/client'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 
 import {
@@ -33,24 +33,17 @@ import {
   DryRunFailedError,
   InvalidParamsError,
   InvalidRequestMethodError,
-  NonAdminOrigin,
   UserRejectionError,
 } from '@kunalabs-io/sui-snap-wallet/dist/errors'
-import { SuiChain } from '@mysten/wallet-standard'
-
-type StoredState = {
-  mainnetUrl: string
-  testnetUrl: string
-  devnetUrl: string
-  localnetUrl: string
-}
-
-const DEFAULT_FULLNODE_URLS = {
-  mainnet: 'https://fullnode.mainnet.sui.io:443',
-  testnet: 'https://fullnode.testnet.sui.io:443',
-  devnet: 'https://fullnode.devnet.sui.io:443',
-  localnet: 'http://127.0.0.1:9000',
-}
+import {
+  BalanceChange,
+  assertAdminOrigin,
+  buildTransactionBlock,
+  calcTotalGasFeesDec,
+  getFullnodeUrlForChain,
+  getStoredState,
+  updateState,
+} from './util'
 
 /**
  * Derive the Ed25519 keypair from user's MetaMask seed phrase.
@@ -76,63 +69,12 @@ async function deriveKeypair() {
   return Ed25519Keypair.fromSecretKey(node.privateKeyBytes)
 }
 
-async function getStoredState(): Promise<StoredState> {
-  const state = await snap.request({
-    method: 'snap_manageState',
-    params: { operation: 'get' },
-  })
-
-  if (state === null) {
-    return {
-      mainnetUrl: DEFAULT_FULLNODE_URLS.mainnet,
-      testnetUrl: DEFAULT_FULLNODE_URLS.testnet,
-      devnetUrl: DEFAULT_FULLNODE_URLS.devnet,
-      localnetUrl: DEFAULT_FULLNODE_URLS.localnet,
-    }
-  }
-
-  return state as StoredState
-}
-
-async function getFullnodeUrlForChain(chain: SuiChain | `${string}:${string}`) {
-  const state = await getStoredState()
-  switch (chain) {
-    case 'sui:mainnet':
-      return state.mainnetUrl
-    case 'sui:testnet':
-      return state.testnetUrl
-    case 'sui:devnet':
-      return state.devnetUrl
-    case 'sui:localnet':
-      return state.localnetUrl
-    default:
-      throw new Error(`Unsupported chain: ${chain}`)
-  }
-}
-
-async function updateState(newState: StoredState): Promise<void> {
-  await snap.request({
-    method: 'snap_manageState',
-    params: { operation: 'update', newState },
-  })
-}
-
-function isAdminOrigin(origin: string) {
-  return origin === 'https://suisnap.com'
-}
-
-function assertAdminOrigin(origin: string) {
-  if (!isAdminOrigin(origin)) {
-    throw NonAdminOrigin.asSimpleError()
-  }
-}
-
-function serialiedWalletAccountForKeypair(
-  keypair: Ed25519Keypair
+function serializedWalletAccountForPublicKey(
+  publicKey: Ed25519PublicKey
 ): SerializedWalletAccount {
   return {
-    address: keypair.getPublicKey().toSuiAddress(),
-    publicKey: keypair.getPublicKey().toBase64(),
+    address: publicKey.toSuiAddress(),
+    publicKey: publicKey.toBase64(),
     chains: ['sui:mainnet', 'sui:testnet', 'sui:devnet', 'sui:localnet'],
     features: [
       'sui:signAndExecuteTransactionBlock',
@@ -166,82 +108,6 @@ function signMessage(
     bytes: toB64(message),
     signature: serializedSignature,
   }
-}
-
-export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
-  const tag = parseStructTag(typeArg)
-
-  const params = []
-  for (const param of tag.typeParams) {
-    if (typeof param === 'string') {
-      params.push(param)
-    } else {
-      params.push(param.name)
-    }
-  }
-
-  let name = tag.name
-  if (params.length > 0) {
-    name += `<${params.join(', ')}>`
-  }
-
-  return {
-    name: name,
-    symbol: tag.name,
-  }
-}
-
-async function getBalanceChanges(
-  client: SuiClient,
-  dryRunRes: DryRunTransactionBlockResponse,
-  sender: string
-) {
-  const changes: Map<string, bigint> = new Map()
-  for (const change of dryRunRes.balanceChanges) {
-    if (
-      change.owner === 'Immutable' ||
-      !('AddressOwner' in change.owner) ||
-      change.owner.AddressOwner !== sender
-    ) {
-      continue
-    }
-    const value = changes.get(change.coinType) ?? 0n
-    changes.set(change.coinType, value + BigInt(change.amount))
-  }
-
-  const res = await Promise.all(
-    Array.from(changes.entries()).map(async ([coinType, amount]) => {
-      const metadata = await client.getCoinMetadata({ coinType })
-      if (metadata === null) {
-        return {
-          symbol: getTokenSymbolAndNameFromTypeArg(coinType).name,
-          amount: amount.toString(),
-        }
-      } else {
-        const positive = amount >= 0n
-        const abs = positive ? amount : -amount
-        const integral = abs / 10n ** BigInt(metadata.decimals)
-        const fractional = abs % 10n ** BigInt(metadata.decimals)
-
-        let value = positive ? '+' : '-'
-        value += integral.toString()
-        if (fractional > 0n) {
-          value += '.'
-          value += fractional
-            .toString()
-            .padStart(metadata.decimals, '0')
-            .replace(/0+$/, '')
-        }
-
-        return {
-          symbol: metadata.symbol,
-          amount: value,
-        }
-      }
-    })
-  )
-
-  return res
 }
 
 function genTxBlockTransactionsText(txb: TransactionBlock): string[] {
@@ -282,16 +148,28 @@ function genTxBlockTransactionsText(txb: TransactionBlock): string[] {
   return txStrings
 }
 
-function calcTotalGasFeesDec(
-  dryRunRes: DryRunTransactionBlockResponse
-): number {
-  const gasUsed = dryRunRes.effects.gasUsed
-  const totalGasFeesInt =
-    BigInt(gasUsed.computationCost) +
-    BigInt(gasUsed.storageCost) -
-    BigInt(gasUsed.storageRebate)
+function genBalanceChangesSection(
+  balanceChanges: Array<BalanceChange> | undefined
+) {
+  if (!balanceChanges || balanceChanges.length === 0) {
+    return []
+  }
 
-  return Number(totalGasFeesInt.toString()) / 1e9
+  return [
+    divider(),
+    text('**Balance Changes:**'),
+    ...balanceChanges.map(change => text(`${change.amount} ${change.symbol}`)),
+  ]
+}
+
+function genOperationsSection(transactionBlock: TransactionBlock) {
+  return [
+    divider(),
+    text('**Operations:**'),
+    ...genTxBlockTransactionsText(transactionBlock).map((str, n) =>
+      text(`[${n + 1}] ${str}`)
+    ),
+  ]
 }
 
 /**
@@ -361,37 +239,22 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const input = deserializeSuiSignTransactionBlockInput(serialized)
 
       const keypair = await deriveKeypair()
-      const url = await getFullnodeUrlForChain(input.chain)
-      const client = new SuiClient({ url })
-
       const sender = keypair.getPublicKey().toSuiAddress()
-      input.transactionBlock.setSender(sender)
+      const result = await buildTransactionBlock({
+        chain: input.chain,
+        transactionBlock: input.transactionBlock,
+        sender,
+      })
 
-      let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
-      let balanceChanges = undefined
-      const dryRunError = { hasError: false, message: '' }
-      try {
-        dryRunRes = await client.dryRunTransactionBlock({
-          transactionBlock: await input.transactionBlock.build({ client }),
-        })
-        if (dryRunRes.effects.status.status === 'failure') {
-          dryRunError.hasError = true
-          dryRunError.message = dryRunRes.effects.status.error || ''
-        }
-        balanceChanges = await getBalanceChanges(client, dryRunRes, sender)
-      } catch (e) {
-        dryRunError.hasError = true
-        dryRunError.message =
-          typeof e === 'object' &&
-          'message' in e &&
-          typeof e.message === 'string'
-            ? e.message
-            : ''
-      }
-      if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
+      const balanceChangesSection = genBalanceChangesSection(
+        result.balanceChanges
+      )
+      const operationsSection = genOperationsSection(input.transactionBlock)
+
+      if (result.isError) {
         let resultText = 'Dry run failed.'
-        if (dryRunError.message) {
-          resultText = `Dry run failed with the following error: **${dryRunError.message}**`
+        if (result.errorMessage) {
+          resultText = `Dry run failed with the following error: **${result.errorMessage}**`
         }
 
         await snap.request({
@@ -403,23 +266,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               text(
                 `**${origin}** is requesting to **sign** a transaction block for **${input.chain}** but the **dry run failed**.`
               ),
-              divider(),
-              text('**Operations:**'),
-              ...genTxBlockTransactionsText(input.transactionBlock).map(
-                (str, n) => text(`[${n + 1}] ${str}`)
-              ),
+              ...balanceChangesSection,
+              ...operationsSection,
               divider(),
               text(resultText),
             ]),
           },
         })
 
-        throw DryRunFailedError.asSimpleError(dryRunError.message)
+        throw DryRunFailedError.asSimpleError(result.errorMessage)
       }
-
-      const transactionBlockBytes = await input.transactionBlock.build({
-        client,
-      })
 
       const response = await snap.request({
         method: 'snap_dialog',
@@ -431,19 +287,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               `**${origin}** is requesting to **sign** a transaction block for **${input.chain}**.`
             ),
             text('Hint: you can manage your wallet at https://suisnap.com/'),
-            divider(),
-            text('**Balance Changes:**'),
-            ...balanceChanges.map(change =>
-              text(`${change.amount} ${change.symbol}`)
-            ),
-            divider(),
-            text('**Operations:**'),
-            ...genTxBlockTransactionsText(input.transactionBlock).map(
-              (str, n) => text(`[${n + 1}] ${str}`)
-            ),
+            ...balanceChangesSection,
+            ...operationsSection,
             divider(),
             text(
-              `Estimated gas fees: **${calcTotalGasFeesDec(dryRunRes)} SUI**`
+              `Estimated gas fees: **${calcTotalGasFeesDec(
+                result.dryRunRes!
+              )} SUI**`
             ),
           ]),
         },
@@ -453,7 +303,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw UserRejectionError.asSimpleError()
       }
 
-      return await keypair.signTransactionBlock(transactionBlockBytes)
+      return await keypair.signTransactionBlock(result.transactionBlockBytes!)
     }
 
     case 'signAndExecuteTransactionBlock': {
@@ -468,38 +318,26 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const input =
         deserializeSuiSignAndExecuteTransactionBlockInput(serialized)
 
-      const keypair = await deriveKeypair()
       const url = await getFullnodeUrlForChain(input.chain)
       const client = new SuiClient({ url })
 
+      const keypair = await deriveKeypair()
       const sender = keypair.getPublicKey().toSuiAddress()
-      input.transactionBlock.setSender(sender)
+      const result = await buildTransactionBlock({
+        chain: input.chain,
+        transactionBlock: input.transactionBlock,
+        sender,
+      })
 
-      let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
-      let balanceChanges = undefined
-      const dryRunError = { hasError: false, message: '' }
-      try {
-        dryRunRes = await client.dryRunTransactionBlock({
-          transactionBlock: await input.transactionBlock.build({ client }),
-        })
-        if (dryRunRes.effects.status.status === 'failure') {
-          dryRunError.hasError = true
-          dryRunError.message = dryRunRes.effects.status.error || ''
-        }
-        balanceChanges = await getBalanceChanges(client, dryRunRes, sender)
-      } catch (e) {
-        dryRunError.hasError = true
-        dryRunError.message =
-          typeof e === 'object' &&
-          'message' in e &&
-          typeof e.message === 'string'
-            ? e.message
-            : ''
-      }
-      if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
+      const balanceChangesSection = genBalanceChangesSection(
+        result.balanceChanges
+      )
+      const operationsSection = genOperationsSection(input.transactionBlock)
+
+      if (result.isError) {
         let resultText = 'Dry run failed.'
-        if (dryRunError.message) {
-          resultText = `Dry run failed with the following error: **${dryRunError.message}**`
+        if (result.errorMessage) {
+          resultText = `Dry run failed with the following error: **${result.errorMessage}**`
         }
 
         await snap.request({
@@ -511,18 +349,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               text(
                 `**${origin}** is requesting to **execute** a transaction block on **${input.chain}** but the **dry run failed**.`
               ),
-              divider(),
-              text('**Operations:**'),
-              ...genTxBlockTransactionsText(input.transactionBlock).map(
-                (str, n) => text(`[${n + 1}] ${str}`)
-              ),
+              ...balanceChangesSection,
+              ...operationsSection,
               divider(),
               text(resultText),
             ]),
           },
         })
 
-        throw DryRunFailedError.asSimpleError(dryRunError.message)
+        throw DryRunFailedError.asSimpleError(result.errorMessage)
       }
 
       const response = await snap.request({
@@ -535,19 +370,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               `**${origin}** is requesting to **execute** a transaction block on **${input.chain}**.`
             ),
             text('Hint: you can manage your wallet at https://suisnap.com/'),
-            divider(),
-            text('**Balance Changes:**'),
-            ...balanceChanges.map(change =>
-              text(`${change.amount} ${change.symbol}`)
-            ),
-            divider(),
-            text('**Operations:**'),
-            ...genTxBlockTransactionsText(input.transactionBlock).map(
-              (str, n) => text(`[${n + 1}] ${str}`)
-            ),
+            ...balanceChangesSection,
+            ...operationsSection,
             divider(),
             text(
-              `Estimated gas fees: **${calcTotalGasFeesDec(dryRunRes)} SUI**`
+              `Estimated gas fees: **${calcTotalGasFeesDec(
+                result.dryRunRes!
+              )} SUI**`
             ),
           ]),
         },
@@ -565,7 +394,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
     case 'getAccounts': {
       const keypair = await deriveKeypair()
-      return [serialiedWalletAccountForKeypair(keypair)]
+      return [serializedWalletAccountForPublicKey(keypair.getPublicKey())]
     }
 
     case 'admin_getStoredState': {
