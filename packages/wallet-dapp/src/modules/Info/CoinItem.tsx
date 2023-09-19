@@ -6,6 +6,7 @@ import { IconSui } from 'components/Icons/IconSui'
 import { suiTypeArg } from 'utils/const'
 import { formatNumberWithCommas } from 'utils/formatting'
 import { IconMissingImg } from 'components/Icons/IconMissingImg'
+import ImageWithFallback from 'components/ImageWithFallback'
 
 const Container = styled.div`
   display: flex;
@@ -33,11 +34,11 @@ const CoinItem = ({ coinInfo, onCoinClick }: Props) => {
   return (
     <Container onClick={() => onCoinClick(coinInfo)}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ marginRight: 10 }}>
+        <div style={{ marginRight: 10, display: 'flex' }}>
           {coinInfo.meta.typeArg === suiTypeArg ? (
             <IconSui />
           ) : coinInfo.meta.iconUrl ? (
-            <img src={coinInfo.meta.iconUrl} style={{ width: 37, height: 37 }} />
+            <ImageWithFallback src={coinInfo.meta.iconUrl} style={{ width: 37, height: 37 }} alt={coinInfo.meta.name} />
           ) : (
             <IconMissingImg />
           )}

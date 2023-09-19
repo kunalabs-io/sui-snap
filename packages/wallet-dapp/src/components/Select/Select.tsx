@@ -4,6 +4,7 @@ import { OptionWithImage } from './styles'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
 import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
+import ImageWithFallback from 'components/ImageWithFallback'
 
 export interface Option {
   value: string
@@ -199,7 +200,13 @@ export const SelectToken = ({
                     <IconSuiSmall />
                   </div>
                 ) : data.image ? (
-                  <img src={data.image} width={27} height={27} style={{ marginRight: 8 }} />
+                  <ImageWithFallback
+                    src={data.image}
+                    isSmallPlaceholder
+                    style={{ width: 27, height: 27, marginRight: 8 }}
+                    placeholderStyles={{ marginRight: 8 }}
+                    alt={data.label}
+                  />
                 ) : (
                   <div style={{ marginRight: 8 }}>
                     <IconMissingImgSmall />
