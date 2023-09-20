@@ -16,10 +16,23 @@ export const StyledTypography = styled(Typography)`
   margin-top: 6px;
 `
 
-export const TokensLabel = styled(Typography)`
+export const TokensLabel = styled(Typography)<{ isActive: boolean }>`
   padding-bottom: 6px;
+  padding-right: 24px;
+  padding-left: 24px;
   color: ${p => p.theme.colors.button.primary};
-  border-bottom: 1px solid ${p => p.theme.colors.button.primary};
+  border-bottom: ${p => p.isActive && `1px solid ${p.theme.colors.button.primary}`};
+  cursor: pointer;
+`
+
+export const Tabs = styled.div`
+  margin-top: 25px;
+  margin-bottom: 8px;
+  text-align: center;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `
 
 export const AddressContainer = styled.div`

@@ -1,28 +1,37 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useWalletKit } from '@mysten/wallet-kit'
 
 import IconButton from 'components/IconButton/IconButton'
 import { IconExplore } from 'components/Icons/IconExplore'
 import { IconSend } from 'components/Icons/IconSend'
 import Typography from 'components/Typography/Typography'
-import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, TokensLabel } from './styles'
-import CoinItem from './CoinItem'
+import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypography, Tabs, TokensLabel } from './styles'
 import { IconCopy } from 'components/Icons/IconCopy'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
 import { RECOGNIZED_TOKENS_PACKAGE_IDS, WALLET_BALANCES_REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
 import { getPackageIdFromTypeArg } from 'utils/helpers'
-import Accordion from 'components/Accordion/Accordion'
 import { NETWORK_MAINNET, useNetwork } from 'utils/useNetworkProvider'
 import { toast } from 'react-toastify'
 import { formatNumberWithCommas } from 'utils/formatting'
 import Spinner from 'components/Spinner/Spinner'
+import { Tokens } from './Tokens'
+import { Nft } from './Nft'
+import { Activity } from './Activity'
 
 interface Props {
   onSendClick: (selectedCoin?: CoinInfo) => void
 }
 
+enum Tab {
+  Tokens = 'tokens',
+  Nft = 'nft',
+  Activity = 'activity',
+}
+
 const Info = ({ onSendClick }: Props) => {
+  const [activeTab, setActiveTab] = useState(Tab.Tokens)
+
   const { currentAccount } = useWalletKit()
   const { network } = useNetwork()
 
@@ -41,6 +50,10 @@ const Info = ({ onSendClick }: Props) => {
     }
     onSendClick()
   }, [infos, onSendClick])
+
+  const handleTabChange = useCallback((tab: Tab) => {
+    setActiveTab(tab)
+  }, [])
 
   if (isLoadingWalletBalances || infos === undefined) {
     return <Spinner />
@@ -122,28 +135,28 @@ const Info = ({ onSendClick }: Props) => {
           </IconButtonContainer>
         </a>
       </div>
-      <div style={{ marginTop: 25, marginBottom: 8, textAlign: 'center', padding: '0 14px' }}>
-        <TokensLabel variant="body">Tokens</TokensLabel>
-      </div>
-      <div>
-        {recognizedCoins.map(c => (
-          <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onSendClick} />
-        ))}
-      </div>
-      {unrecognizedCoins.length ? (
-        <Accordion
-          isOpenInitial
-          accordionSummary={`${unrecognizedCoins.length} Unrecognized Token${unrecognizedCoins.length > 1 ? 's' : ''}`}
-          accordionSummaryStyles={{ padding: '0 14px' }}
-          accordionDetails={
-            <div style={{ marginTop: 10 }}>
-              {unrecognizedCoins.map(c => (
-                <CoinItem coinInfo={c} key={c.meta.typeArg} onCoinClick={onSendClick} />
-              ))}
-            </div>
-          }
-        />
-      ) : null}
+      <Tabs>
+        <div onClick={() => handleTabChange(Tab.Tokens)}>
+          <TokensLabel variant="body" isActive={activeTab === Tab.Tokens}>
+            Tokens
+          </TokensLabel>
+        </div>
+        <div onClick={() => handleTabChange(Tab.Nft)}>
+          <TokensLabel variant="body" isActive={activeTab === Tab.Nft}>
+            NFT
+          </TokensLabel>
+        </div>
+        <div onClick={() => handleTabChange(Tab.Activity)}>
+          <TokensLabel variant="body" isActive={activeTab === Tab.Activity}>
+            Activity
+          </TokensLabel>
+        </div>
+      </Tabs>
+      {activeTab === Tab.Tokens && (
+        <Tokens unrecognizedCoins={unrecognizedCoins} recognizedCoins={recognizedCoins} onSendClick={onSendClick} />
+      )}
+      {activeTab === Tab.Nft && <Nft />}
+      {activeTab === Tab.Activity && <Activity />}
     </div>
   )
 }
