@@ -38,7 +38,7 @@ import { convertError } from './errors'
 export * from './types'
 export * from './errors'
 
-export const snapOrigin = 'local:http://localhost:8080'
+export const snapOrigin = 'npm:@kunalabs-io/sui-metamask-snap'
 
 export function registerSuiSnapWallet(): SuiSnapWallet {
   const wallets = getWallets()
