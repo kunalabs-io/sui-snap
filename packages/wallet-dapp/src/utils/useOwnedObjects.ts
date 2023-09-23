@@ -10,6 +10,8 @@ interface OwnedObjectsInfos {
   ownedObjects?: SuiObjectResponse[]
 }
 
+const COIN_CONTENT = '0x2::coin::Coin'
+
 export const useOwnedObjects = (options?: { refetchInterval: number }): OwnedObjectsInfos => {
   const suiClient = useSuiClientProvider()
   const { currentAccount } = useWalletKit()
@@ -37,6 +39,6 @@ export const useOwnedObjects = (options?: { refetchInterval: number }): OwnedObj
 
   return {
     isLoading,
-    ownedObjects: ownedObjectsRes.data?.data,
+    ownedObjects: ownedObjectsRes.data?.data.filter(o => !o.data?.type?.includes(COIN_CONTENT)),
   }
 }

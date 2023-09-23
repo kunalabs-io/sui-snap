@@ -7,6 +7,7 @@ import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import { useOwnedObjects } from 'utils/useOwnedObjects'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
+import { useNetwork } from 'utils/useNetworkProvider'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -15,6 +16,7 @@ const Container = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  padding-bottom: 24px;
 `
 
 const EmptyPlaceholder = styled.div`
@@ -83,6 +85,7 @@ const NftName = styled(Typography)`
   bottom: 16px;
   text-align: center;
 `
+
 const NftType = styled(Typography)`
   width: 110px;
   left: 50%;
@@ -92,9 +95,18 @@ const NftType = styled(Typography)`
   overflow: hidden;
   text-overflow: ellipsis;
   top: inherit !important;
+  display: block;
+  position: absolute;
 `
+interface NftImageProps {
+  imgSrc?: string
+  objectId?: string
+  name?: string
+  address: string
+  network: string
+}
 
-const NftImage = ({ imgSrc, objectId, name }: { imgSrc?: string; objectId?: string; name?: string }) => {
+const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) => {
   const [showPlaceholder, setShowPlaceholder] = useState(false)
 
   useEffect(() => setShowPlaceholder(!imgSrc), [imgSrc])
@@ -103,31 +115,43 @@ const NftImage = ({ imgSrc, objectId, name }: { imgSrc?: string; objectId?: stri
 
   const handleImageLoadError = useCallback(() => setShowPlaceholder(true), [])
 
-  return showPlaceholder ? (
-    <EmptyPlaceholder key={objectId}>
-      <PlaceholderWrapper>
-        <IconNftPlaceholder />
-      </PlaceholderWrapper>
-      {name ? (
-        <NftName variant="caption" className="hide">
-          {name}
-        </NftName>
-      ) : null}
-    </EmptyPlaceholder>
-  ) : (
-    <ImgWrapper>
-      <StyledNftImage key={objectId} onLoad={handleImageLoaded} onError={handleImageLoadError} src={imgSrc} />
-      {name ? (
-        <NftName variant="caption" className="hide">
-          {name}
-        </NftName>
-      ) : null}
-    </ImgWrapper>
+  return (
+    <a
+      key={objectId}
+      href={`https://suiexplorer.com/object/${address}?network=${network}`}
+      target="_blank"
+      rel="noreferrer"
+      style={{ textDecoration: 'none' }}
+    >
+      {showPlaceholder ? (
+        <EmptyPlaceholder key={objectId}>
+          <PlaceholderWrapper>
+            <IconNftPlaceholder />
+          </PlaceholderWrapper>
+          {name ? (
+            <NftName variant="caption" className="hide">
+              {name}
+            </NftName>
+          ) : null}
+        </EmptyPlaceholder>
+      ) : (
+        <ImgWrapper>
+          <StyledNftImage key={objectId} onLoad={handleImageLoaded} onError={handleImageLoadError} src={imgSrc} />
+          {name ? (
+            <NftName variant="caption" className="hide">
+              {name}
+            </NftName>
+          ) : null}
+        </ImgWrapper>
+      )}
+    </a>
   )
 }
 
 export const Nft = () => {
   const { isLoading, ownedObjects } = useOwnedObjects({ refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL })
+
+  const { network } = useNetwork()
 
   if (isLoading) {
     return <Spinner style={{ marginTop: 48 }} />
@@ -140,29 +164,48 @@ export const Nft = () => {
   return (
     <Container>
       {ownedObjects.map(o => {
-        if (o.data?.display?.data === null) {
-          const type = o.data?.type || ''
-          const address = type ? type.substring(0, type.indexOf('::')) : ''
+        if (o.error) {
+          return null
+        }
 
-          console.log(type.substring(type.indexOf('::')))
+        const type = o.data?.type || ''
+        const address = type ? type.substring(0, type.indexOf('::')) : ''
+        if (o.data?.display?.data === null) {
           return (
-            <EmptyPlaceholder key={o.data?.objectId}>
-              <PlaceholderWrapper>
-                <IconNftPlaceholder />
-              </PlaceholderWrapper>
-              <NftType variant="caption" className="hide">
-                <div>{ellipsizeTokenAddress(address)}</div>
-                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {type.substring(type.indexOf('::'))}
-                </div>
-              </NftType>
-            </EmptyPlaceholder>
+            <a
+              key={o.data?.objectId}
+              href={`https://suiexplorer.com/object/${address}?network=${network}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ textDecoration: 'none' }}
+            >
+              <EmptyPlaceholder>
+                <PlaceholderWrapper>
+                  <IconNftPlaceholder />
+                </PlaceholderWrapper>
+                <NftType variant="caption">
+                  <div>{ellipsizeTokenAddress(address)}</div>
+                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {type.substring(type.indexOf('::'))}
+                  </div>
+                </NftType>
+              </EmptyPlaceholder>
+            </a>
           )
         }
         const imgUrl = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data] as string
         const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data] as string
 
-        return <NftImage key={o.data?.objectId} objectId={o.data?.objectId} imgSrc={imgUrl} name={name} />
+        return (
+          <NftImage
+            key={o.data?.objectId}
+            objectId={o.data?.objectId}
+            imgSrc={imgUrl}
+            name={name}
+            address={address}
+            network={network}
+          />
+        )
       })}
     </Container>
   )
