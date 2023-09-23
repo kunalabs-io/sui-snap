@@ -3,7 +3,6 @@ import styled from 'styled-components'
 
 import { IconNftPlaceholder } from 'components/Icons/IconNftPlaceholder'
 import Spinner from 'components/Spinner'
-import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import { useOwnedObjects } from 'utils/useOwnedObjects'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
@@ -16,7 +15,6 @@ const Container = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding-bottom: 24px;
 `
 
 const EmptyPlaceholder = styled.div`
@@ -98,6 +96,14 @@ const NftType = styled(Typography)`
   display: block;
   position: absolute;
 `
+
+const LoadMore = styled.div`
+  text-align: center;
+  padding: 16px;
+  cursor: pointer;
+  color: ${p => p.theme.colors.button.primary};
+`
+
 interface NftImageProps {
   imgSrc?: string
   objectId?: string
@@ -149,11 +155,17 @@ const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) =
 }
 
 export const Nft = () => {
-  const { isLoading, ownedObjects } = useOwnedObjects({ refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL })
+  const { isInitialFetch, isLoading, ownedObjects, hasNextPage, onPageLoad, nextCursor } = useOwnedObjects()
 
   const { network } = useNetwork()
 
-  if (isLoading) {
+  const handlePageLoad = useCallback(() => {
+    if (hasNextPage && nextCursor) {
+      onPageLoad(nextCursor)
+    }
+  }, [onPageLoad, nextCursor, hasNextPage])
+
+  if (isLoading && isInitialFetch) {
     return <Spinner style={{ marginTop: 48 }} />
   }
 
@@ -162,51 +174,60 @@ export const Nft = () => {
   }
 
   return (
-    <Container>
-      {ownedObjects.map(o => {
-        if (o.error) {
-          return null
-        }
+    <>
+      <Container>
+        {ownedObjects.map(o => {
+          if (o.error) {
+            return null
+          }
 
-        const type = o.data?.type || ''
-        const address = type ? type.substring(0, type.indexOf('::')) : ''
-        if (o.data?.display?.data === null) {
+          const type = o.data?.type || ''
+          const address = type ? type.substring(0, type.indexOf('::')) : ''
+          if (o.data?.display?.data === null) {
+            return (
+              <a
+                key={o.data?.objectId}
+                href={`https://suiexplorer.com/object/${address}?network=${network}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                <EmptyPlaceholder>
+                  <PlaceholderWrapper>
+                    <IconNftPlaceholder />
+                  </PlaceholderWrapper>
+                  <NftType variant="caption">
+                    <div>{ellipsizeTokenAddress(address)}</div>
+                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {type.substring(type.indexOf('::'))}
+                    </div>
+                  </NftType>
+                </EmptyPlaceholder>
+              </a>
+            )
+          }
+          const imgUrl = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data] as string
+          const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data] as string
+
           return (
-            <a
+            <NftImage
               key={o.data?.objectId}
-              href={`https://suiexplorer.com/object/${address}?network=${network}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ textDecoration: 'none' }}
-            >
-              <EmptyPlaceholder>
-                <PlaceholderWrapper>
-                  <IconNftPlaceholder />
-                </PlaceholderWrapper>
-                <NftType variant="caption">
-                  <div>{ellipsizeTokenAddress(address)}</div>
-                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {type.substring(type.indexOf('::'))}
-                  </div>
-                </NftType>
-              </EmptyPlaceholder>
-            </a>
+              objectId={o.data?.objectId}
+              imgSrc={imgUrl}
+              name={name}
+              address={address}
+              network={network}
+            />
           )
-        }
-        const imgUrl = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data] as string
-        const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data] as string
-
-        return (
-          <NftImage
-            key={o.data?.objectId}
-            objectId={o.data?.objectId}
-            imgSrc={imgUrl}
-            name={name}
-            address={address}
-            network={network}
-          />
-        )
-      })}
-    </Container>
+        })}
+      </Container>
+      {hasNextPage ? (
+        <LoadMore onClick={handlePageLoad}>Load more</LoadMore>
+      ) : isLoading ? (
+        <Spinner style={{ marginTop: 16, width: 32, height: 32, marginLeft: 'calc(50% - 16px)' }} />
+      ) : (
+        <div style={{ height: 51 }} />
+      )}
+    </>
   )
 }
