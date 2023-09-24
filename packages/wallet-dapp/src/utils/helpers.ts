@@ -23,8 +23,15 @@ export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
   }
 }
 
-export const ellipsizeTokenAddress = (tokenAddress: string) =>
-  `${tokenAddress.substring(0, 5)}...${tokenAddress.substring(tokenAddress.length - 5, tokenAddress.length)}`
+export const ellipsizeTokenAddress = (tokenAddress: string, charStartEndNum = 5) => {
+  if (tokenAddress.length <= charStartEndNum * 2) {
+    return tokenAddress
+  }
+  return `${tokenAddress.substring(0, charStartEndNum)}...${tokenAddress.substring(
+    tokenAddress.length - charStartEndNum,
+    tokenAddress.length
+  )}`
+}
 
 export const getPackageIdFromTypeArg = (typeArg: string, separator = '::') => {
   const firstIndexOfSeparator = typeArg.indexOf(separator)
