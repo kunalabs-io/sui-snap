@@ -8,13 +8,12 @@ import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
 
-const Container = styled.div`
+const Container = styled.div<{ isScrollable: boolean }>`
   padding-top: 16px;
   padding-left: 24px;
   padding-right: 24px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  ${p => (p.isScrollable ? `flex-wrap: wrap; gap: 8px` : `justify-content: space-between`)}
 `
 
 const EmptyPlaceholder = styled.div`
@@ -35,7 +34,9 @@ const EmptyPlaceholder = styled.div`
       .hide {
         display: block;
         position: absolute;
-        top: 30px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }
@@ -61,6 +62,9 @@ const StyledNftImage = styled.img`
   &:hover + .hide {
     display: block;
     position: absolute;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `
 
@@ -75,7 +79,7 @@ const ImgWrapper = styled.div`
 const NftName = styled(Typography)`
   background-color: rgba(255, 255, 255, 0.95);
   border: 1px solid #d6d9dc;
-  padding: 4px 0;
+  padding: 4px;
   border-radius: 4px;
   width: 110px;
   left: 50%;
@@ -167,7 +171,13 @@ const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) =
 }
 
 export const Nft = () => {
-  const { isInitialFetch, isLoading, ownedObjects, hasNextPage, onPageLoad, nextCursor } = useOwnedObjects()
+  const { isInitialFetch, isLoading, ownedObjects, hasNextPage, onPageLoad, nextCursor } = useOwnedObjects({
+    MatchNone: [
+      {
+        StructType: '0x2::coin::Coin',
+      },
+    ],
+  })
 
   const { network } = useNetwork()
 
@@ -191,7 +201,7 @@ export const Nft = () => {
 
   return (
     <>
-      <Container>
+      <Container isScrollable={ownedObjects.length > 2}>
         {ownedObjects.map(o => {
           if (o.error) {
             return null

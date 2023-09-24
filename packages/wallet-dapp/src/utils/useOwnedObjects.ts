@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useWalletKit } from '@mysten/wallet-kit'
-import { SuiObjectResponse } from '@mysten/sui.js'
+import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui.js'
 
 import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
@@ -17,7 +17,7 @@ interface OwnedObjectsInfos {
 
 const PAGE_LIMIT = 50
 
-export const useOwnedObjects = (): OwnedObjectsInfos => {
+export const useOwnedObjects = (filter?: SuiObjectDataFilter | null | undefined): OwnedObjectsInfos => {
   const [cursor, setCursor] = useState<string | null>(null)
   const [ownedObjects, setOwnedObjects] = useState<SuiObjectResponse[]>()
 
@@ -38,13 +38,7 @@ export const useOwnedObjects = (): OwnedObjectsInfos => {
         options: { showType: true, showDisplay: true },
         limit: PAGE_LIMIT,
         cursor,
-        filter: {
-          MatchNone: [
-            {
-              StructType: '0x2::coin::Coin',
-            },
-          ],
-        },
+        filter,
       })
 
       setOwnedObjects(ownedObjects ? ownedObjects.concat(fetchedOwnedObjects.data) : fetchedOwnedObjects.data)
