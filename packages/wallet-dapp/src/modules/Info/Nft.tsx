@@ -104,6 +104,18 @@ const LoadMore = styled.div`
   color: ${p => p.theme.colors.button.primary};
 `
 
+const NftTextOverflow = styled.div`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const EmptyList = styled.div`
+  padding: 24px;
+  text-align: center;
+  color: ${p => p.theme.colors.text.secondary};
+`
+
 interface NftImageProps {
   imgSrc?: string
   objectId?: string
@@ -173,6 +185,10 @@ export const Nft = () => {
     return null
   }
 
+  if (ownedObjects && ownedObjects.length === 0) {
+    return <EmptyList>The list is currently empty.</EmptyList>
+  }
+
   return (
     <>
       <Container>
@@ -197,10 +213,8 @@ export const Nft = () => {
                     <IconNftPlaceholder />
                   </PlaceholderWrapper>
                   <NftType variant="caption">
-                    <div>{ellipsizeTokenAddress(address)}</div>
-                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {type.substring(type.indexOf('::'))}
-                    </div>
+                    <NftTextOverflow>{ellipsizeTokenAddress(address)}</NftTextOverflow>
+                    <NftTextOverflow>{type.substring(type.indexOf('::'))}</NftTextOverflow>
                   </NftType>
                 </EmptyPlaceholder>
               </a>
