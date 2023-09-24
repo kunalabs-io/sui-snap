@@ -7,6 +7,7 @@ import { useOwnedObjects } from 'utils/useOwnedObjects'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
+import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 
 const Container = styled.div<{ isScrollable: boolean }>`
   padding-top: 16px;
@@ -171,21 +172,24 @@ const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) =
 }
 
 export const Nft = () => {
-  const { isInitialFetch, isLoading, ownedObjects, hasNextPage, onPageLoad, nextCursor } = useOwnedObjects({
-    MatchNone: [
-      {
-        StructType: '0x2::coin::Coin',
-      },
-    ],
+  const { isInitialFetch, isLoading, ownedObjects, hasNextPage, loadMore } = useOwnedObjects({
+    filter: {
+      MatchNone: [
+        {
+          StructType: '0x2::coin::Coin',
+        },
+      ],
+    },
+    refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
   const { network } = useNetwork()
 
   const handlePageLoad = useCallback(() => {
-    if (hasNextPage && nextCursor) {
-      onPageLoad(nextCursor)
+    if (hasNextPage) {
+      loadMore()
     }
-  }, [onPageLoad, nextCursor, hasNextPage])
+  }, [loadMore, hasNextPage])
 
   if (isLoading && isInitialFetch) {
     return <Spinner style={{ marginTop: 48 }} />
