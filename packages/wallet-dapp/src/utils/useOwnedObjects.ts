@@ -33,10 +33,10 @@ export const useOwnedObjects = (options?: {
     setCurrentCursor(null)
     setNextCursor(null)
     setOwnedObjects(undefined)
-  }, [network])
+  }, [network, currentAccount?.address])
 
   const ownedObjectsRes = useQuery({
-    queryKey: ['owned-objects', currentCursor || '', currentAccount?.address, network],
+    queryKey: ['owned-objects', currentCursor || '', currentAccount?.address, options?.filter || '', network],
     enabled: !!currentAccount?.address,
     queryFn: async () => {
       if (!currentAccount?.address) {
@@ -74,7 +74,7 @@ export const useOwnedObjects = (options?: {
       setNextCursor(fetchedOwnedObjects.nextCursor || null)
       return fetchedOwnedObjects
     },
-    refetchInterval: options?.refetchInterval,
+    refetchInterval: currentCursor ? undefined : options?.refetchInterval,
   })
 
   const loadMore = useCallback(() => {
