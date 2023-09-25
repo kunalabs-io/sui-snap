@@ -88,14 +88,14 @@ function serializedWalletAccountForPublicKey(
 /**
  * Sign a message using the keypair, with the `PersonalMessage` intent.
  */
-function signMessage(
+async function signMessage(
   keypair: Keypair,
   message: Uint8Array
-): SignatureWithBytes {
+): Promise<SignatureWithBytes> {
   const data = messageWithIntent(IntentScope.PersonalMessage, message)
   const pubkey = keypair.getPublicKey()
   const digest = blake2b(data, { dkLen: 32 })
-  const signature = keypair.signData(digest)
+  const signature = await keypair.sign(digest)
   const signatureScheme = keypair.getKeyScheme()
 
   const serializedSignature = toSerializedSignature({
@@ -225,7 +225,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw UserRejectionError.asSimpleError()
       }
 
-      return signMessage(keypair, input.message)
+      return await signMessage(keypair, input.message)
     }
 
     case 'signTransactionBlock': {
