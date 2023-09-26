@@ -155,7 +155,7 @@ export async function getBalanceChanges(
   return res
 }
 
-function getErrorMessage(e: unknown): string {
+function getErrorMessage(e: unknown): string | null {
   if (
     typeof e === 'object' &&
     e !== null &&
@@ -164,7 +164,7 @@ function getErrorMessage(e: unknown): string {
   ) {
     return e.message
   }
-  return ''
+  return null
 }
 
 export interface BuildTransactionBlockInput {
@@ -203,7 +203,7 @@ export async function buildTransactionBlock(
     balanceChanges = await getBalanceChanges(client, dryRunRes, input.sender)
   } catch (e: unknown) {
     dryRunError.hasError = true
-    dryRunError.message = getErrorMessage(e)
+    dryRunError.message = getErrorMessage(e) ?? 'Unexpected error'
   }
 
   if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
@@ -227,7 +227,7 @@ export async function buildTransactionBlock(
       balanceChanges,
       dryRunRes,
       isError: true,
-      errorMessage: getErrorMessage(e),
+      errorMessage: getErrorMessage(e) ?? 'Unexpected error',
     }
   }
 
