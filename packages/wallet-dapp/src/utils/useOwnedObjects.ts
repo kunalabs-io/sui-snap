@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useWalletKit } from '@mysten/wallet-kit'
-import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui.js'
 
 import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
+import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui.js/client'
 
 interface OwnedObjectsInfos {
   isLoading: boolean

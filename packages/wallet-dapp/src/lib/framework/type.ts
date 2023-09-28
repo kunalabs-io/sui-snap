@@ -1,4 +1,4 @@
-import { TypeTag } from '@mysten/sui.js'
+import { TypeTag } from '@mysten/sui.js/bcs'
 
 export type Type = string
 

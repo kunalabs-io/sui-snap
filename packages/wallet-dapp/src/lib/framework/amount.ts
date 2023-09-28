@@ -17,7 +17,10 @@ export class Amount {
    * @param int Integer representation of the amount.
    * @param decimals Number of decimals.
    */
-  protected constructor(readonly int: bigint, readonly decimals: number) {}
+  protected constructor(
+    readonly int: bigint,
+    readonly decimals: number
+  ) {}
 
   /**
    *
