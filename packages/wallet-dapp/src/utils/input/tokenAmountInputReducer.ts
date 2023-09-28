@@ -1,4 +1,4 @@
-import { Amount } from 'lib/framework/amount'
+import { Amount } from 'lib/amount'
 import { cleanNumberInput, countDecimals, limitToDecimals } from './input'
 
 export const initialState: State = {

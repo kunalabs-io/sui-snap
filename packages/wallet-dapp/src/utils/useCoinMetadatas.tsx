@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 
-import { CoinMetadata } from 'lib/framework/coin'
-import { Type, tagToType } from 'lib/framework/type'
+import { CoinMetadata } from 'lib/coin'
+import { Type, tagToType } from 'lib/type'
 import { useSuiClientProvider } from './useSuiClientProvider'
 import { ONE_DAY } from './const'
 import { getTokenSymbolAndNameFromTypeArg } from './helpers'

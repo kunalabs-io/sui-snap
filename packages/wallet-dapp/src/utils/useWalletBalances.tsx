@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useWalletKit } from '@mysten/wallet-kit'
 
-import { Type } from 'lib/framework/type'
-import { Amount } from 'lib/framework/amount'
-import { CoinMetadata } from 'lib/framework/coin'
+import { Type } from 'lib/type'
+import { Amount } from 'lib/amount'
+import { CoinMetadata } from 'lib/coin'
 
 import useCoinMetadatas from './useCoinMetadatas'
 import { useSuiClientProvider } from './useSuiClientProvider'
