@@ -245,7 +245,7 @@ export const getDisplayTransactions = (
   }
 
   const transactionsToDisplay = transactions.filter(tx => {
-    if (!tx.timestampMs) {
+    if (!tx || !tx.timestampMs) {
       return false
     }
 
