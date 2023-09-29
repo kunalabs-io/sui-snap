@@ -53,21 +53,22 @@ export const getChangesForEachTx = (
 
     for (const tx of allTransactions) {
       const txChanges: Map<string, bigint> = new Map()
-      if (tx.balanceChanges) {
-        const { balanceChanges, digest } = tx
-        for (const change of balanceChanges) {
-          if (
-            change.owner === 'Immutable' ||
-            !('AddressOwner' in change.owner) ||
-            change.owner.AddressOwner !== address
-          ) {
-            continue
-          }
-          const value = txChanges.get(change.coinType) ?? 0n
-          txChanges.set(change.coinType, value + BigInt(change.amount))
-        }
-        changes.set(digest, txChanges)
+      if (!tx.balanceChanges) {
+        continue
       }
+      const { balanceChanges, digest } = tx
+      for (const change of balanceChanges) {
+        if (
+          change.owner === 'Immutable' ||
+          !('AddressOwner' in change.owner) ||
+          change.owner.AddressOwner !== address
+        ) {
+          continue
+        }
+        const value = txChanges.get(change.coinType) ?? 0n
+        txChanges.set(change.coinType, value + BigInt(change.amount))
+      }
+      changes.set(digest, txChanges)
     }
 
     return changes
@@ -94,10 +95,23 @@ export const getBalanceChangesForEachTx = (
 ) => {
   const balanceChangesMap: Map<string, BalanceChange[]> = new Map()
 
+  const digestToTxMap = transactions.reduce(
+    (map, tx) => map.set(tx.digest, tx),
+    new Map<string, SuiTransactionBlockResponse>()
+  )
+
+  const typeArgToMetaMap = new Map<string, CoinMetadata>()
+  for (const m of metas) {
+    if (!m) {
+      continue
+    }
+    typeArgToMetaMap.set(m.typeArg, m)
+  }
+
   for (const [txDigest, txChanges] of coinTypeChanges) {
     const balanceChangesByTransaction: BalanceChange[] = []
     for (const [coinType, amount] of txChanges) {
-      const metadata = metas.find(m => m?.typeArg === coinType)
+      const metadata = typeArgToMetaMap.get(coinType)
       if (!metadata) {
         balanceChangesByTransaction.push({
           symbol: getTokenSymbolAndNameFromTypeArg(coinType).name,
@@ -116,7 +130,7 @@ export const getBalanceChangesForEachTx = (
           value += fractional.toString().padStart(metadata.decimals, '0').replace(/0+$/, '')
         }
 
-        const tx = transactions.find(t => t.digest === txDigest)
+        const tx = digestToTxMap.get(txDigest)
         const txFee = calcTotalGasFeesDec(tx)
         if (txFee - Math.abs(Number(value)) !== 0) {
           balanceChangesByTransaction.push({
@@ -143,46 +157,108 @@ export function genTxBlockTransactionsTextForEachTx(
   const allTxStrings: Map<string, string[]> = new Map()
   for (const tx of allTransactions) {
     const transaction = tx.transaction?.data.transaction
-    if (transaction?.kind === 'ProgrammableTransaction') {
-      const txStrings = []
-      const { transactions } = transaction
-      for (const tx of transactions) {
-        const txKey = Object.keys(tx)[0]
-        switch (txKey) {
-          case 'MoveCall': {
-            const txMoveCall = tx as {
-              MoveCall: MoveCallSuiTransaction
-            }
-            txStrings.push(`**Call** ${txMoveCall.MoveCall.function}`)
-            continue
+    if (transaction?.kind !== 'ProgrammableTransaction') {
+      continue
+    }
+    const txStrings = []
+    const { transactions } = transaction
+    for (const tx of transactions) {
+      const txKey = Object.keys(tx)[0]
+      switch (txKey) {
+        case 'MoveCall': {
+          const txMoveCall = tx as {
+            MoveCall: MoveCallSuiTransaction
           }
-          case 'MergeCoins': {
-            const txMergeCoins = tx as {
-              MergeCoins: [SuiArgument, SuiArgument[]]
-            }
-            txStrings.push(`**Merge** (${txMergeCoins.MergeCoins.length + 1}) coin objects`)
-            continue
-          }
-          case 'SplitCoins': {
-            const txSPlitCoins = tx as {
-              SplitCoins: [SuiArgument, SuiArgument[]]
-            }
-            txStrings.push(`**Split** a coin into (${txSPlitCoins.SplitCoins.length}) objects`)
-            continue
-          }
-          case 'TransferObjects': {
-            const txTransferObjects = tx as {
-              TransferObjects: [SuiArgument[], SuiArgument]
-            }
-
-            const str = `**Transfer** (${txTransferObjects.TransferObjects.length}) objects`
-
-            txStrings.push(str)
-          }
+          txStrings.push(txMoveCall.MoveCall.function)
+          continue
+        }
+        case 'MergeCoins': {
+          txStrings.push('MergeCoins')
+          continue
+        }
+        case 'SplitCoins': {
+          txStrings.push('SplitCoins')
+          continue
+        }
+        case 'TransferObjects': {
+          txStrings.push('TransferObjects')
+          continue
+        }
+        case 'Publish': {
+          txStrings.push('Publish')
+          continue
+        }
+        case 'Upgrade': {
+          txStrings.push('Upgrade')
+          continue
+        }
+        case 'MakeMoveVec': {
+          txStrings.push('MakeMoveVec')
         }
       }
-      allTxStrings.set(tx.digest, txStrings)
     }
+    allTxStrings.set(tx.digest, txStrings)
   }
   return allTxStrings
+}
+
+export const getTxTimestampStart = (
+  sentTransactions: SuiTransactionBlockResponse[] | null,
+  receivedTransactions: SuiTransactionBlockResponse[] | null
+) => {
+  if (!sentTransactions || !receivedTransactions) {
+    return null
+  }
+
+  const minTimestampSent = sentTransactions.reduce(
+    (min, tx) => {
+      if (typeof tx.timestampMs === 'undefined' || tx.timestampMs === null) {
+        return min
+      }
+
+      const timestampNum = parseInt(tx.timestampMs, 10)
+      return timestampNum < (min || Infinity) ? timestampNum : min
+    },
+    parseInt(sentTransactions[0].timestampMs || '', 10)
+  )
+  const minTimestampReceived = receivedTransactions.reduce(
+    (min, tx) => {
+      if (typeof tx.timestampMs === 'undefined' || tx.timestampMs === null) {
+        return min
+      }
+
+      const timestampNum = parseInt(tx.timestampMs, 10)
+      return timestampNum < (min || Infinity) ? timestampNum : min
+    },
+    parseInt(receivedTransactions[0].timestampMs || '', 10)
+  )
+
+  return Math.max(minTimestampSent, minTimestampReceived)
+}
+
+export const getDisplayTransactions = (
+  transactions: SuiTransactionBlockResponse[] | undefined,
+  txTimestampStart: number | null
+) => {
+  if (!transactions) {
+    return
+  }
+
+  const transactionsToDisplay = transactions.filter(tx => {
+    if (!tx.timestampMs) {
+      return false
+    }
+
+    return parseInt(tx.timestampMs, 10) >= (txTimestampStart || 0)
+  })
+
+  const digestToTransactionMap = new Map<string, SuiTransactionBlockResponse>()
+  for (const tx of transactionsToDisplay) {
+    if (!tx) {
+      continue
+    }
+    digestToTransactionMap.set(tx.digest, tx)
+  }
+
+  return Array.from(digestToTransactionMap.values())
 }

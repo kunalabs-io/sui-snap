@@ -9,6 +9,7 @@ import Typography from 'components/Typography'
 import { IconArrowTransaction } from 'components/Icons/ArrowTransaction'
 import { IconArrowReceived } from 'components/Icons/ArrowReceived'
 import { useNetwork } from 'utils/useNetworkProvider'
+import { getFormattedDate } from 'utils/date'
 
 const Container = styled.div`
   padding: 20px 0px;
@@ -93,7 +94,8 @@ export const Activity = () => {
 
   const groupedTransactionsByDate = transactions.reduce(
     (result: Record<string, SuiTransactionBlockResponse[]>, item) => {
-      const date = new Date(parseInt(item.timestampMs || '', 10) || '')
+      const date = item.timestampMs ? new Date(parseInt(item.timestampMs, 10)) : new Date()
+
       const dateString = date.toISOString().split('T')[0]
 
       if (!result[dateString]) {
@@ -111,11 +113,11 @@ export const Activity = () => {
     <Container>
       {Object.keys(groupedTransactionsByDate).map(dateKey => (
         <DateContainer key={dateKey}>
-          <DateLabel variant="body">{dateKey}</DateLabel>
+          <DateLabel variant="body">{getFormattedDate(dateKey)}</DateLabel>
           {groupedTransactionsByDate[dateKey]
             .sort((tx1, tx2) => parseInt(tx2.timestampMs || '', 10) - parseInt(tx1.timestampMs || '', 10))
             .map((tx, i) => {
-              const txDate = new Date(parseInt(tx.timestampMs || '', 10) || '')
+              const txDate = tx.timestampMs ? new Date(parseInt(tx.timestampMs)) : null
               return (
                 <a
                   key={`${tx.digest}-${i}`}
@@ -135,7 +137,7 @@ export const Activity = () => {
                         <TransactionType style={{ marginRight: 5 }}>
                           {tx.transaction?.data.sender !== currentAccount?.address ? 'Received' : 'Transaction'}
                         </TransactionType>
-                        <TimeLabel>{`(${txDate.toLocaleTimeString()})`}</TimeLabel>
+                        <TimeLabel>{`(${txDate ? txDate.toLocaleTimeString() : ''})`}</TimeLabel>
                       </div>
                       <TxBlockTexts>{txBlockTexts?.get(tx.digest)?.join(',')}</TxBlockTexts>
                     </div>

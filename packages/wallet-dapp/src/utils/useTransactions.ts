@@ -12,6 +12,8 @@ import {
   getBalanceChangesForEachTx,
   getChangesForEachTx,
   getCoinTypes,
+  getDisplayTransactions,
+  getTxTimestampStart,
 } from './transaction'
 
 interface TransactionsInfos {
@@ -24,6 +26,7 @@ interface TransactionsInfos {
 export const useTransactions = (options?: { refetchInterval?: number }): TransactionsInfos => {
   const [sentTransactions, setSentTransactions] = useState<SuiTransactionBlockResponse[] | null>(null)
   const [receivedTransactions, setReceivedTransactions] = useState<SuiTransactionBlockResponse[] | null>(null)
+  const [txTimestampStart, setTxTimestampStart] = useState<number | null>(null)
 
   const { currentAccount } = useWalletKit()
   const suiClient = useSuiClientProvider()
@@ -33,6 +36,10 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     setReceivedTransactions(null)
     setSentTransactions(null)
   }, [network, currentAccount?.address])
+
+  useEffect(() => {
+    setTxTimestampStart(getTxTimestampStart(sentTransactions, receivedTransactions))
+  }, [sentTransactions, receivedTransactions])
 
   const coinTypeChanges = useMemo(() => {
     return getChangesForEachTx(sentTransactions, receivedTransactions, currentAccount?.address)
@@ -105,6 +112,9 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     balanceChanges,
     txBlockTexts,
     isLoading: results.some(r => r.isLoading) || metas.isLoading,
-    transactions: results.map(r => r?.data?.data as SuiTransactionBlockResponse[]).flat(),
+    transactions: getDisplayTransactions(
+      results.map(r => r?.data?.data as SuiTransactionBlockResponse[]).flat(),
+      txTimestampStart
+    ),
   }
 }
