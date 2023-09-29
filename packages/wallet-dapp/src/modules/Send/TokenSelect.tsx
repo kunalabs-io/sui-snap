@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import styled from 'styled-components'
 
 import Typography from 'components/Typography/Typography'
@@ -8,7 +9,6 @@ import { formatNumberWithCommas } from 'utils/formatting'
 import { FilterOption, SelectAsset, Option } from 'components/Select/Select'
 import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 import ImageWithFallback from 'components/ImageWithFallback'
-// import { useState } from 'react'
 
 interface Props {
   label: string
@@ -24,7 +24,7 @@ const Label = styled(Typography)`
 `
 
 const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props) => {
-  // const [currentSelectInputValue, setCurrentSelectInputValue] = useState('')
+  const [showAssetImage, setShowAssetImage] = useState(true)
 
   const handleOptionClick = (option: Option | null) => {
     if (!option) {
@@ -36,15 +36,18 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
     }
   }
 
+  const handleMenuOpen = () => {
+    setShowAssetImage(false)
+  }
+
   const handleMenuClose = () => {
-    console.log('closing menu')
+    setShowAssetImage(true)
   }
 
   const customFilterOption = (option: FilterOption, inputValue: string) => {
     const inputValueLower = inputValue.toLowerCase()
     const optionLabelLower = option.label.toLowerCase()
     const optionNameLower = option.data.name?.toLowerCase() || ''
-    // setCurrentSelectInputValue(inputValue)
     return optionLabelLower.includes(inputValueLower) || optionNameLower.includes(inputValueLower)
   }
 
@@ -54,20 +57,22 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
         {label}
       </Label>
       <div style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', zIndex: 12, top: 9, left: 12 }}>
-          {coin?.meta.typeArg === suiTypeArg ? (
-            <IconSuiSmall />
-          ) : coin?.meta.iconUrl ? (
-            <ImageWithFallback
-              src={coin.meta.iconUrl}
-              style={{ width: 27, height: 27 }}
-              alt={coin?.meta.name || ''}
-              isSmallPlaceholder
-            />
-          ) : typeof coin !== 'undefined' ? (
-            <IconMissingImgSmall />
-          ) : null}
-        </div>
+        {showAssetImage ? (
+          <div style={{ position: 'absolute', zIndex: 12, top: 9, left: 12 }}>
+            {coin?.meta.typeArg === suiTypeArg ? (
+              <IconSuiSmall />
+            ) : coin?.meta.iconUrl ? (
+              <ImageWithFallback
+                src={coin.meta.iconUrl}
+                style={{ width: 27, height: 27 }}
+                alt={coin?.meta.name || ''}
+                isSmallPlaceholder
+              />
+            ) : typeof coin !== 'undefined' ? (
+              <IconMissingImgSmall />
+            ) : null}
+          </div>
+        ) : null}
         <SelectAsset
           options={options.map(o => ({
             label: o.meta.symbol,
@@ -79,13 +84,14 @@ const TokenSelect = ({ label, coin, options, handleCoinChange, disabled }: Props
           handleChange={handleOptionClick}
           customFilterOption={customFilterOption}
           selectedOption={{
-            label: coin?.meta.symbol || '',
+            label: coin?.meta.name || '',
             value: coin?.meta.typeArg || '',
             image: coin?.meta.iconUrl || '',
             balance: formatNumberWithCommas(coin?.amount.toString() || ''),
             name: coin?.meta.name || '',
           }}
           disabled={disabled}
+          handleMenuOpen={handleMenuOpen}
           handleMenuClose={handleMenuClose}
         />
       </div>

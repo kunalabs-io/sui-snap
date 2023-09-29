@@ -103,14 +103,17 @@ export const NetworkSelect = ({ selectedOption, handleChange, options }: Network
 }
 
 interface SelectAssetProps extends SelectTokenProps {
+  handleMenuOpen: () => void
   handleMenuClose: () => void
 }
+
 export const SelectAsset = ({
   selectedOption,
   handleChange,
   options,
   disabled,
   customFilterOption,
+  handleMenuOpen,
   handleMenuClose,
 }: SelectAssetProps) => {
   const theme = useTheme()
@@ -122,6 +125,8 @@ export const SelectAsset = ({
       onChange={handleChange}
       options={options}
       menuPosition="fixed"
+      onMenuOpen={handleMenuOpen}
+      onMenuClose={handleMenuClose}
       styles={{
         control: provided => ({
           ...provided,
@@ -181,7 +186,6 @@ export const SelectAsset = ({
         ),
       }}
       filterOption={customFilterOption}
-      onMenuClose={handleMenuClose}
     />
   )
 }
