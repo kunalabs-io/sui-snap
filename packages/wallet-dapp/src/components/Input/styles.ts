@@ -28,21 +28,6 @@ export const StyledInput = styled.input<{ error: boolean }>`
   }
 `
 
-export const MaxLabelContainer = styled.div<{ disabled?: boolean }>`
-  cursor: ${p => (p.disabled ? 'not-allowed' : 'pointer')};
-  opacity: ${p => (p.disabled ? 0.5 : 1)};
-`
-
-export const MaxLabel = styled(Typography)`
-  position: absolute;
-  right: 13px;
-  top: 11px;
-  color: ${p => p.theme.colors.text.alternative};
-  padding: 3px 13px;
-  border-radius: 46px;
-  border: 1px solid ${p => p.theme.colors.divider};
-`
-
 export const ErrorMessage = styled(Typography)`
   color: ${p => p.theme.colors.text.danger};
   position: absolute;

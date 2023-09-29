@@ -136,11 +136,11 @@ export const SelectAsset = ({
         input: styles => ({ ...styles }),
       }}
       components={{
-        Option: ({ innerProps, innerRef, data, isSelected }) => (
+        Option: ({ innerProps, innerRef, data, isSelected, isFocused }) => (
           <div
             {...innerProps}
             ref={innerRef}
-            style={{ backgroundColor: isSelected ? theme.colors.background.hover : '' }}
+            style={{ backgroundColor: isSelected || isFocused ? theme.colors.background.hover : '' }}
           >
             <OptionWithImage>
               <div>

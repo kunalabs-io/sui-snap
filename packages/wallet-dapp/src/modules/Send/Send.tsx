@@ -18,6 +18,8 @@ import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 import { CoinStruct } from '@mysten/sui.js/client'
+import { formatNumberWithCommas } from 'utils/formatting'
+import Typography from 'components/Typography'
 
 interface Props {
   openInfoScreen: () => void
@@ -38,6 +40,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
   useAutoSizeTextarea(textAreaRef.current, recipient)
 
+  console.log({ selectedCoin })
   const {
     infos,
     isLoading: isLoadingWalletBalances,
@@ -237,11 +240,19 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         inputText={sanitizedInputValue}
         onChange={handleAmountChange}
         placeholder="0.00"
-        label="Amount"
+        label={
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div>Amount</div>
+            {selectedCoin ? (
+              <div onClick={handleMaxClick}>
+                <Typography variant="body" color="secondary" style={{ cursor: 'pointer' }}>
+                  {`${formatNumberWithCommas(selectedCoin.amount.toString())} ${selectedCoin.meta.symbol}`}
+                </Typography>
+              </div>
+            ) : null}
+          </div>
+        }
         style={{ marginBottom: 20, padding: '0 14px' }}
-        showMax
-        disableMax={!selectedCoin || isSending}
-        onMaxClick={handleMaxClick}
         disabled={isSending}
         errorMessage={!sendEnabled ? amountError : undefined}
       />
