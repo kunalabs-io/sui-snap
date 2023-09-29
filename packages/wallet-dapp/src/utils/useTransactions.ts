@@ -37,10 +37,6 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     setSentTransactions(null)
   }, [network, currentAccount?.address])
 
-  useEffect(() => {
-    setTxTimestampStart(getTxTimestampStart(sentTransactions, receivedTransactions))
-  }, [sentTransactions, receivedTransactions])
-
   const coinTypeChanges = useMemo(() => {
     return getChangesForEachTx(sentTransactions, receivedTransactions, currentAccount?.address)
   }, [sentTransactions, receivedTransactions, currentAccount?.address])
@@ -107,6 +103,13 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
       },
     ],
   })
+
+  useEffect(() => {
+    if (!results[0].data?.hasNextPage && !results[1].data?.hasNextPage) {
+      return
+    }
+    setTxTimestampStart(getTxTimestampStart(sentTransactions, receivedTransactions))
+  }, [sentTransactions, receivedTransactions, results])
 
   return {
     balanceChanges,
