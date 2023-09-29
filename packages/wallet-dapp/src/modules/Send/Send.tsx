@@ -40,7 +40,6 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
   useAutoSizeTextarea(textAreaRef.current, recipient)
 
-  console.log({ selectedCoin })
   const {
     infos,
     isLoading: isLoadingWalletBalances,
