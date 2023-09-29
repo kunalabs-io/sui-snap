@@ -1,10 +1,12 @@
 import Select from 'react-select'
 import { useTheme } from 'styled-components'
+
 import { OptionWithImage } from './styles'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
 import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 import ImageWithFallback from 'components/ImageWithFallback'
+import Typography from 'components/Typography'
 
 export interface Option {
   value: string
@@ -100,98 +102,50 @@ export const NetworkSelect = ({ selectedOption, handleChange, options }: Network
   )
 }
 
-export const SelectToken = ({
+interface SelectAssetProps extends SelectTokenProps {
+  handleMenuOpen: () => void
+  handleMenuClose: () => void
+}
+
+export const SelectAsset = ({
   selectedOption,
   handleChange,
   options,
   disabled,
   customFilterOption,
-}: SelectTokenProps) => {
+  handleMenuOpen,
+  handleMenuClose,
+}: SelectAssetProps) => {
   const theme = useTheme()
+
   return (
     <Select
-      autoFocus
       isDisabled={disabled}
       value={selectedOption}
       onChange={handleChange}
       options={options}
       menuPosition="fixed"
+      onMenuOpen={handleMenuOpen}
+      onMenuClose={handleMenuClose}
       styles={{
-        menu: provided => ({
-          ...provided,
-          width: '200px',
-          marginRight: 30,
-          right: -40,
-        }),
-        menuList: provided => ({
-          ...provided,
-          width: '200px',
-        }),
         control: provided => ({
           ...provided,
-          borderColor: theme.colors.divider,
-          minHeight: '28px',
-          height: '28px',
-          width: '70px',
-          fontSize: '14px',
-          border: 'none',
-          boxShadow: 'none',
-          marginLeft: '4px',
-        }),
-        singleValue: provided => ({
-          ...provided,
-          color: theme.colors.text.description,
+          height: '45px',
           fontWeight: 500,
-          textTransform: 'capitalize',
+          color: '#24272A',
         }),
-        option: (provided, state) => ({
-          ...provided,
-          color: state.isSelected ? theme.colors.text.description : theme.colors.text.description,
-          backgroundColor: state.isFocused
-            ? theme.colors.background.hover
-            : state.isSelected
-            ? theme.colors.background.hover
-            : 'transparent',
-          fontSize: '14px',
-          cursor: 'pointer',
-          '&:active': {
-            backgroundColor: theme.colors.background.hover,
-          },
-        }),
-
         valueContainer: provided => ({
           ...provided,
-          height: '26px',
-          padding: '0px',
+          paddingLeft: 45,
         }),
-
-        input: provided => ({
-          ...provided,
-          margin: '0px',
-        }),
-        indicatorSeparator: () => ({
-          display: 'none',
-        }),
-        indicatorsContainer: provided => ({
-          ...provided,
-          height: '26px',
-        }),
-        dropdownIndicator: base => ({
-          ...base,
-          color: theme.colors.text.description,
-          cursor: 'pointer',
-          '&:hover': {
-            color: theme.colors.text.description,
-          },
-          padding: '0px',
-        }),
+        input: styles => ({ ...styles }),
       }}
       components={{
-        Option: ({ innerProps, innerRef, data, isSelected }) => (
+        Option: ({ innerProps, innerRef, data, isSelected, isFocused }) => (
           <div
             {...innerProps}
             ref={innerRef}
-            style={{ backgroundColor: isSelected ? theme.colors.background.hover : '' }}
+            style={{ backgroundColor: isSelected || isFocused ? theme.colors.background.hover : '' }}
           >
             <OptionWithImage>
               <div>
@@ -213,13 +167,20 @@ export const SelectToken = ({
                   </div>
                 )}
               </div>
-              <div>
-                <div>{data.name}</div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div style={{ marginRight: 4, color: theme.colors.text.secondary, fontSize: 10 }}>{data.balance}</div>
-                  <div style={{ color: theme.colors.text.secondary, fontSize: 10 }}>{data.label}</div>
-                </div>
+              <Typography variant="body" fontWeight="medium" style={{ color: '#24272A' }}>
+                {data.name}
+              </Typography>
+              <div style={{ color: theme.colors.text.secondary, fontSize: 13, fontWeight: 500, marginLeft: 4 }}>
+                {data.label}
               </div>
+              <Typography
+                variant="body"
+                fontWeight="medium"
+                style={{ marginLeft: 'auto', color: theme.colors.text.description }}
+              >
+                {data.balance}
+                <span style={{ marginLeft: 8 }}>{data.label}</span>
+              </Typography>
             </OptionWithImage>
           </div>
         ),
