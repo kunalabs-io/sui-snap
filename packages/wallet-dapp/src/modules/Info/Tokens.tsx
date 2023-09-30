@@ -18,7 +18,6 @@ export const Tokens = ({ recognizedCoins, unrecognizedCoins, onSendClick }: Prop
       </div>
       {unrecognizedCoins.length ? (
         <Accordion
-          isOpenInitial
           accordionSummary={`${unrecognizedCoins.length} Unrecognized Token${unrecognizedCoins.length > 1 ? 's' : ''}`}
           accordionSummaryStyles={{ padding: '0 14px' }}
           accordionDetails={

@@ -29,9 +29,10 @@ export const AccordionDetails = styled.div<{ isOpen: boolean }>`
 `
 
 export const IconButton = styled.div<{ isOpen: boolean }>`
+  margin-top: 3px;
   & > svg {
     transition: all 0.3s ease;
-    transform: ${p => (p.isOpen ? 'rotate(180deg)' : null)};
+    transform: ${p => (p.isOpen ? 'rotate(180deg)' : 'rotate(90deg)')};
     fill: ${p => p.theme.colors.text.secondary};
   }
 `
