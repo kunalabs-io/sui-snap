@@ -1,4 +1,4 @@
-import { useQueries } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useWalletKit } from '@mysten/wallet-kit'
 import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
 
@@ -27,49 +27,54 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
   const suiClient = useSuiClientProvider()
   const { network } = useNetwork()
 
-  const fetchTransactions = async (type: 'from' | 'to') => {
-    const fetchedTransactions = await suiClient.queryTransactionBlocks({
-      filter:
-        type === 'from'
-          ? {
-              FromAddress: currentAccount?.address || '',
-            }
-          : {
-              ToAddress: currentAccount?.address || '',
-            },
-      options: {
-        showBalanceChanges: true,
-        showEffects: true,
-        showEvents: true,
-        showObjectChanges: true,
-        showInput: true,
-        showRawInput: true,
-      },
-      order: 'descending',
-    })
+  const result = useQuery({
+    queryKey: ['useTransactions', currentAccount?.address || '', network],
+    enabled: !!currentAccount?.address,
+    refetchInterval: options?.refetchInterval,
+    queryFn: async () => {
+      if (!currentAccount) {
+        throw new Error('Invariant violation')
+      }
 
-    return fetchedTransactions
-  }
+      const fromTransactions = suiClient.queryTransactionBlocks({
+        filter: {
+          FromAddress: currentAccount?.address || '',
+        },
+        options: {
+          showBalanceChanges: true,
+          showEffects: true,
+          showEvents: true,
+          showObjectChanges: true,
+          showInput: true,
+          showRawInput: true,
+        },
+        order: 'descending',
+      })
+      const toTransactions = suiClient.queryTransactionBlocks({
+        filter: {
+          ToAddress: currentAccount?.address || '',
+        },
+        options: {
+          showBalanceChanges: true,
+          showEffects: true,
+          showEvents: true,
+          showObjectChanges: true,
+          showInput: true,
+          showRawInput: true,
+        },
+        order: 'descending',
+      })
 
-  const results = useQueries({
-    queries: [
-      {
-        queryKey: ['transactions', 'from', currentAccount?.address || '', network],
-        enabled: !!currentAccount?.address,
-        queryFn: () => fetchTransactions('from'),
-        refetchInterval: options?.refetchInterval,
-      },
-      {
-        queryKey: ['transactions', 'to', currentAccount?.address || '', network],
-        enabled: !!currentAccount?.address,
-        queryFn: () => fetchTransactions('to'),
-        refetchInterval: options?.refetchInterval,
-      },
-    ],
+      const [fromRes, toRes] = await Promise.all([fromTransactions, toTransactions])
+      return {
+        sent: fromRes,
+        received: toRes,
+      }
+    },
   })
 
-  const sentTransactions = results[0].data?.data
-  const receivedTransactions = results[1].data?.data
+  const sentTransactions = result.data?.sent.data
+  const receivedTransactions = result.data?.received.data
 
   let coinTypeChanges: ReturnType<typeof getChangesForEachTx> | undefined = undefined
   let txBlockTexts: ReturnType<typeof genTxBlockTransactionsTextForEachTx> | undefined = undefined
@@ -78,7 +83,7 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     coinTypeChanges = getChangesForEachTx(sentTransactions, receivedTransactions, currentAccount.address)
     txBlockTexts = genTxBlockTransactionsTextForEachTx(sentTransactions, receivedTransactions)
 
-    if (results[0].data?.hasNextPage || results[1].data?.hasNextPage) {
+    if (result.data?.sent.hasNextPage || result.data?.received.hasNextPage) {
       txTimestampStart = getTxTimestampStart(sentTransactions, receivedTransactions)
     }
   }
@@ -93,13 +98,12 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     ])
   }
 
+  const allTxs = [sentTransactions || [], receivedTransactions || []].flat()
+
   return {
     balanceChanges,
     txBlockTexts,
-    isLoading: results.some(r => r.isLoading) || metas.isLoading,
-    transactions: getDisplayTransactions(
-      results.map(r => r?.data?.data as SuiTransactionBlockResponse[]).flat(),
-      txTimestampStart
-    ),
+    isLoading: result.isLoading || metas.isLoading,
+    transactions: getDisplayTransactions(allTxs, txTimestampStart),
   }
 }
