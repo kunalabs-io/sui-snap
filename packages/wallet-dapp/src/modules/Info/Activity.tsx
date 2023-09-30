@@ -139,7 +139,7 @@ export const Activity = () => {
                         </TransactionType>
                         <TimeLabel>{`(${txDate ? txDate.toLocaleTimeString() : ''})`}</TimeLabel>
                       </div>
-                      <TxBlockTexts>{txBlockTexts?.get(tx.digest)?.join(',')}</TxBlockTexts>
+                      <TxBlockTexts>{txBlockTexts?.get(tx.digest)?.join(', ')}</TxBlockTexts>
                     </div>
                     <div style={{ marginLeft: 'auto' }}>
                       {balanceChanges && balanceChanges.get(tx.digest) && (
