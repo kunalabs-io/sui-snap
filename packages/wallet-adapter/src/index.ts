@@ -38,7 +38,8 @@ import { convertError } from './errors'
 export * from './types'
 export * from './errors'
 
-export const snapOrigin = 'npm:@kunalabs-io/sui-metamask-snap'
+export const SNAP_ORIGIN = 'npm:@kunalabs-io/sui-metamask-snap'
+export const SNAP_VERSION = '^1.0.0'
 
 export function registerSuiSnapWallet(): SuiSnapWallet {
   const wallets = getWallets()
@@ -55,7 +56,7 @@ export async function getAccounts(provider: BaseProvider): Promise<ReadonlyWalle
   const res = (await provider.request({
     method: 'wallet_invokeSnap',
     params: {
-      snapId: snapOrigin,
+      snapId: SNAP_ORIGIN,
       request: {
         method: 'getAccounts',
       },
@@ -69,7 +70,7 @@ export async function admin_getStoredState(provider: BaseProvider) {
   const res = (await provider.request({
     method: 'wallet_invokeSnap',
     params: {
-      snapId: snapOrigin,
+      snapId: SNAP_ORIGIN,
       request: {
         method: 'admin_getStoredState',
       },
@@ -91,7 +92,7 @@ export async function admin_setFullnodeUrl(
   await provider.request({
     method: 'wallet_invokeSnap',
     params: {
-      snapId: snapOrigin,
+      snapId: SNAP_ORIGIN,
       request: {
         method: 'admin_setFullnodeUrl',
         params,
@@ -110,7 +111,7 @@ export async function signPersonalMessage(
     return (await provider.request({
       method: 'wallet_invokeSnap',
       params: {
-        snapId: snapOrigin,
+        snapId: SNAP_ORIGIN,
         request: {
           method: 'signPersonalMessage',
           params: {
@@ -146,7 +147,7 @@ export async function signTransactionBlock(
     return (await provider.request({
       method: 'wallet_invokeSnap',
       params: {
-        snapId: snapOrigin,
+        snapId: SNAP_ORIGIN,
         request: {
           method: 'signTransactionBlock',
           params: {
@@ -170,7 +171,7 @@ export async function signAndExecuteTransactionBlock(
     return (await provider.request({
       method: 'wallet_invokeSnap',
       params: {
-        snapId: snapOrigin,
+        snapId: SNAP_ORIGIN,
         request: {
           method: 'signAndExecuteTransactionBlock',
           params: {
@@ -315,7 +316,9 @@ export class SuiSnapWallet implements Wallet {
       await provider.request({
         method: 'wallet_requestSnaps',
         params: {
-          [snapOrigin]: {},
+          [SNAP_ORIGIN]: {
+            version: SNAP_VERSION,
+          },
         },
       })
 

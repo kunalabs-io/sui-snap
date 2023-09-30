@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A Snap for making transactions on the Sui blockchain",
   "proposedName": "Sui",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/kunalabs-io/sui-snap"
   },
   "source": {
-    "shasum": "e2iWU1+G2HlPbyqjQUxESNIzgS6SRtB6NFEhFtNjyTo=",
+    "shasum": "/Y5tW9Pk/eL4PUmkoXVnBL58+p0wqdSpv+HgJTjqzTE=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
