@@ -43,10 +43,7 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
         options: {
           showBalanceChanges: true,
           showEffects: true,
-          showEvents: true,
-          showObjectChanges: true,
           showInput: true,
-          showRawInput: true,
         },
         order: 'descending',
       })
@@ -57,10 +54,7 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
         options: {
           showBalanceChanges: true,
           showEffects: true,
-          showEvents: true,
-          showObjectChanges: true,
           showInput: true,
-          showRawInput: true,
         },
         order: 'descending',
       })
