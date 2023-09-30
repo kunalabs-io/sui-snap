@@ -11,15 +11,14 @@ import {
   getBalanceChangesForEachTx,
   getChangesForEachTx,
   getCoinTypes,
-  getDisplayTransactions,
   getTxTimestampStart,
 } from './transaction'
 
 interface TransactionsInfos {
   isLoading: boolean
-  transactions?: SuiTransactionBlockResponse[]
-  balanceChanges?: Map<string, BalanceChange[]>
-  txBlockTexts?: Map<string, string[]>
+  transactions: SuiTransactionBlockResponse[]
+  balanceChanges: Map<string, BalanceChange[]>
+  txBlockTexts: Map<string, string[]>
 }
 
 export const useTransactions = (options?: { refetchInterval?: number }): TransactionsInfos => {
@@ -82,9 +81,9 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     transactions = Array.from(map.values())
   }
 
-  let coinTypeChanges: ReturnType<typeof getChangesForEachTx> | undefined = undefined
-  let txBlockTexts: ReturnType<typeof genTxBlockTransactionsTextForEachTx> | undefined = undefined
-  let txTimestampStart: number | undefined = undefined
+  let coinTypeChanges = new Map<string, Map<string, bigint>>()
+  let txBlockTexts = new Map<string, string[]>()
+  let txTimestampStart = 0
   if (transactions && currentAccount) {
     coinTypeChanges = getChangesForEachTx(transactions, currentAccount.address)
     txBlockTexts = genTxBlockTransactionsTextForEachTx(transactions)
@@ -96,15 +95,22 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
 
   const metas = useCoinMetadatas(coinTypeChanges ? getCoinTypes(coinTypeChanges) : [])
 
-  let balanceChanges: Map<string, BalanceChange[]> | undefined = undefined
+  let balanceChanges = new Map<string, BalanceChange[]>()
   if (!metas.isLoading && metas && coinTypeChanges && sentTransactions && receivedTransactions) {
     balanceChanges = getBalanceChangesForEachTx(coinTypeChanges, metas.metas, transactions)
   }
+
+  const transactionsToShow = transactions.filter(tx => {
+    if (!tx.timestampMs) {
+      return true
+    }
+    return Number.parseInt(tx.timestampMs) >= txTimestampStart
+  })
 
   return {
     balanceChanges,
     txBlockTexts,
     isLoading: result.isLoading || metas.isLoading,
-    transactions: getDisplayTransactions(transactions, txTimestampStart),
+    transactions: transactionsToShow,
   }
 }

@@ -66,7 +66,7 @@ export const getChangesForEachTx = (
   return changes
 }
 
-export const getCoinTypes = (changes: Map<string, Map<string, bigint>>) => {
+export const getCoinTypes = (changes: Map<string, Map<string, bigint>>): string[] => {
   const coinTypes = new Set<string>()
   for (const txChanges of changes.values()) {
     for (const coinType of txChanges.keys()) {
@@ -81,7 +81,7 @@ export const getBalanceChangesForEachTx = (
   coinTypeChanges: Map<string, Map<string, bigint>>,
   metas: (CoinMetadata | undefined)[],
   transactions: SuiTransactionBlockResponse[]
-) => {
+): Map<string, BalanceChange[]> => {
   const balanceChangesMap: Map<string, BalanceChange[]> = new Map()
 
   const digestToTxMap = transactions.reduce(
@@ -188,9 +188,9 @@ export function genTxBlockTransactionsTextForEachTx(
 export const getTxTimestampStart = (
   sentTransactions: SuiTransactionBlockResponse[],
   receivedTransactions: SuiTransactionBlockResponse[]
-) => {
+): number => {
   if (!sentTransactions || !receivedTransactions) {
-    return
+    return 0
   }
 
   const minTimestampSent = sentTransactions.reduce(
@@ -217,20 +217,4 @@ export const getTxTimestampStart = (
   )
 
   return Math.max(minTimestampSent, minTimestampReceived)
-}
-
-export const getDisplayTransactions = (transactions: SuiTransactionBlockResponse[], txTimestampStart?: number) => {
-  if (!transactions) {
-    return
-  }
-
-  const transactionsToDisplay = transactions.filter(tx => {
-    if (!tx || !tx.timestampMs) {
-      return false
-    }
-
-    return parseInt(tx.timestampMs, 10) >= (txTimestampStart || 0)
-  })
-
-  return transactionsToDisplay
 }
