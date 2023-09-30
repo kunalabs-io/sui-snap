@@ -42,39 +42,31 @@ export function calcTotalGasFeesDec(tx?: SuiTransactionBlockResponse): number {
 }
 
 export const getChangesForEachTx = (
-  sentTransactions: SuiTransactionBlockResponse[] | null,
-  receivedTransactions: SuiTransactionBlockResponse[] | null,
-  address?: string
-): Map<string, Map<string, bigint>> | null => {
-  if (sentTransactions !== null && receivedTransactions !== null) {
-    const allTransactions = [...sentTransactions, ...receivedTransactions] as SuiTransactionBlockResponse[]
+  sentTransactions: SuiTransactionBlockResponse[],
+  receivedTransactions: SuiTransactionBlockResponse[],
+  address: string
+): Map<string, Map<string, bigint>> => {
+  const allTransactions = [...sentTransactions, ...receivedTransactions] as SuiTransactionBlockResponse[]
 
-    const changes: Map<string, Map<string, bigint>> = new Map()
+  const changes: Map<string, Map<string, bigint>> = new Map()
 
-    for (const tx of allTransactions) {
-      const txChanges: Map<string, bigint> = new Map()
-      if (!tx.balanceChanges) {
+  for (const tx of allTransactions) {
+    const txChanges: Map<string, bigint> = new Map()
+    if (!tx.balanceChanges) {
+      continue
+    }
+    const { balanceChanges, digest } = tx
+    for (const change of balanceChanges) {
+      if (change.owner === 'Immutable' || !('AddressOwner' in change.owner) || change.owner.AddressOwner !== address) {
         continue
       }
-      const { balanceChanges, digest } = tx
-      for (const change of balanceChanges) {
-        if (
-          change.owner === 'Immutable' ||
-          !('AddressOwner' in change.owner) ||
-          change.owner.AddressOwner !== address
-        ) {
-          continue
-        }
-        const value = txChanges.get(change.coinType) ?? 0n
-        txChanges.set(change.coinType, value + BigInt(change.amount))
-      }
-      changes.set(digest, txChanges)
+      const value = txChanges.get(change.coinType) ?? 0n
+      txChanges.set(change.coinType, value + BigInt(change.amount))
     }
-
-    return changes
+    changes.set(digest, txChanges)
   }
 
-  return null
+  return changes
 }
 
 export const getCoinTypes = (changes: Map<string, Map<string, bigint>>) => {
@@ -146,11 +138,11 @@ export const getBalanceChangesForEachTx = (
 }
 
 export function genTxBlockTransactionsTextForEachTx(
-  sentTransactions: SuiTransactionBlockResponse[] | null,
-  receivedTransactions: SuiTransactionBlockResponse[] | null
-): Map<string, string[]> | null {
+  sentTransactions: SuiTransactionBlockResponse[],
+  receivedTransactions: SuiTransactionBlockResponse[]
+): Map<string, string[]> | undefined {
   if (!sentTransactions || !receivedTransactions) {
-    return null
+    return
   }
 
   const allTransactions = [...sentTransactions, receivedTransactions] as SuiTransactionBlockResponse[]
@@ -203,11 +195,11 @@ export function genTxBlockTransactionsTextForEachTx(
 }
 
 export const getTxTimestampStart = (
-  sentTransactions: SuiTransactionBlockResponse[] | null,
-  receivedTransactions: SuiTransactionBlockResponse[] | null
+  sentTransactions: SuiTransactionBlockResponse[],
+  receivedTransactions: SuiTransactionBlockResponse[]
 ) => {
   if (!sentTransactions || !receivedTransactions) {
-    return null
+    return
   }
 
   const minTimestampSent = sentTransactions.reduce(
@@ -236,10 +228,7 @@ export const getTxTimestampStart = (
   return Math.max(minTimestampSent, minTimestampReceived)
 }
 
-export const getDisplayTransactions = (
-  transactions: SuiTransactionBlockResponse[] | undefined,
-  txTimestampStart: number | null
-) => {
+export const getDisplayTransactions = (transactions: SuiTransactionBlockResponse[], txTimestampStart?: number) => {
   if (!transactions) {
     return
   }
