@@ -106,6 +106,12 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     }
     return Number.parseInt(tx.timestampMs) >= txTimestampStart
   })
+  transactionsToShow.sort((a, b) => {
+    if (!a.timestampMs || !b.timestampMs) {
+      return 0
+    }
+    return Number.parseInt(b.timestampMs) - Number.parseInt(a.timestampMs)
+  })
 
   return {
     balanceChanges,
