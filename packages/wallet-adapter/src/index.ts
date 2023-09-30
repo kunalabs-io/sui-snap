@@ -185,38 +185,46 @@ export async function signAndExecuteTransactionBlock(
   }
 }
 
-export interface FlaskStatus {
-  flaskAvailable: boolean
-  flaskVersion?: string
-  overriden: boolean // whether window.ethereum is overriden by another wallet
+export interface MetaMaskStatus {
+  available: boolean
+  version?: string
+  supportsSnaps: boolean
+  suiSnapInstalled: boolean
 }
 
-export async function flaskAvailable(): Promise<FlaskStatus> {
+export async function metaMaskAvailable(): Promise<MetaMaskStatus> {
   const provider = window.ethereum
   if (!provider) {
     return {
-      flaskAvailable: false,
-      overriden: false,
+      available: false,
+      supportsSnaps: false,
+      suiSnapInstalled: false,
     }
   }
   if (!provider.isMetaMask) {
     return {
-      flaskAvailable: false,
-      overriden: true,
+      available: false,
+      suiSnapInstalled: false,
+      supportsSnaps: false,
     }
   }
   try {
     const version = await provider.request<string>({ method: 'web3_clientVersion' })
+    const snaps = await provider.request<Record<string, unknown>>({ method: 'wallet_getSnaps' })
+    const suiSnapInstalled = !!snaps && 'npm:@kunalabs-io/sui-metamask-snap' in snaps
+
     return {
-      flaskAvailable: true,
-      flaskVersion: version!,
-      overriden: false,
+      available: true,
+      version: version!,
+      supportsSnaps: true,
+      suiSnapInstalled,
     }
   } catch (e) {
     console.warn(e)
     return {
-      flaskAvailable: false,
-      overriden: true,
+      available: true,
+      supportsSnaps: false,
+      suiSnapInstalled: false,
     }
   }
 }
@@ -309,8 +317,9 @@ export class SuiSnapWallet implements Wallet {
 
     try {
       const provider = window.ethereum
-      if (!(await flaskAvailable())) {
-        throw new Error('MetaMask Flask not detected!')
+      const mmStatus = await metaMaskAvailable()
+      if (mmStatus.available) {
+        throw new Error('MetaMask not detected!')
       }
 
       await provider.request({

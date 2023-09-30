@@ -1,21 +1,21 @@
 import { useWalletKit } from '@mysten/wallet-kit'
 
 import Typography from 'components/Typography/Typography'
-import { IconFlask } from 'components/Icons/IconFlask'
 import { ButtonWrapper, Wrapper } from './styles'
-import { FlaskStatus } from '@kunalabs-io/sui-snap-wallet'
+import { MetaMaskStatus } from '@kunalabs-io/sui-snap-wallet'
+import { IconMetaMask } from 'components/Icons/IconMetaMask'
 
 interface Props {
-  flaskStatus?: FlaskStatus
+  mmStatus?: MetaMaskStatus
   connectedToSnap: boolean
 }
 
-const Welcome = ({ flaskStatus, connectedToSnap }: Props) => {
+const Welcome = ({ mmStatus, connectedToSnap }: Props) => {
   const kit = useWalletKit()
 
-  const statusLoading = flaskStatus === undefined
-  const flaskInstalled = !!flaskStatus?.flaskAvailable
-  const overriden = !!flaskStatus?.overriden
+  const statusLoading = mmStatus === undefined
+  const mmAvailable = !!mmStatus?.available
+  const supportsSnaps = !!mmStatus?.supportsSnaps
 
   const handleConnectClick = async () => {
     if (connectedToSnap) {
@@ -37,32 +37,32 @@ const Welcome = ({ flaskStatus, connectedToSnap }: Props) => {
         </Typography>
       )}
 
-      {!statusLoading && !flaskInstalled && (
+      {!statusLoading && (!mmAvailable || !supportsSnaps) && (
         <>
-          <Typography variant="body" color="secondary" style={{ marginBottom: overriden ? 10 : 50 }}>
-            Get started by installing MetaMask Flask.{' '}
+          <Typography variant="body" color="secondary" style={{ marginBottom: supportsSnaps ? 50 : 10 }}>
+            Get started by installing MetaMask.{' '}
           </Typography>
-          {overriden && (
+          {!supportsSnaps && (
             <Typography variant="body" color="secondary" style={{ marginBottom: 20 }}>
-              If you have it installed already, please disable any other wallets that might be interfering with MetaMask
-              Flask.
+              If you have it installed already, update it to the newest version and disable any other wallets that might
+              be interfering with MetaMask.
             </Typography>
           )}
-          <a href="https://metamask.io/flask/" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+          <a href="https://metamask.io/download" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
             <ButtonWrapper variant="outlined">
-              <IconFlask />
-              Install Flask
+              <IconMetaMask />
+              Install MetaMask
             </ButtonWrapper>
           </a>
         </>
       )}
-      {!statusLoading && flaskInstalled && (
+      {!statusLoading && mmAvailable && (
         <>
-          <Typography variant="body" color="secondary" style={{ marginBottom: overriden ? 10 : 50 }}>
-            Get started by connecting to Flask.
+          <Typography variant="body" color="secondary" style={{ marginBottom: supportsSnaps ? 50 : 10 }}>
+            Get started by connecting to MetaMask.
           </Typography>
           <ButtonWrapper variant="outlined" onClick={handleConnectClick}>
-            <IconFlask />
+            <IconMetaMask />
             Connect
           </ButtonWrapper>
         </>
