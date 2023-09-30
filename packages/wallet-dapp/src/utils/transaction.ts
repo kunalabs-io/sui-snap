@@ -1,7 +1,7 @@
-import { MoveCallSuiTransaction, SuiArgument, SuiTransactionBlockResponse } from '@mysten/sui.js/client'
+import { MoveCallSuiTransaction, SuiTransactionBlockResponse } from '@mysten/sui.js/client'
 import { parseStructTag } from '@mysten/sui.js/utils'
 
-import { CoinMetadata } from 'lib/framework/coin'
+import { CoinMetadata } from 'lib/coin'
 
 export interface BalanceChange {
   symbol: string
@@ -79,8 +79,8 @@ export const getChangesForEachTx = (
 
 export const getCoinTypes = (changes: Map<string, Map<string, bigint>>) => {
   const coinTypes = new Set<string>()
-  for (const [_txDigest, _txChanges] of changes) {
-    for (const [coinType, _amount] of _txChanges) {
+  for (const txChanges of changes.values()) {
+    for (const coinType of txChanges.keys()) {
       coinTypes.add(coinType)
     }
   }
