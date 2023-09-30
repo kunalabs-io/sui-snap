@@ -30,7 +30,7 @@ export const Tabs = styled.div`
   margin-bottom: 8px;
   text-align: center;
   padding: 0 14px;
-  display: flex;
+  /* display: flex; */
   align-items: center;
   justify-content: space-between;
 `
