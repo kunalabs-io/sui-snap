@@ -75,7 +75,7 @@ const Header = () => {
         <Modal onClose={toggleModal}>
           <ModalBody>
             <Typography variant="caption" style={{ marginBottom: 4, fontSize: '16px' }}>
-              Your address:
+              Your Sui address:
             </Typography>
             <div onClick={handleAddressClick} style={{ cursor: 'pointer' }}>
               <Typography variant="body" style={{ wordWrap: 'break-word', fontSize: '17px' }} fontWeight="bold">

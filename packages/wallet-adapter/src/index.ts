@@ -318,7 +318,7 @@ export class SuiSnapWallet implements Wallet {
     try {
       const provider = window.ethereum
       const mmStatus = await metaMaskAvailable()
-      if (mmStatus.available) {
+      if (!mmStatus.available) {
         throw new Error('MetaMask not detected!')
       }
 
