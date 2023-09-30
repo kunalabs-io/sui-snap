@@ -67,15 +67,27 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
     },
   })
 
-  const sentTransactions = result.data?.sent.data
-  const receivedTransactions = result.data?.received.data
+  const sentTransactions = result.data?.sent.data || []
+  const receivedTransactions = result.data?.received.data || []
+
+  let transactions: SuiTransactionBlockResponse[] = []
+  {
+    const map = new Map<string, SuiTransactionBlockResponse>()
+    for (const tx of sentTransactions) {
+      map.set(tx.digest, tx)
+    }
+    for (const tx of receivedTransactions) {
+      map.set(tx.digest, tx)
+    }
+    transactions = Array.from(map.values())
+  }
 
   let coinTypeChanges: ReturnType<typeof getChangesForEachTx> | undefined = undefined
   let txBlockTexts: ReturnType<typeof genTxBlockTransactionsTextForEachTx> | undefined = undefined
   let txTimestampStart: number | undefined = undefined
-  if (sentTransactions && receivedTransactions && currentAccount) {
-    coinTypeChanges = getChangesForEachTx(sentTransactions, receivedTransactions, currentAccount.address)
-    txBlockTexts = genTxBlockTransactionsTextForEachTx(sentTransactions, receivedTransactions)
+  if (transactions && currentAccount) {
+    coinTypeChanges = getChangesForEachTx(transactions, currentAccount.address)
+    txBlockTexts = genTxBlockTransactionsTextForEachTx(transactions)
 
     if (result.data?.sent.hasNextPage || result.data?.received.hasNextPage) {
       txTimestampStart = getTxTimestampStart(sentTransactions, receivedTransactions)
@@ -86,18 +98,13 @@ export const useTransactions = (options?: { refetchInterval?: number }): Transac
 
   let balanceChanges: Map<string, BalanceChange[]> | undefined = undefined
   if (!metas.isLoading && metas && coinTypeChanges && sentTransactions && receivedTransactions) {
-    balanceChanges = getBalanceChangesForEachTx(coinTypeChanges, metas.metas, [
-      ...sentTransactions,
-      ...receivedTransactions,
-    ])
+    balanceChanges = getBalanceChangesForEachTx(coinTypeChanges, metas.metas, transactions)
   }
-
-  const allTxs = [sentTransactions || [], receivedTransactions || []].flat()
 
   return {
     balanceChanges,
     txBlockTexts,
     isLoading: result.isLoading || metas.isLoading,
-    transactions: getDisplayTransactions(allTxs, txTimestampStart),
+    transactions: getDisplayTransactions(transactions, txTimestampStart),
   }
 }

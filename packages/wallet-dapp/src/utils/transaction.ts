@@ -42,15 +42,12 @@ export function calcTotalGasFeesDec(tx?: SuiTransactionBlockResponse): number {
 }
 
 export const getChangesForEachTx = (
-  sentTransactions: SuiTransactionBlockResponse[],
-  receivedTransactions: SuiTransactionBlockResponse[],
+  transactions: SuiTransactionBlockResponse[],
   address: string
 ): Map<string, Map<string, bigint>> => {
-  const allTransactions = [...sentTransactions, ...receivedTransactions] as SuiTransactionBlockResponse[]
-
   const changes: Map<string, Map<string, bigint>> = new Map()
 
-  for (const tx of allTransactions) {
+  for (const tx of transactions) {
     const txChanges: Map<string, bigint> = new Map()
     if (!tx.balanceChanges) {
       continue
@@ -138,16 +135,10 @@ export const getBalanceChangesForEachTx = (
 }
 
 export function genTxBlockTransactionsTextForEachTx(
-  sentTransactions: SuiTransactionBlockResponse[],
-  receivedTransactions: SuiTransactionBlockResponse[]
-): Map<string, string[]> | undefined {
-  if (!sentTransactions || !receivedTransactions) {
-    return
-  }
-
-  const allTransactions = [...sentTransactions, receivedTransactions] as SuiTransactionBlockResponse[]
+  transactions: SuiTransactionBlockResponse[]
+): Map<string, string[]> {
   const allTxStrings: Map<string, string[]> = new Map()
-  for (const tx of allTransactions) {
+  for (const tx of transactions) {
     const transaction = tx.transaction?.data.transaction
     if (transaction?.kind !== 'ProgrammableTransaction') {
       continue
@@ -241,13 +232,5 @@ export const getDisplayTransactions = (transactions: SuiTransactionBlockResponse
     return parseInt(tx.timestampMs, 10) >= (txTimestampStart || 0)
   })
 
-  const digestToTransactionMap = new Map<string, SuiTransactionBlockResponse>()
-  for (const tx of transactionsToDisplay) {
-    if (!tx) {
-      continue
-    }
-    digestToTransactionMap.set(tx.digest, tx)
-  }
-
-  return Array.from(digestToTransactionMap.values())
+  return transactionsToDisplay
 }
