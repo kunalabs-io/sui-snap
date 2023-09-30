@@ -18,7 +18,6 @@ import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 import { CoinStruct } from '@mysten/sui.js/client'
-import { formatNumberWithCommas } from 'utils/formatting'
 import Typography from 'components/Typography'
 
 interface Props {
@@ -245,7 +244,9 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
             {selectedCoin ? (
               <div onClick={handleMaxClick}>
                 <Typography variant="body" color="secondary" style={{ cursor: 'pointer' }}>
-                  {`${formatNumberWithCommas(selectedCoin.amount.toString())} ${selectedCoin.meta.symbol}`}
+                  {`Balance: ${selectedCoin.amount.toNumber().toLocaleString('en-US', { maximumFractionDigits: 20 })} ${
+                    selectedCoin.meta.symbol
+                  }`}
                 </Typography>
               </div>
             ) : null}
