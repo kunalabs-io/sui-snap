@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import { SuiSnapWallet, admin_getStoredState, admin_setFullnodeUrl, flaskAvailable } from '@kunalabs-io/sui-snap-wallet'
+import {
+  SuiSnapWallet,
+  admin_getStoredState,
+  admin_setFullnodeUrl,
+  metaMaskAvailable,
+} from '@kunalabs-io/sui-snap-wallet'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { useWalletKit } from '@mysten/wallet-kit'
 import { SuiClient } from '@mysten/sui.js/client'
@@ -13,9 +18,9 @@ const Main = () => {
 
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
   useEffect(() => {
-    flaskAvailable()
-      .then(flaskState => {
-        setFlaskInstalled(flaskState.flaskAvailable)
+    metaMaskAvailable()
+      .then(metaMaskState => {
+        setFlaskInstalled(metaMaskState.available)
       })
       .catch(e => {
         setFlaskInstalled(false)
@@ -38,6 +43,7 @@ const Main = () => {
       } else {
         setError((e as Error).message)
       }
+      throw e
     }
   }
 
@@ -60,6 +66,7 @@ const Main = () => {
       } else {
         setError((e as Error).message)
       }
+      throw e
     }
   }
 
@@ -85,6 +92,7 @@ const Main = () => {
       } else {
         setError((e as Error).message)
       }
+      throw e
     }
   }
 
@@ -119,6 +127,7 @@ const Main = () => {
       } else {
         setError((e as Error).message)
       }
+      throw e
     }
   }
 
@@ -135,6 +144,7 @@ const Main = () => {
       } else {
         setError((e as Error).message)
       }
+      throw e
     }
   }
 
@@ -160,6 +170,7 @@ const Main = () => {
       } else {
         setError((e as Error).message)
       }
+      throw e
     }
   }
 
