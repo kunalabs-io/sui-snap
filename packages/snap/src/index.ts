@@ -44,6 +44,11 @@ import {
   getStoredState,
   updateState,
 } from './util'
+import {
+  SuiSignAndExecuteTransactionBlockOutput,
+  SuiSignPersonalMessageOutput,
+  SuiSignTransactionBlockOutput,
+} from '@mysten/wallet-standard'
 
 /**
  * Derive the Ed25519 keypair from user's MetaMask seed phrase.
@@ -225,7 +230,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw UserRejectionError.asSimpleError()
       }
 
-      return await signMessage(keypair, input.message)
+      const signed = await signMessage(keypair, input.message)
+
+      const ret: SuiSignPersonalMessageOutput = signed
+      return ret
     }
 
     case 'signTransactionBlock': {
@@ -303,7 +311,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw UserRejectionError.asSimpleError()
       }
 
-      return await keypair.signTransactionBlock(result.transactionBlockBytes!)
+      const signed = await keypair.signTransactionBlock(
+        result.transactionBlockBytes!
+      )
+
+      const res: SuiSignTransactionBlockOutput = {
+        transactionBlockBytes: signed.bytes,
+        signature: signed.signature,
+      }
+
+      return res
     }
 
     case 'signAndExecuteTransactionBlock': {
@@ -386,10 +403,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         throw UserRejectionError.asSimpleError()
       }
 
-      return await client.signAndExecuteTransactionBlock({
+      const res = await client.signAndExecuteTransactionBlock({
         signer: keypair,
         ...input,
       })
+      const ret: SuiSignAndExecuteTransactionBlockOutput = res
+
+      return ret
     }
 
     case 'getAccounts': {

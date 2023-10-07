@@ -1,6 +1,6 @@
 {
   "name": "@kunalabs-io/sui-metamask-snap",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Kuna Labs <build@kunalabs.io>",
   "main": "./dist/bundle.js",
   "license": "Apache-2.0",
