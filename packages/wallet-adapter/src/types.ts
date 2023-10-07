@@ -140,7 +140,7 @@ export const SerializedSuiSignAndExecuteTransactionBlockInput = object({
   account: SerializedWalletAccount,
   chain: string(),
   requestType: optional(string()),
-  option: optional(SuiTransactionBlockResponseOptions),
+  options: optional(SuiTransactionBlockResponseOptions),
 })
 
 export type SerializedSuiSignAndExecuteTransactionBlockInput = Infer<
@@ -151,9 +151,11 @@ export function serializeSuiSignAndExecuteTransactionBlockInput(
   input: SuiSignAndExecuteTransactionBlockInput
 ): SerializedSuiSignAndExecuteTransactionBlockInput {
   return {
-    ...input,
     transactionBlock: input.transactionBlock.serialize(),
     account: serializeWalletAccount(input.account),
+    chain: input.chain,
+    requestType: input.requestType,
+    options: input.options,
   }
 }
 
