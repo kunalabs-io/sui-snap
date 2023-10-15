@@ -41,6 +41,21 @@ export function calcTotalGasFeesDec(tx?: SuiTransactionBlockResponse): number {
   return Number(totalGasFeesInt.toString()) / 1e9
 }
 
+export function getTxFees(tx?: SuiTransactionBlockResponse) {
+  const gasUsed = tx?.effects?.gasUsed
+  if (!gasUsed) {
+    return null
+  }
+  const totalGasFeesInt = BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
+
+  return {
+    total: Number(totalGasFeesInt.toString()) / 1e9,
+    computation: Number(BigInt(gasUsed.computationCost).toString()) / 1e9,
+    storage: Number(BigInt(gasUsed.storageCost).toString()) / 1e9,
+    rebate: Number(BigInt(gasUsed.storageRebate).toString()) / 1e9,
+  }
+}
+
 export const getChangesForEachTx = (
   transactions: SuiTransactionBlockResponse[],
   address: string
@@ -132,6 +147,51 @@ export const getBalanceChangesForEachTx = (
     balanceChangesMap.set(txDigest, balanceChangesByTransaction)
   }
   return balanceChangesMap
+}
+
+export function genTxBlockForTxDetails(tx: SuiTransactionBlockResponse): string[] | null {
+  const transaction = tx.transaction?.data.transaction
+  if (transaction?.kind !== 'ProgrammableTransaction') {
+    return null
+  }
+  const txStrings = []
+  const { transactions } = transaction
+  for (const tx of transactions) {
+    const txKey = Object.keys(tx)[0]
+    switch (txKey) {
+      case 'MoveCall': {
+        const txMoveCall = tx as {
+          MoveCall: MoveCallSuiTransaction
+        }
+        txStrings.push(`${txMoveCall.MoveCall.package}::${txMoveCall.MoveCall.module}::${txMoveCall.MoveCall.function}`)
+        continue
+      }
+      case 'MergeCoins': {
+        txStrings.push('MergeCoins')
+        continue
+      }
+      case 'SplitCoins': {
+        txStrings.push('SplitCoins')
+        continue
+      }
+      case 'TransferObjects': {
+        txStrings.push('TransferObjects')
+        continue
+      }
+      case 'Publish': {
+        txStrings.push('Publish')
+        continue
+      }
+      case 'Upgrade': {
+        txStrings.push('Upgrade')
+        continue
+      }
+      case 'MakeMoveVec': {
+        txStrings.push('MakeMoveVec')
+      }
+    }
+  }
+  return txStrings
 }
 
 export function genTxBlockTransactionsTextForEachTx(

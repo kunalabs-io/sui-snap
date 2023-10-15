@@ -1,6 +1,7 @@
 import styled from 'styled-components'
 import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
 import { useWalletKit } from '@mysten/wallet-kit'
+import { useCallback, useState } from 'react'
 
 import Spinner from 'components/Spinner'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
@@ -8,8 +9,8 @@ import { useTransactions } from 'utils/useTransactions'
 import Typography from 'components/Typography'
 import { IconArrowTransaction } from 'components/Icons/ArrowTransaction'
 import { IconArrowReceived } from 'components/Icons/ArrowReceived'
-import { useNetwork } from 'utils/useNetworkProvider'
 import { getFormattedDate } from 'utils/date'
+import { TransactionDetails } from './TransactionDetails'
 
 const Container = styled.div`
   padding: 20px 0px;
@@ -73,12 +74,22 @@ const AmountChangedSymbol = styled(Typography)`
 `
 
 export const Activity = () => {
+  const [isOpenTxDetailsModal, setIsOpenTxDetailsModal] = useState(false)
+  const [activeTx, setActiveTx] = useState<SuiTransactionBlockResponse>()
+
   const { isLoading, transactions, balanceChanges, txBlockTexts } = useTransactions({
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
   const { currentAccount } = useWalletKit()
-  const { network } = useNetwork()
+
+  const toggleModal = useCallback(
+    (tx?: SuiTransactionBlockResponse) => {
+      setIsOpenTxDetailsModal(!isOpenTxDetailsModal)
+      setActiveTx(tx)
+    },
+    [isOpenTxDetailsModal]
+  )
 
   if (isLoading) {
     return <Spinner style={{ marginTop: 48 }} />
@@ -95,7 +106,6 @@ export const Activity = () => {
   const groupedTransactionsByDate = transactions.reduce(
     (result: Record<string, SuiTransactionBlockResponse[]>, item) => {
       const date = item.timestampMs ? new Date(parseInt(item.timestampMs, 10)) : new Date()
-
       const dateString = date.toISOString().split('T')[0]
 
       if (!result[dateString]) {
@@ -119,13 +129,7 @@ export const Activity = () => {
             .map((tx, i) => {
               const txDate = tx.timestampMs ? new Date(parseInt(tx.timestampMs)) : null
               return (
-                <a
-                  key={`${tx.digest}-${i}`}
-                  href={`https://suiexplorer.com/txblock/${tx.digest}?network=${network}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ textDecoration: 'none' }}
-                >
+                <div key={`${tx.digest}-${i}`} onClick={() => toggleModal(tx)}>
                   <TransactionContainer>
                     {tx.transaction?.data.sender !== currentAccount?.address ? (
                       <IconArrowReceived />
@@ -163,11 +167,18 @@ export const Activity = () => {
                       )}
                     </div>
                   </TransactionContainer>
-                </a>
+                </div>
               )
             })}
         </DateContainer>
       ))}
+      {isOpenTxDetailsModal && (
+        <TransactionDetails
+          toggleModal={toggleModal}
+          tx={activeTx}
+          balanceChanges={activeTx ? balanceChanges.get(activeTx.digest) : undefined}
+        />
+      )}
     </Container>
   )
 }
