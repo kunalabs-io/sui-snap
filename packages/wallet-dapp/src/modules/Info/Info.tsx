@@ -141,7 +141,6 @@ const Info = ({ onSendClick }: Props) => {
             Tokens
           </TokensLabel>
         </div>
-        {/*
         <div onClick={() => handleTabChange(Tab.Nft)}>
           <TokensLabel variant="body" isActive={activeTab === Tab.Nft}>
             NFT
@@ -152,15 +151,12 @@ const Info = ({ onSendClick }: Props) => {
             Activity
           </TokensLabel>
         </div>
-        */}
       </Tabs>
       {activeTab === Tab.Tokens && (
         <Tokens unrecognizedCoins={unrecognizedCoins} recognizedCoins={recognizedCoins} onSendClick={onSendClick} />
       )}
-      {/*
       {activeTab === Tab.Nft && <Nft />}
       {activeTab === Tab.Activity && <Activity />}
-      */}
     </div>
   )
 }
