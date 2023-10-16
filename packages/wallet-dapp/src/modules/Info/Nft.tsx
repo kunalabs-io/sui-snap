@@ -212,7 +212,7 @@ export const Nft = () => {
           }
 
           const type = o.data?.type || ''
-          const address = type ? type.substring(0, type.indexOf('::')) : ''
+          const address = o.data?.objectId || ''
           if (o.data?.display?.data === null) {
             return (
               <a
