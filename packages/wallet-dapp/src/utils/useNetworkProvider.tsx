@@ -12,7 +12,7 @@ export type NETWORK = typeof NETWORK_MAINNET | typeof NETWORK_TESTNET | typeof N
 export function fullnodeUrlFromNetwork(network: NETWORK): string {
   switch (network) {
     case NETWORK_MAINNET:
-      return 'https://fullnode.mainnet.sui.io:443'
+      return 'https://sui-mainnet-rpc.allthatnode.com'
     case NETWORK_TESTNET:
       return 'https://fullnode.testnet.sui.io:443'
     case NETWORK_DEVNET:
