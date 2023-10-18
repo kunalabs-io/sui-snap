@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import styled from 'styled-components'
+import { SuiObjectResponse } from '@mysten/sui.js/client'
 
 import { IconNftPlaceholder } from 'components/Icons/IconNftPlaceholder'
 import Spinner from 'components/Spinner'
 import { useOwnedObjects } from 'utils/useOwnedObjects'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
-import { useNetwork } from 'utils/useNetworkProvider'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
+import { NftDetails } from './NftDetails'
 
 const Container = styled.div<{ isScrollable: boolean }>`
   padding-top: 16px;
@@ -17,15 +18,15 @@ const Container = styled.div<{ isScrollable: boolean }>`
   ${p => (p.isScrollable ? `flex-wrap: wrap; gap: 8px` : `justify-content: space-between`)}
 `
 
-const EmptyPlaceholder = styled.div`
-  width: 144px;
-  height: 144px;
+const EmptyPlaceholder = styled.div<{ width?: number; height?: number; showImgInfoOnHover?: boolean }>`
+  width: ${p => p.width || 144}px;
+  height: ${p => p.height || 144}px;
   border-radius: 13px;
   background: #f2f4f6;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
+  ${p => p.showImgInfoOnHover && `cursor: pointer;`}
   position: relative;
   .hide {
     display: none;
@@ -54,11 +55,11 @@ const PlaceholderWrapper = styled.div`
   }
 `
 
-const StyledNftImage = styled.img`
-  width: 144px;
-  height: 144px;
+const StyledNftImage = styled.img<{ width?: number; height?: number; showImgInfoOnHover?: boolean }>`
+  width: ${p => p.width || 144}px;
+  height: ${p => p.height || 144}px;
   border-radius: 13px;
-  cursor: pointer;
+  ${p => p.showImgInfoOnHover && `cursor: pointer;`}
 
   &:hover + .hide {
     display: block;
@@ -123,13 +124,23 @@ const EmptyList = styled.div`
 
 interface NftImageProps {
   imgSrc?: string
-  objectId?: string
+  nft?: SuiObjectResponse
+  onClick?: (o?: SuiObjectResponse) => void
   name?: string
-  address: string
-  network: string
+  imgWidth?: number
+  imgHeight?: number
+  showImgInfoOnHover?: boolean
 }
 
-const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) => {
+interface NftImageContainerProps {
+  nft: SuiObjectResponse
+  toggleModal?: (o?: SuiObjectResponse) => void
+  imgWidth?: number
+  imgHeight?: number
+  showImgInfoOnHover?: boolean
+}
+
+const NftImage = ({ imgSrc, nft, name, onClick, imgWidth, imgHeight, showImgInfoOnHover }: NftImageProps) => {
   const [showPlaceholder, setShowPlaceholder] = useState(false)
 
   useEffect(() => setShowPlaceholder(!imgSrc), [imgSrc])
@@ -139,19 +150,13 @@ const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) =
   const handleImageLoadError = useCallback(() => setShowPlaceholder(true), [])
 
   return (
-    <a
-      key={objectId}
-      href={`https://suiexplorer.com/object/${address}?network=${network}`}
-      target="_blank"
-      rel="noreferrer"
-      style={{ textDecoration: 'none' }}
-    >
+    <div key={nft?.data?.objectId} onClick={() => onClick?.(nft)}>
       {showPlaceholder ? (
-        <EmptyPlaceholder key={objectId}>
+        <EmptyPlaceholder width={imgWidth} height={imgHeight} showImgInfoOnHover={showImgInfoOnHover}>
           <PlaceholderWrapper>
             <IconNftPlaceholder />
           </PlaceholderWrapper>
-          {name ? (
+          {name && showImgInfoOnHover ? (
             <NftName variant="caption" className="hide">
               {name}
             </NftName>
@@ -159,19 +164,68 @@ const NftImage = ({ imgSrc, objectId, name, address, network }: NftImageProps) =
         </EmptyPlaceholder>
       ) : (
         <ImgWrapper>
-          <StyledNftImage key={objectId} onLoad={handleImageLoaded} onError={handleImageLoadError} src={imgSrc} />
-          {name ? (
+          <StyledNftImage
+            onLoad={handleImageLoaded}
+            onError={handleImageLoadError}
+            src={imgSrc}
+            width={imgWidth}
+            height={imgHeight}
+            showImgInfoOnHover={showImgInfoOnHover}
+          />
+          {name && showImgInfoOnHover ? (
             <NftName variant="caption" className="hide">
               {name}
             </NftName>
           ) : null}
         </ImgWrapper>
       )}
-    </a>
+    </div>
+  )
+}
+
+export const NftImageContainer = ({
+  nft,
+  toggleModal,
+  imgWidth,
+  imgHeight,
+  showImgInfoOnHover,
+}: NftImageContainerProps) => {
+  const type = nft.data?.type || ''
+  const address = nft.data?.objectId || ''
+  if (nft.data?.display?.data === null) {
+    return (
+      <div key={nft.data?.objectId} onClick={() => toggleModal?.(nft)}>
+        <EmptyPlaceholder width={imgWidth} height={imgHeight} showImgInfoOnHover={showImgInfoOnHover}>
+          <PlaceholderWrapper>
+            <IconNftPlaceholder />
+          </PlaceholderWrapper>
+          <NftType variant="caption">
+            <NftTextOverflow>{ellipsizeTokenAddress(address)}</NftTextOverflow>
+            <NftTextOverflow>{type.substring(type.indexOf('::'))}</NftTextOverflow>
+          </NftType>
+        </EmptyPlaceholder>
+      </div>
+    )
+  }
+  const imgUrl = nft.data?.display?.data?.['image_url' as keyof typeof nft.data.display.data] as string
+  const name = nft.data?.display?.data?.['name' as keyof typeof nft.data.display.data] as string
+
+  return (
+    <NftImage
+      key={nft.data?.objectId}
+      nft={nft}
+      imgSrc={imgUrl}
+      name={name}
+      onClick={toggleModal}
+      imgWidth={imgWidth}
+      imgHeight={imgHeight}
+      showImgInfoOnHover={showImgInfoOnHover}
+    />
   )
 }
 
 export const Nft = () => {
+  const [activeNft, setActiveNft] = useState<SuiObjectResponse>()
   const { isInitialFetch, isLoading, ownedObjects, hasNextPage, loadMore } = useOwnedObjects({
     filter: {
       MatchNone: [
@@ -183,7 +237,9 @@ export const Nft = () => {
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
-  const { network } = useNetwork()
+  const toggleModal = useCallback((nft?: SuiObjectResponse) => {
+    setActiveNft(nft)
+  }, [])
 
   const handlePageLoad = useCallback(() => {
     if (hasNextPage) {
@@ -211,41 +267,8 @@ export const Nft = () => {
             return null
           }
 
-          const type = o.data?.type || ''
-          const address = o.data?.objectId || ''
-          if (o.data?.display?.data === null) {
-            return (
-              <a
-                key={o.data?.objectId}
-                href={`https://suiexplorer.com/object/${address}?network=${network}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{ textDecoration: 'none' }}
-              >
-                <EmptyPlaceholder>
-                  <PlaceholderWrapper>
-                    <IconNftPlaceholder />
-                  </PlaceholderWrapper>
-                  <NftType variant="caption">
-                    <NftTextOverflow>{ellipsizeTokenAddress(address)}</NftTextOverflow>
-                    <NftTextOverflow>{type.substring(type.indexOf('::'))}</NftTextOverflow>
-                  </NftType>
-                </EmptyPlaceholder>
-              </a>
-            )
-          }
-          const imgUrl = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data] as string
-          const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data] as string
-
           return (
-            <NftImage
-              key={o.data?.objectId}
-              objectId={o.data?.objectId}
-              imgSrc={imgUrl}
-              name={name}
-              address={address}
-              network={network}
-            />
+            <NftImageContainer key={o.data?.objectId} toggleModal={toggleModal} nft={o} showImgInfoOnHover={true} />
           )
         })}
       </Container>
@@ -256,6 +279,7 @@ export const Nft = () => {
       ) : (
         <div style={{ height: 51 }} />
       )}
+      {activeNft && <NftDetails nft={activeNft} toggleModal={toggleModal} />}
     </>
   )
 }
