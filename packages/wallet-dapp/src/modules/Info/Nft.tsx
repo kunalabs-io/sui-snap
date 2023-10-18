@@ -123,10 +123,8 @@ const EmptyList = styled.div`
 `
 
 interface NftImageProps {
-  imgSrc?: string
-  nft?: SuiObjectResponse
+  nft: SuiObjectResponse
   onClick?: (o?: SuiObjectResponse) => void
-  name?: string
   imgWidth?: number
   imgHeight?: number
   showImgInfoOnHover?: boolean
@@ -140,8 +138,11 @@ interface NftImageContainerProps {
   showImgInfoOnHover?: boolean
 }
 
-const NftImage = ({ imgSrc, nft, name, onClick, imgWidth, imgHeight, showImgInfoOnHover }: NftImageProps) => {
+const NftImage = ({ nft, onClick, imgWidth, imgHeight, showImgInfoOnHover }: NftImageProps) => {
   const [showPlaceholder, setShowPlaceholder] = useState(false)
+
+  const imgSrc = nft.data?.display?.data?.['image_url' as keyof typeof nft.data.display.data] as string
+  const name = nft.data?.display?.data?.['name' as keyof typeof nft.data.display.data] as string
 
   useEffect(() => setShowPlaceholder(!imgSrc), [imgSrc])
 
@@ -207,15 +208,11 @@ export const NftImageContainer = ({
       </div>
     )
   }
-  const imgUrl = nft.data?.display?.data?.['image_url' as keyof typeof nft.data.display.data] as string
-  const name = nft.data?.display?.data?.['name' as keyof typeof nft.data.display.data] as string
 
   return (
     <NftImage
       key={nft.data?.objectId}
       nft={nft}
-      imgSrc={imgUrl}
-      name={name}
       onClick={toggleModal}
       imgWidth={imgWidth}
       imgHeight={imgHeight}
