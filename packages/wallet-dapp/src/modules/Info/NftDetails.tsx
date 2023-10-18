@@ -120,7 +120,7 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
             <HrLine />
           </DetailsContainer>
         )}
-        <div style={{ height: 24 }} />
+        {showDetailsTitle && <div style={{ height: 24 }} />}
         {name && (
           <InfoContainer>
             <Typography variant="description" fontWeight="medium" color="secondary">
