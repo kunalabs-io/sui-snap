@@ -28,19 +28,13 @@ const EmptyPlaceholder = styled.div<{ width?: number; height?: number; showImgIn
   align-items: center;
   ${p => p.showImgInfoOnHover && `cursor: pointer;`}
   position: relative;
-  .hide {
-    display: none;
-  }
-  &:hover {
-    & > {
-      .hide {
-        display: block;
-        position: absolute;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
+
+  .showName {
+    display: block;
+    position: absolute;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `
 
@@ -158,7 +152,7 @@ const NftImage = ({ nft, onClick, imgWidth, imgHeight, showImgInfoOnHover }: Nft
             <IconNftPlaceholder />
           </PlaceholderWrapper>
           {name && showImgInfoOnHover ? (
-            <NftName variant="caption" className="hide">
+            <NftName variant="caption" className="showName">
               {name}
             </NftName>
           ) : null}

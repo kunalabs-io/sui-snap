@@ -8,6 +8,7 @@ import { NftImageContainer } from './Nft'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
 import Typography from 'components/Typography'
+import { ellipsizeTokenAddress } from 'utils/helpers'
 
 interface Props {
   toggleModal: () => void
@@ -92,7 +93,9 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
   const projectUrl = nft.data?.display?.data?.['project_url' as keyof typeof nft.data.display.data] as string
   const creator = nft.data?.display?.data?.['creator' as keyof typeof nft.data.display.data] as string
 
-  const showDetailsTitle = name || description || link || projectUrl || creator
+  const noDisplayData = nft.data?.display?.data === null
+  const type = nft.data?.type || ''
+  const address = nft.data?.objectId || ''
 
   return (
     <Modal onClose={handleClose} style={{ padding: 20, maxHeight: 450 }}>
@@ -112,15 +115,13 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
           <ViewExplorerLabel variant="caption">View on explorer</ViewExplorerLabel>
           <IconLink stroke={theme.colors.text.alternative} />
         </ExplorerLink>
-        {showDetailsTitle && (
-          <DetailsContainer>
-            <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
-              Details
-            </DetailsLabel>
-            <HrLine />
-          </DetailsContainer>
-        )}
-        {showDetailsTitle && <div style={{ height: 24 }} />}
+        <DetailsContainer>
+          <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
+            Details
+          </DetailsLabel>
+          <HrLine />
+        </DetailsContainer>
+        {<div style={{ height: 24 }} />}
         {name && (
           <InfoContainer>
             <Typography variant="description" fontWeight="medium" color="secondary">
@@ -172,6 +173,21 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
             </Typography>
             <InfoValue variant="description" fontWeight="medium" color="secondary">
               {creator}
+            </InfoValue>
+          </InfoContainer>
+        )}
+        {noDisplayData && (
+          <InfoContainer>
+            <Typography variant="description" fontWeight="medium" color="secondary">
+              Type
+            </Typography>
+            <InfoValue
+              variant="description"
+              fontWeight="medium"
+              color="secondary"
+              style={{ maxWidth: 300, wordBreak: 'break-word', whiteSpace: 'normal' }}
+            >
+              {`${ellipsizeTokenAddress(address)}${type.substring(type.indexOf('::'))}`}
             </InfoValue>
           </InfoContainer>
         )}
