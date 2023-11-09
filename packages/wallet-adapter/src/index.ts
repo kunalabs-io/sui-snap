@@ -43,8 +43,11 @@ export const SNAP_VERSION = '^1.0.0'
 
 export function registerSuiSnapWallet(): SuiSnapWallet {
   const wallets = getWallets()
-  if (wallets.get().find(w => w.name === SuiSnapWallet.NAME)) {
-    console.warn('SuiSnapWallet already registered')
+  for (const wallet of wallets.get()) {
+    if (wallet.name === SuiSnapWallet.NAME) {
+      console.warn('SuiSnapWallet already registered')
+      return wallet as SuiSnapWallet
+    }
   }
 
   const wallet = new SuiSnapWallet()
