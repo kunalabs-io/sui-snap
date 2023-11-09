@@ -45,10 +45,10 @@ const Description = styled.div`
   margin-bottom: 2.4rem;
 `
 
-export const Card = ({ content, disabled = false, fullWidth }: CardProps) => {
+export const Card = ({ content, disabled = false }: CardProps) => {
   const { title, description, button } = content
   return (
-    <CardWrapper fullWidth={fullWidth} disabled={disabled}>
+    <CardWrapper disabled={disabled}>
       {title && <Title>{title}</Title>}
       <Description>{description}</Description>
       {button}

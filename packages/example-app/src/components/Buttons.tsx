@@ -54,7 +54,7 @@ export const InstallFlaskButton = () => (
 
 export const ConnectButton = (props: ComponentProps<typeof Button> & { connecting?: boolean }) => {
   return (
-    <Button {...props}>
+    <Button onClick={props.onClick} disabled={props.disabled}>
       <FlaskFox />
       <ButtonText>{props.connecting ? 'Connecting...' : 'Connect'}</ButtonText>
     </Button>
