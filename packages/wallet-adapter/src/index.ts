@@ -98,7 +98,7 @@ export async function admin_setFullnodeUrl(
       snapId: SNAP_ORIGIN,
       request: {
         method: 'admin_setFullnodeUrl',
-        params,
+        params: JSON.parse(JSON.stringify(params)),
       },
     },
   })
@@ -117,9 +117,7 @@ export async function signPersonalMessage(
         snapId: SNAP_ORIGIN,
         request: {
           method: 'signPersonalMessage',
-          params: {
-            ...serialized,
-          },
+          params: JSON.parse(JSON.stringify(serialized)),
         },
       },
     })) as SuiSignPersonalMessageOutput
@@ -153,9 +151,7 @@ export async function signTransactionBlock(
         snapId: SNAP_ORIGIN,
         request: {
           method: 'signTransactionBlock',
-          params: {
-            ...serialized,
-          },
+          params: JSON.parse(JSON.stringify(serialized)),
         },
       },
     })) as SuiSignTransactionBlockOutput
@@ -177,9 +173,7 @@ export async function signAndExecuteTransactionBlock(
         snapId: SNAP_ORIGIN,
         request: {
           method: 'signAndExecuteTransactionBlock',
-          params: {
-            ...serialized,
-          },
+          params: JSON.parse(JSON.stringify(serialized)),
         },
       },
     })) as SuiSignAndExecuteTransactionBlockOutput
