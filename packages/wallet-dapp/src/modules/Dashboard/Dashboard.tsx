@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { DashboardContainer } from './styles'
 import Info from 'modules/Info/Info'
@@ -6,9 +6,10 @@ import Header from 'modules/Header/Header'
 import Send from 'modules/Send/Send'
 import { CoinInfo } from 'utils/useWalletBalances'
 import { useNetwork } from 'utils/useNetworkProvider'
+import { Stake } from 'modules/Stake/Stake'
 
 const Dashboard = () => {
-  const [currentScreen, setCurrentScreen] = useState<'info' | 'send'>('info')
+  const [currentScreen, setCurrentScreen] = useState<'info' | 'send' | 'stake'>('info')
   const [selectedTokenToSend, setSelectedTokenToSend] = useState<CoinInfo>()
 
   const { network } = useNetwork()
@@ -17,14 +18,18 @@ const Dashboard = () => {
     setCurrentScreen('info')
   }, [network])
 
-  const handleSendClick = (selectedCoin?: CoinInfo) => {
+  const handleSendClick = useCallback((selectedCoin?: CoinInfo) => {
     setSelectedTokenToSend(selectedCoin)
     setCurrentScreen('send')
-  }
+  }, [])
 
-  const openInfoScreen = () => {
+  const handleStakeClick = useCallback(() => {
+    setCurrentScreen('stake')
+  }, [])
+
+  const openInfoScreen = useCallback(() => {
     setCurrentScreen('info')
-  }
+  }, [])
 
   return (
     <div>
@@ -32,8 +37,10 @@ const Dashboard = () => {
       <DashboardContainer>
         {currentScreen === 'send' ? (
           <Send openInfoScreen={openInfoScreen} initialCoinInfo={selectedTokenToSend} />
+        ) : currentScreen === 'info' ? (
+          <Info onSendClick={handleSendClick} onStakeClick={handleStakeClick} />
         ) : (
-          <Info onSendClick={handleSendClick} />
+          <Stake onBackClick={openInfoScreen} />
         )}
       </DashboardContainer>
     </div>
