@@ -18,9 +18,11 @@ import Spinner from 'components/Spinner/Spinner'
 import { Tokens } from './Tokens'
 import { Nft } from './Nft'
 import { Activity } from './Activity'
+import { IconGroup } from 'components/Icons/IconGroup'
 
 interface Props {
   onSendClick: (selectedCoin?: CoinInfo) => void
+  onStakeClick: () => void
 }
 
 enum Tab {
@@ -29,7 +31,7 @@ enum Tab {
   Activity = 'activity',
 }
 
-const Info = ({ onSendClick }: Props) => {
+const Info = ({ onSendClick, onStakeClick }: Props) => {
   const [activeTab, setActiveTab] = useState(Tab.Tokens)
 
   const { currentAccount } = useWalletKit()
@@ -50,6 +52,13 @@ const Info = ({ onSendClick }: Props) => {
     }
     onSendClick()
   }, [infos, onSendClick])
+
+  const handleStakeClick = useCallback(() => {
+    if (!infos || infos.size === 0) {
+      return
+    }
+    onStakeClick()
+  }, [infos, onStakeClick])
 
   const handleTabChange = useCallback((tab: Tab) => {
     setActiveTab(tab)
@@ -134,6 +143,13 @@ const Info = ({ onSendClick }: Props) => {
             <StyledTypography variant="body">Explorer</StyledTypography>
           </IconButtonContainer>
         </a>
+
+        <IconButtonContainer onClick={handleStakeClick} disabled={!infos || infos.size === 0}>
+          <IconButton disabled={!infos || infos.size === 0}>
+            <IconGroup />
+          </IconButton>
+          <StyledTypography variant="body">Stake</StyledTypography>
+        </IconButtonContainer>
       </div>
       <Tabs>
         <div onClick={() => handleTabChange(Tab.Tokens)}>
