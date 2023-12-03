@@ -23,7 +23,6 @@ const StyledButton = styled(Button)`
   font-size: 14px;
   width: 100%;
   height: 34px;
-  margin 16px 0px;
 `
 
 const StakingInfoContainer = styled.div`
@@ -155,7 +154,9 @@ export const Stake = ({ onBackClick }: Props) => {
       <IconContainer onClick={onBackClick}>
         <IconBack />
       </IconContainer>
+      <div style={{ height: 16 }} />
       <StyledButton onClick={handleNewStakeClick}>+ Stake SUI</StyledButton>
+      <div style={{ height: 16 }} />
       <StakingInfoContainer>
         <StakingInfoTitle variant="caption" fontWeight="bold">
           STAKING ON 1 VALIDATOR
