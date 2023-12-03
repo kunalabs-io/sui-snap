@@ -119,6 +119,13 @@ interface Props {
   onBackClick: () => void
 }
 
+export interface ValidatorInfo {
+  id: string
+  name: string
+  apy: string
+  iconUrl?: string
+}
+
 export const Stake = ({ onBackClick }: Props) => {
   const [activeStakeScreen, setActiveStakeScreen] = useState<'stake' | 'new-stake' | 'stake-details'>('stake')
 
@@ -136,7 +143,7 @@ export const Stake = ({ onBackClick }: Props) => {
 
   const stakingItems = 2
   if (activeStakeScreen === 'new-stake') {
-    return <NewStake />
+    return <NewStake onBackClick={handleStakeBack} />
   }
 
   if (activeStakeScreen === 'stake-details') {

@@ -148,18 +148,18 @@ export const StakeDetails = ({ onBackClick }: Props) => {
       </DetailsContainer>
       {<div style={{ height: 16 }} />}
       <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="bold" variant="description">
+        <DetailsInfoLabel fontWeight="medium" variant="description">
           APY
         </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="bold" variant="description">
+        <DetailsInfoValue fontWeight="medium" variant="description">
           4.43%
         </DetailsInfoValue>
       </DetailsInfoContainer>
       <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="bold" variant="description">
+        <DetailsInfoLabel fontWeight="medium" variant="description">
           Commission
         </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="bold" variant="description">
+        <DetailsInfoValue fontWeight="medium" variant="description">
           8%
         </DetailsInfoValue>
       </DetailsInfoContainer>
