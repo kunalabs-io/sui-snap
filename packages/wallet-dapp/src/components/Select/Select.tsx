@@ -14,6 +14,7 @@ export interface Option {
   image?: string
   balance?: string
   name?: string
+  apy?: string
 }
 
 interface NetworkSelectProps {
@@ -180,6 +181,80 @@ export const SelectAsset = ({
               >
                 {data.balance}
                 <span style={{ marginLeft: 8 }}>{data.label}</span>
+              </Typography>
+            </OptionWithImage>
+          </div>
+        ),
+      }}
+      filterOption={customFilterOption}
+    />
+  )
+}
+
+export const SelectValidator = ({
+  selectedOption,
+  handleChange,
+  options,
+  disabled,
+  customFilterOption,
+  handleMenuOpen,
+  handleMenuClose,
+}: SelectAssetProps) => {
+  const theme = useTheme()
+
+  return (
+    <Select
+      isDisabled={disabled}
+      value={selectedOption}
+      onChange={handleChange}
+      options={options}
+      menuPosition="fixed"
+      onMenuOpen={handleMenuOpen}
+      onMenuClose={handleMenuClose}
+      styles={{
+        control: provided => ({
+          ...provided,
+          height: '45px',
+          fontWeight: 500,
+          color: '#24272A',
+        }),
+        valueContainer: provided => ({
+          ...provided,
+          paddingLeft: 45,
+        }),
+        input: styles => ({ ...styles }),
+      }}
+      components={{
+        Option: ({ innerProps, innerRef, data, isSelected, isFocused }) => (
+          <div
+            {...innerProps}
+            ref={innerRef}
+            style={{ backgroundColor: isSelected || isFocused ? theme.colors.background.hover : '' }}
+          >
+            <OptionWithImage>
+              <div>
+                {data.image ? (
+                  <ImageWithFallback
+                    src={data.image}
+                    isSmallPlaceholder
+                    style={{ width: 27, height: 27, marginRight: 8 }}
+                    placeholderStyles={{ marginRight: 8 }}
+                    alt={data.label}
+                  />
+                ) : (
+                  <div style={{ marginRight: 8 }}>
+                    <IconMissingImgSmall />
+                  </div>
+                )}
+              </div>
+              <div style={{ color: '#24272A', fontSize: 14, fontWeight: 500, marginLeft: 4 }}>{data.label}</div>
+              <Typography
+                variant="body"
+                fontWeight="medium"
+                style={{ marginLeft: 'auto', color: theme.colors.text.description }}
+              >
+                APY:&nbsp;
+                {data.apy}
               </Typography>
             </OptionWithImage>
           </div>
