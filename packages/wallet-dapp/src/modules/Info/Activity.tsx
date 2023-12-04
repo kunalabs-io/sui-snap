@@ -67,10 +67,14 @@ const TxBlockTexts = styled.div`
 
 const AmountChanged = styled(Typography)<{ isPositive: boolean }>`
   color: ${p => (p.isPositive ? '#28A745' : '#DC3545')};
+  max-width: 59px;
+  overflow: hidden;
 `
 
 const AmountChangedSymbol = styled(Typography)`
   color: ${p => p.theme.colors.text.alternative};
+  max-width: 38px;
+  overflow: hidden;
 `
 
 export const Activity = () => {
@@ -156,7 +160,7 @@ export const Activity = () => {
                                 isPositive={Number(balanceChange.amount || '') >= 0n}
                                 style={{ marginRight: 3 }}
                               >
-                                {balanceChange.amount}
+                                {Math.round((Number(balanceChange.amount) + Number.EPSILON) * 1000000) / 1000000}
                               </AmountChanged>
                               <AmountChangedSymbol variant="caption" fontWeight="medium">
                                 {balanceChange.symbol}
