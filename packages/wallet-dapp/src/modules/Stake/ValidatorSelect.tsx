@@ -6,13 +6,21 @@ import { FilterOption, Option, SelectValidator } from 'components/Select/Select'
 import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 import ImageWithFallback from 'components/ImageWithFallback'
 import { ValidatorInfo } from './Stake'
+import { formatNumberToPct } from 'utils/formatting'
 
 interface Props {
   label: string
-  validator?: ValidatorInfo
-  options: ValidatorInfo[]
+  selectedValidator?: string
+  validators: ValidatorInfo[]
   handleValidatorChange: (validator: ValidatorInfo) => void
   disabled?: boolean
+}
+
+interface ValidatorOption {
+  name: string
+  address: string
+  imageUrl: string
+  apy?: string
 }
 
 const Label = styled(Typography)`
@@ -20,14 +28,22 @@ const Label = styled(Typography)`
   color: ${p => p.theme.colors.text.alternative};
 `
 
-export const ValidatorSelect = ({ label, validator, options, handleValidatorChange, disabled }: Props) => {
+export const ValidatorSelect = ({ label, selectedValidator, validators, handleValidatorChange, disabled }: Props) => {
+  const options: ValidatorOption[] = validators.map(v => ({
+    name: v.name,
+    address: v.address,
+    imageUrl: v.imageUrl,
+    apy: v.apy !== undefined ? formatNumberToPct(v.apy, 2, true) : undefined,
+  }))
+  const validator = options.find(v => v.address === selectedValidator)
+
   const [showAssetImage, setShowAssetImage] = useState(true)
 
   const handleOptionClick = (option: Option | null) => {
     if (!option) {
       return
     }
-    const newValidatorInfo = options.find(o => o.id === option.value)
+    const newValidatorInfo = validators.find(o => o.address === option.value)
     if (newValidatorInfo) {
       handleValidatorChange(newValidatorInfo)
     }
@@ -55,9 +71,9 @@ export const ValidatorSelect = ({ label, validator, options, handleValidatorChan
       <div style={{ position: 'relative' }}>
         {showAssetImage ? (
           <div style={{ position: 'absolute', zIndex: 12, top: 9, left: 12 }}>
-            {validator?.iconUrl ? (
+            {validator?.imageUrl ? (
               <ImageWithFallback
-                src={validator.iconUrl}
+                src={validator.imageUrl}
                 style={{ width: 27, height: 27 }}
                 alt={validator?.name || ''}
                 isSmallPlaceholder
@@ -70,16 +86,16 @@ export const ValidatorSelect = ({ label, validator, options, handleValidatorChan
         <SelectValidator
           options={options.map(o => ({
             label: o.name,
-            value: o.id,
-            image: o.iconUrl,
+            value: o.address,
+            image: o.imageUrl,
             apy: o.apy,
           }))}
           handleChange={handleOptionClick}
           customFilterOption={customFilterOption}
           selectedOption={{
             label: validator?.name || '',
-            value: validator?.id || '',
-            image: validator?.iconUrl || '',
+            value: validator?.address || '',
+            image: validator?.imageUrl || '',
             apy: validator?.apy,
           }}
           disabled={disabled}

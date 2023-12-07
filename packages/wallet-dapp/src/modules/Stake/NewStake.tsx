@@ -13,7 +13,15 @@ import { useWalletBalances } from 'utils/useWalletBalances'
 import { WALLET_BALANCES_REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
 import Button from 'components/Button'
 import Spinner from 'components/Spinner'
-import { ellipsizeTokenAddress } from 'utils/helpers'
+import { ellipsizeTokenAddress, formatTimeDifference } from 'utils/helpers'
+import useLatestSuiSystemState from 'utils/useLatestSuiSystemState'
+import { Amount } from 'lib/amount'
+import { SUI_DECIMALS, SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui.js/utils'
+import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
+import { useSuiClientProvider } from 'utils/useSuiClientProvider'
+import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { useNetwork } from 'utils/useNetworkProvider'
+import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -59,40 +67,55 @@ const DetailsInfoValue = styled(Typography)<{ isAddress?: boolean }>`
 
 interface Props {
   onBackClick: () => void
+  openStakeScreen: () => void
 }
 
-const options: ValidatorInfo[] = [
-  {
-    id: 'id1',
-    name: 'OKXEarn1',
-    apy: '14.11%',
-    iconUrl: 'https://raw.githubusercontent.com/okxEarnSuiValidator/OKX-SUI-Image/main/OKX-logo.png',
-  },
-  {
-    id: 'id2',
-    name: 'OKXEarn2',
-    apy: '34.33%',
-    iconUrl: 'https://raw.githubusercontent.com/okxEarnSuiValidator/OKX-SUI-Image/main/OKX-logo.png',
-  },
-  {
-    id: 'id3',
-    name: 'OKXEarn3',
-    apy: '43.43%',
-    iconUrl: 'https://raw.githubusercontent.com/okxEarnSuiValidator/OKX-SUI-Image/main/OKX-logo.png',
-  },
-]
-
-export const NewStake = ({ onBackClick }: Props) => {
+export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
   const [selectedValidator, setSelectedValidator] = useState<ValidatorInfo>()
   const [rawInputStr, setRawInputStr] = useState('')
   const [isSending, setIsSending] = useState(false)
+
+  const client = useSuiClientProvider()
+  const walletKit = useWalletKit()
+  const { network, chain } = useNetwork()
+
+  const systemStateRes = useLatestSuiSystemState()
+
+  const validators: ValidatorInfo[] | undefined = systemStateRes.data?.systemState.activeValidators.map(v => {
+    return {
+      address: v.suiAddress,
+      poolId: v.stakingPoolId,
+      name: v.name,
+      apy: systemStateRes.data?.apyMap.get(v.suiAddress),
+      imageUrl: v.imageUrl,
+      totalSuiStaked: Amount.fromInt(BigInt(v.stakingPoolSuiBalance), SUI_DECIMALS),
+      votingPower: Number(v.votingPower) / 100_00,
+      commission: Number(v.commissionRate) / 100_00,
+    }
+  })
+
+  let rewardsStart = undefined
+  if (systemStateRes.data?.systemState) {
+    rewardsStart = new Date(
+      Number(systemStateRes.data.systemState.epochStartTimestampMs) +
+        Number(systemStateRes.data.systemState.epochDurationMs)
+    )
+  }
+
+  let rewardsRedeemable = undefined
+  if (systemStateRes.data?.systemState) {
+    rewardsRedeemable = new Date(
+      Number(systemStateRes.data.systemState.epochStartTimestampMs) +
+        Number(systemStateRes.data.systemState.epochDurationMs) * 2
+    )
+  }
 
   const { currentAccount } = useWalletKit()
 
   const {
     infos,
     isLoading: isLoadingWalletBalances,
-    // triggerUpdate: triggerWalletBalancesUpdate,
+    triggerUpdate: triggerWalletBalancesUpdate,
   } = useWalletBalances({
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
@@ -110,8 +133,8 @@ export const NewStake = ({ onBackClick }: Props) => {
     setRawInputStr(e.target.value)
   }, [])
 
-  const handleValidatorChange = useCallback((coin: ValidatorInfo) => {
-    setSelectedValidator(coin)
+  const handleValidatorChange = useCallback((validator: ValidatorInfo) => {
+    setSelectedValidator(validator)
   }, [])
 
   const handleMaxClick = useCallback(() => {
@@ -140,6 +163,61 @@ export const NewStake = ({ onBackClick }: Props) => {
     amountError = 'Amount too large'
   }
 
+  const handleStakeClick = useCallback(async () => {
+    if (!selectedValidator || !amount || !client) {
+      return
+    }
+
+    setIsSending(true)
+
+    const txb = new TransactionBlock()
+    const stakeCoin = txb.splitCoins(txb.gas, [txb.pure(amount.int)])
+    txb.moveCall({
+      target: '0x3::sui_system::request_add_stake',
+      arguments: [
+        txb.sharedObjectRef({
+          objectId: SUI_SYSTEM_STATE_OBJECT_ID,
+          initialSharedVersion: 1,
+          mutable: true,
+        }),
+        stakeCoin,
+        txb.pure(selectedValidator.address), // txb.pure.address(validator)
+      ],
+    })
+
+    try {
+      const res = await walletKit.signAndExecuteTransactionBlock({
+        transactionBlock: txb,
+        requestType: 'WaitForLocalExecution',
+        chain,
+      })
+
+      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+      toast.success(
+        <div>
+          Transaction succeeded:{' '}
+          <a href={url} target="_blank" rel="noreferrer">
+            {res.digest}
+          </a>
+        </div>
+      )
+
+      triggerWalletBalancesUpdate()
+      openStakeScreen()
+    } catch (e) {
+      if (e instanceof UserRejectionError) {
+        toast.warn('Transaction rejected')
+        return
+      }
+
+      toast.error('Transaction failed')
+      console.error(e)
+      return
+    } finally {
+      setIsSending(false)
+    }
+  }, [client, selectedValidator, amount, walletKit, chain, network, triggerWalletBalancesUpdate, openStakeScreen])
+
   if (isLoadingWalletBalances) {
     return (
       <Container>
@@ -154,10 +232,10 @@ export const NewStake = ({ onBackClick }: Props) => {
         <IconBack />
       </IconContainer>
       <ValidatorSelect
-        label="Asset"
-        validator={selectedValidator}
+        label="Validator"
+        selectedValidator={selectedValidator?.address}
         handleValidatorChange={handleValidatorChange}
-        options={options}
+        validators={validators || []}
         disabled={!infos || infos.size === 0 || isSending}
       />
       <Input
@@ -181,99 +259,107 @@ export const NewStake = ({ onBackClick }: Props) => {
         errorMessage={!stakeEnabled ? amountError : undefined}
       />
 
-      <DetailsContainer>
-        <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
-          Details
-        </DetailsLabel>
-        <HrLine />
-      </DetailsContainer>
-      {<div style={{ height: 16 }} />}
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Validator
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          {selectedValidator?.name}
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Address
-        </DetailsInfoLabel>
-        <div onClick={handleAddressClick}>
-          <DetailsInfoValue fontWeight="medium" variant="description" isAddress>
-            {ellipsizeTokenAddress(currentAccount?.address || '')}
-          </DetailsInfoValue>
-        </div>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Total SUI staked
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          39.92 M
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Voting power
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          0.49%
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Commission
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          9%
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Staking APY
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          4.43%
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Rewards start in
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          20 h 49 min
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <DetailsInfoContainer>
-        <DetailsInfoLabel fontWeight="medium" variant="description">
-          Rewards redeemable in
-        </DetailsInfoLabel>
-        <DetailsInfoValue fontWeight="medium" variant="description">
-          44 h 49 min
-        </DetailsInfoValue>
-      </DetailsInfoContainer>
-      <Typography variant="body" color="secondary" style={{ margin: '22px 0' }}>
-        Staked SUI starts counting as validator’s stake at the end of the Epoch in which it was staked. Rewards are
-        earned separately for each Epoch and become available at the end of each Epoch.
-      </Typography>
-      <Button style={{ width: '100%', marginBottom: 20 }} disabled={!stakeEnabled || isSending}>
-        {isSending ? (
-          <Spinner
-            style={{
-              marginTop: 0,
-              marginLeft: 0,
-              border: '5px solid #ffffff',
-              borderBottomColor: 'transparent',
-              width: 32,
-              height: 32,
-            }}
-          />
-        ) : (
-          <span>Stake Now</span>
-        )}
-      </Button>
+      {selectedValidator && (
+        <>
+          <DetailsContainer>
+            <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
+              Details
+            </DetailsLabel>
+            <HrLine />
+          </DetailsContainer>
+          {<div style={{ height: 16 }} />}
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Validator
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {selectedValidator.name}
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Address
+            </DetailsInfoLabel>
+            <div onClick={handleAddressClick}>
+              <DetailsInfoValue fontWeight="medium" variant="description" isAddress>
+                {ellipsizeTokenAddress(selectedValidator.address)}
+              </DetailsInfoValue>
+            </div>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Total SUI staked
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {formatNumberWithCommas(selectedValidator.totalSuiStaked.toString())} SUI
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Voting power
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {formatNumberToPct(selectedValidator.votingPower, 2, true)}
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Commission
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {formatNumberToPct(selectedValidator.commission, 2, false)}
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Staking APY
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {selectedValidator.apy !== undefined ? formatNumberToPct(selectedValidator.apy || 0, 2, true) : '--'}
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Rewards start in
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {rewardsStart ? formatTimeDifference(new Date(), rewardsStart) : '--'}
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <DetailsInfoContainer>
+            <DetailsInfoLabel fontWeight="medium" variant="description">
+              Rewards redeemable in
+            </DetailsInfoLabel>
+            <DetailsInfoValue fontWeight="medium" variant="description">
+              {rewardsRedeemable ? formatTimeDifference(new Date(), rewardsRedeemable) : '--'}
+            </DetailsInfoValue>
+          </DetailsInfoContainer>
+          <Typography variant="body" color="secondary" style={{ margin: '22px 0' }}>
+            Staked SUI starts counting as validator’s stake at the end of the Epoch in which it was staked. Rewards are
+            earned separately for each Epoch and become available at the end of each Epoch.
+          </Typography>
+          <Button
+            style={{ width: '100%', marginBottom: 20 }}
+            disabled={!stakeEnabled || isSending}
+            onClick={handleStakeClick}
+          >
+            {isSending ? (
+              <Spinner
+                style={{
+                  marginTop: 0,
+                  marginLeft: 0,
+                  border: '5px solid #ffffff',
+                  borderBottomColor: 'transparent',
+                  width: 32,
+                  height: 32,
+                }}
+              />
+            ) : (
+              <span>Stake Now</span>
+            )}
+          </Button>
+        </>
+      )}
     </Container>
   )
 }

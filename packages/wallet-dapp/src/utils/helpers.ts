@@ -40,3 +40,15 @@ export const getPackageIdFromTypeArg = (typeArg: string, separator = '::') => {
   }
   return ''
 }
+
+export function formatTimeDifference(startDate: Date, endDate: Date) {
+  const msPerMinute = 60 * 1000
+  const msPerHour = msPerMinute * 60
+
+  const difference = endDate.getTime() - startDate.getTime()
+
+  const hours = Math.floor(difference / msPerHour)
+  const minutes = Math.floor((difference % msPerHour) / msPerMinute)
+
+  return `${hours} h ${minutes} min`
+}

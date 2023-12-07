@@ -23,3 +23,17 @@ export const formatNumberWithCommas = (numberStr: string) => {
     return `${numStr} B`
   }
 }
+
+export const roundNumber = (n: number, decimals: number) => {
+  if (Number.isFinite(n) === false) return n
+  const factor = 10 ** decimals
+  return Math.round(n * factor) / factor
+}
+
+export const formatNumberToPct = (n: number, decimals: number, fixDecimals = false) => {
+  if (fixDecimals) {
+    return `${(n * 100).toFixed(decimals)}%`
+  } else {
+    return `${roundNumber(n * 100, decimals)}%`
+  }
+}

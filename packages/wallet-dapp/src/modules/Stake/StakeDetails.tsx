@@ -1,9 +1,21 @@
 import styled from 'styled-components'
 
 import { IconBack } from 'components/Icons/IconBack'
-import okxearn from './okxearn.png'
 import Typography from 'components/Typography'
 import Button from 'components/Button'
+import { StakeItem } from './Stake'
+import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
+import { formatTimeDifference } from 'utils/helpers'
+import { useState } from 'react'
+import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui.js/utils'
+import { toast } from 'react-toastify'
+import { useWalletKit } from '@mysten/wallet-kit'
+import { useNetwork } from 'utils/useNetworkProvider'
+import { useQueryClient } from '@tanstack/react-query'
+import { invalidateWalletBalances } from 'utils/useWalletBalances'
+import { invalidateStakes } from 'utils/useStakes'
+import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -99,18 +111,77 @@ const DetailsInfoValue = styled(Typography)`
 
 interface Props {
   onBackClick: () => void
+  stake: StakeItem
+  openStakeScreen: () => void
 }
 
-export const StakeDetails = ({ onBackClick }: Props) => {
+export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => {
+  const queryClient = useQueryClient()
+
+  const walletKit = useWalletKit()
+  const { network, chain } = useNetwork()
+
+  const [isSending, setIsSending] = useState(false)
+
+  const handleUnstakeClick = async () => {
+    setIsSending(true)
+
+    const txb = new TransactionBlock()
+    txb.moveCall({
+      target: '0x3::sui_system::request_withdraw_stake',
+      arguments: [
+        txb.sharedObjectRef({
+          objectId: SUI_SYSTEM_STATE_OBJECT_ID,
+          initialSharedVersion: 1,
+          mutable: true,
+        }),
+        txb.object(stake.id),
+      ],
+    })
+
+    try {
+      const res = await walletKit.signAndExecuteTransactionBlock({
+        transactionBlock: txb,
+        requestType: 'WaitForLocalExecution',
+        chain,
+      })
+
+      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+      toast.success(
+        <div>
+          Transaction succeeded:{' '}
+          <a href={url} target="_blank" rel="noreferrer">
+            {res.digest}
+          </a>
+        </div>
+      )
+
+      await Promise.all([invalidateWalletBalances(queryClient), invalidateStakes(queryClient)])
+      setIsSending(false)
+      openStakeScreen()
+    } catch (e) {
+      if (e instanceof UserRejectionError) {
+        toast.warn('Transaction rejected')
+        return
+      }
+
+      toast.error('Transaction failed')
+      console.error(e)
+      return
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   return (
     <Container>
       <IconContainer onClick={onBackClick}>
         <IconBack />
       </IconContainer>
       <ImgContainer>
-        <img src={okxearn} width={58} height={17} />
+        <img src={stake.validator?.imgUrl} width={40} />
         <Title variant="description" fontWeight="bold">
-          OKXEarn
+          {stake.validator?.name}
         </Title>
       </ImgContainer>
       <StakingInfoContent>
@@ -120,26 +191,56 @@ export const StakeDetails = ({ onBackClick }: Props) => {
           </StakingInfoSubtitle>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <StakeValue variant="caption" fontWeight="bold" style={{ marginBottom: 0 }}>
-              19
+              {formatNumberWithCommas(stake.principal.toString())}
             </StakeValue>
             <StakeToken fontWeight="medium">SUI</StakeToken>
           </div>
         </div>
         <div>
-          <StakingInfoSubtitle variant="caption" fontWeight="bold">
-            Earned
-          </StakingInfoSubtitle>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <StakeValue variant="caption" fontWeight="bold" style={{ marginBottom: 0 }} earned>
-              5.02930
-            </StakeValue>
-            <StakeToken earned fontWeight="medium">
-              SUI
-            </StakeToken>
-          </div>
+          {stake.status === 'Active' && stake.startedEarning && (
+            <>
+              <StakingInfoSubtitle variant="caption" fontWeight="bold">
+                Earned
+              </StakingInfoSubtitle>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <StakeValue
+                  variant="caption"
+                  fontWeight="bold"
+                  style={{ marginBottom: 0 }}
+                  earned={!!stake.estimatedReward?.int}
+                >
+                  {stake.estimatedReward && formatNumberWithCommas(stake.estimatedReward?.toString())}
+                </StakeValue>
+                <StakeToken fontWeight="medium" earned={!!stake.estimatedReward?.int}>
+                  SUI
+                </StakeToken>
+              </div>
+            </>
+          )}
+          {stake.rewardsStart !== undefined && (
+            <>
+              <StakingInfoSubtitle variant="caption" fontWeight="bold">
+                Starts earning in
+              </StakingInfoSubtitle>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <StakingInfoSubtitle variant="caption" fontWeight="medium">
+                  {formatTimeDifference(new Date(), stake.rewardsStart)}
+                </StakingInfoSubtitle>
+              </div>
+            </>
+          )}
         </div>
       </StakingInfoContent>
-      <UnstakeButton variant="outlined">Unstake and Collect Earned</UnstakeButton>
+      {stake.status !== 'Active' && (
+        <UnstakeButton disabled variant="outlined">
+          Stake pending activation
+        </UnstakeButton>
+      )}
+      {stake.status === 'Active' && (
+        <UnstakeButton variant="outlined" onClick={handleUnstakeClick}>
+          Unstake {stake.startedEarning && 'and Collect Earned'}
+        </UnstakeButton>
+      )}
       <DetailsContainer>
         <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
           Details
@@ -152,7 +253,7 @@ export const StakeDetails = ({ onBackClick }: Props) => {
           APY
         </DetailsInfoLabel>
         <DetailsInfoValue fontWeight="medium" variant="description">
-          4.43%
+          {stake.validator?.apy && formatNumberToPct(stake.validator.apy, 2, true)}
         </DetailsInfoValue>
       </DetailsInfoContainer>
       <DetailsInfoContainer>
@@ -160,7 +261,7 @@ export const StakeDetails = ({ onBackClick }: Props) => {
           Commission
         </DetailsInfoLabel>
         <DetailsInfoValue fontWeight="medium" variant="description">
-          8%
+          {stake.validator?.commission && formatNumberToPct(stake.validator.commission, 2, false)}
         </DetailsInfoValue>
       </DetailsInfoContainer>
     </Container>

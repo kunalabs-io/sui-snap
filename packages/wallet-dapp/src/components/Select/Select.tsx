@@ -248,14 +248,16 @@ export const SelectValidator = ({
                 )}
               </div>
               <div style={{ color: '#24272A', fontSize: 14, fontWeight: 500, marginLeft: 4 }}>{data.label}</div>
-              <Typography
-                variant="body"
-                fontWeight="medium"
-                style={{ marginLeft: 'auto', color: theme.colors.text.description }}
-              >
-                APY:&nbsp;
-                {data.apy}
-              </Typography>
+              {data.apy !== undefined && (
+                <Typography
+                  variant="body"
+                  fontWeight="medium"
+                  style={{ marginLeft: 'auto', color: theme.colors.text.description }}
+                >
+                  APY:&nbsp;
+                  {data.apy}
+                </Typography>
+              )}
             </OptionWithImage>
           </div>
         ),

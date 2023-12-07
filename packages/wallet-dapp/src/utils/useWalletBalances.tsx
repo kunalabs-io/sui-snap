@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useWalletKit } from '@mysten/wallet-kit'
 
 import { Type } from 'lib/type'
@@ -77,4 +77,12 @@ export const useWalletBalances = (options?: { refetchInterval: number }): Wallet
     isLoading,
     triggerUpdate,
   }
+}
+
+export async function invalidateWalletBalances(client: QueryClient) {
+  await client.invalidateQueries({
+    predicate: query => {
+      return query.queryKey[0] === 'wallet-balances'
+    },
+  })
 }

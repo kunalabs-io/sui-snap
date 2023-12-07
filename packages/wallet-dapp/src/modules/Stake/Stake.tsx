@@ -4,9 +4,15 @@ import { useCallback, useState } from 'react'
 import Button from 'components/Button'
 import { IconBack } from 'components/Icons/IconBack'
 import Typography from 'components/Typography'
-import okxEarn from './okxearn.png'
 import { StakeDetails } from './StakeDetails'
 import { NewStake } from './NewStake'
+import { Amount } from 'lib/amount'
+import useStakes from 'utils/useStakes'
+import useLatestSuiSystemState from 'utils/useLatestSuiSystemState'
+import { SUI_DECIMALS } from '@mysten/sui.js/utils'
+import { formatNumberWithCommas } from 'utils/formatting'
+import ImageWithFallback from 'components/ImageWithFallback'
+import { formatTimeDifference } from 'utils/helpers'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -107,8 +113,8 @@ const RewardsLabel = styled(Typography)`
   margin-bottom: 2px;
 `
 
-const RewardsValue = styled(Typography)`
-  color: ${p => p.theme.colors.text.success};
+const RewardsValue = styled(Typography)<{ earned?: boolean }>`
+  color: ${p => (p.earned ? p.theme.colors.text.success : p.theme.colors.text.secondary)};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -119,34 +125,122 @@ interface Props {
 }
 
 export interface ValidatorInfo {
-  id: string
+  address: string
+  poolId: string
   name: string
-  apy: string
-  iconUrl?: string
+  apy?: number
+  imageUrl: string
+  totalSuiStaked: Amount
+  votingPower: number
+  commission: number
+}
+
+export interface StakeItem {
+  id: string
+  validatorAddress: string
+  validator?: {
+    address: string
+    name: string
+    imgUrl: string
+    apy?: number
+    commission: number
+  }
+  principal: Amount
+  status: 'Pending' | 'Active'
+  startedEarning: boolean
+  rewardsStart?: Date
+  estimatedReward?: Amount
 }
 
 export const Stake = ({ onBackClick }: Props) => {
   const [activeStakeScreen, setActiveStakeScreen] = useState<'stake' | 'new-stake' | 'stake-details'>('stake')
 
+  const stakesRes = useStakes()
+  const systemStateRes = useLatestSuiSystemState()
+
+  const stakes: StakeItem[] = []
+  if (stakesRes.data && systemStateRes.data) {
+    for (const validator of stakesRes.data) {
+      for (const stake of validator.stakes) {
+        const validatorInfo = systemStateRes.data.systemState.activeValidators.find(
+          v => v.suiAddress === validator.validatorAddress
+        )
+
+        if (stake.status === 'Unstaked') {
+          continue
+        }
+
+        const startedEarning = Number(stake.stakeActiveEpoch) < Number(systemStateRes.data.systemState.epoch)
+
+        const currentEpoch = Number(systemStateRes.data.systemState.epoch)
+        const stakeRequestEpoch = Number(stake.stakeRequestEpoch)
+        let rewardsStart: Date | undefined
+        if (!startedEarning) {
+          rewardsStart = new Date(
+            Number(systemStateRes.data.systemState.epochStartTimestampMs) +
+              (stakeRequestEpoch - currentEpoch + 2) * Number(systemStateRes.data.systemState.epochDurationMs)
+          )
+        }
+
+        stakes.push({
+          id: stake.stakedSuiId,
+          validatorAddress: validator.validatorAddress,
+          validator: validatorInfo
+            ? {
+                address: validatorInfo.suiAddress,
+                name: validatorInfo.name,
+                imgUrl: validatorInfo.imageUrl,
+                apy: systemStateRes.data?.apyMap.get(validatorInfo.suiAddress),
+                commission: Number(validatorInfo.commissionRate) / 100_00,
+              }
+            : undefined,
+          principal: Amount.fromInt(BigInt(stake.principal), SUI_DECIMALS),
+          status: stake.status,
+          startedEarning,
+          rewardsStart,
+          estimatedReward:
+            ('estimatedReward' in stake && Amount.fromInt(BigInt(stake.estimatedReward), SUI_DECIMALS)) || undefined,
+        })
+      }
+    }
+  }
+
+  const summary = {
+    numValidators: stakes.reduce((acc, stake) => {
+      acc.add(stake.validatorAddress)
+      return acc
+    }, new Set()).size,
+    totalStake: Amount.fromInt(
+      stakes.reduce((acc, stake) => acc + stake.principal.int, 0n),
+      SUI_DECIMALS
+    ),
+    totalEarned: Amount.fromInt(
+      stakes.reduce((acc, stake) => acc + (stake.estimatedReward?.int || 0n), 0n),
+      SUI_DECIMALS
+    ),
+  }
+
+  const [stakeDetailsItem, setStakeDetailsItem] = useState<StakeItem>()
+
   const handleNewStakeClick = useCallback(() => {
     setActiveStakeScreen('new-stake')
   }, [])
 
-  const handleStakeDetailsClick = useCallback(() => {
+  const handleStakeDetailsClick = useCallback((stake: StakeItem) => {
+    setStakeDetailsItem(stake)
     setActiveStakeScreen('stake-details')
   }, [])
 
-  const handleStakeBack = useCallback(() => {
+  const openStakeScreen = useCallback(() => {
     setActiveStakeScreen('stake')
   }, [])
 
-  const stakingItems = 2
   if (activeStakeScreen === 'new-stake') {
-    return <NewStake onBackClick={handleStakeBack} />
+    return <NewStake onBackClick={openStakeScreen} openStakeScreen={openStakeScreen} />
   }
 
-  if (activeStakeScreen === 'stake-details') {
-    return <StakeDetails onBackClick={handleStakeBack} />
+  if (activeStakeScreen === 'stake-details' && stakeDetailsItem) {
+    return <StakeDetails onBackClick={openStakeScreen} stake={stakeDetailsItem} openStakeScreen={openStakeScreen} />
   }
 
   return (
@@ -159,7 +253,7 @@ export const Stake = ({ onBackClick }: Props) => {
       <div style={{ height: 16 }} />
       <StakingInfoContainer>
         <StakingInfoTitle variant="caption" fontWeight="bold">
-          STAKING ON 1 VALIDATOR
+          STAKING ON {summary.numValidators} VALIDATOR{summary.numValidators > 1 ? 'S' : ''}
         </StakingInfoTitle>
         <StakingInfoContent>
           <div>
@@ -168,7 +262,7 @@ export const Stake = ({ onBackClick }: Props) => {
             </StakingInfoSubtitle>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <StakeValue variant="caption" fontWeight="bold" style={{ marginBottom: 0 }}>
-                19
+                {formatNumberWithCommas(summary.totalStake.toString())}
               </StakeValue>
               <StakeToken fontWeight="medium">SUI</StakeToken>
             </div>
@@ -178,36 +272,54 @@ export const Stake = ({ onBackClick }: Props) => {
               Earned
             </StakingInfoSubtitle>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <StakeValue variant="caption" fontWeight="bold" style={{ marginBottom: 0 }} earned>
-                5.02930
+              <StakeValue
+                variant="caption"
+                fontWeight="bold"
+                style={{ marginBottom: 0 }}
+                earned={summary.totalEarned.int > 0n}
+              >
+                {formatNumberWithCommas(summary.totalEarned.toString())}
               </StakeValue>
-              <StakeToken earned fontWeight="medium">
+              <StakeToken earned={summary.totalEarned.int > 0n} fontWeight="medium">
                 SUI
               </StakeToken>
             </div>
           </div>
         </StakingInfoContent>
       </StakingInfoContainer>
-      <StakingContainer isScrollable={stakingItems > 2}>
-        {Array.from(Array(stakingItems).keys()).map(item => (
-          <StakingItem key={item} onClick={handleStakeDetailsClick}>
-            <img src={okxEarn} />
+      <StakingContainer isScrollable={stakes.length > 2}>
+        {stakes.map(stake => (
+          <StakingItem key={stake.id} onClick={() => handleStakeDetailsClick(stake)}>
+            <ImageWithFallback
+              src={stake.validator?.imgUrl}
+              style={{ width: 27, height: 27 }}
+              alt={stake.validator?.name || ''}
+              isSmallPlaceholder
+            />
             <EarnName variant="body" fontWeight="medium" style={{ marginTop: 4 }}>
-              OKXEarn
+              {stake.validator?.name || ''}
             </EarnName>
             <div style={{ display: 'flex', alignItems: 'center', margin: '12px 0' }}>
-              <EarnValue fontWeight="medium">1.05</EarnValue>
+              <EarnValue fontWeight="medium">{formatNumberWithCommas(stake.principal.toString())}</EarnValue>
               <StakeToken>SUI</StakeToken>
             </div>
-            <RewardsLabel variant="caption" fontWeight="bold">
-              Staking Rewards
-            </RewardsLabel>
-            <RewardsValue variant="body" fontWeight="medium">
-              5.029305928 SUI
-            </RewardsValue>
-            {/* <RewardsLabel variant="caption" fontWeight="bold">
-              Starts earning in 20 hours 50 mins
-            </RewardsLabel> */}
+            {stake.status === 'Active' && stake.startedEarning && (
+              <>
+                <RewardsLabel variant="caption" fontWeight="bold">
+                  Staking Rewards
+                </RewardsLabel>
+                <RewardsValue variant="caption" fontWeight="medium" earned={!!stake.estimatedReward?.int}>
+                  {stake.estimatedReward && formatNumberWithCommas(stake.estimatedReward.toString())} SUI
+                </RewardsValue>
+              </>
+            )}
+            {stake.rewardsStart !== undefined && (
+              <RewardsLabel variant="caption" fontWeight="bold">
+                Starts earning in
+                <br />
+                {formatTimeDifference(new Date(), stake.rewardsStart)}
+              </RewardsLabel>
+            )}
           </StakingItem>
         ))}
       </StakingContainer>
