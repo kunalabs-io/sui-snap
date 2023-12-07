@@ -63,7 +63,9 @@ export class Amount {
     }
     const decTrimmed = (dec && dec.replace(/0+$/, '')) || ''
     if (decTrimmed.length > decimals) {
-      throw new Error('the amount cannot be correctly represented with the provided number of decimals')
+      throw new Error(
+        'the amount cannot be correctly represented with the provided number of decimals'
+      )
     }
 
     return new Amount(BigInt(int + decTrimmed.padEnd(decimals, '0')), decimals)

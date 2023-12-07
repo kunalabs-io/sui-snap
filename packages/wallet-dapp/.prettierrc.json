@@ -9,5 +9,13 @@
   "semi": false,
   "endOfLine": "lf",
   "bracketSameLine": false,
-  "printWidth": 120
+  "printWidth": 120,
+  "overrides": [
+    {
+      "files": "**/*.ts",
+      "options": {
+        "printWidth": 100
+      }
+    }
+  ]
 }

@@ -9,7 +9,10 @@ export const useLatestSuiSystemState = () => {
   const result = useQuery({
     queryKey: ['latestSuiSystemState', network],
     queryFn: async () => {
-      const [systemState, apys] = await Promise.all([client.getLatestSuiSystemState(), client.getValidatorsApy()])
+      const [systemState, apys] = await Promise.all([
+        client.getLatestSuiSystemState(),
+        client.getValidatorsApy(),
+      ])
 
       const apyMap = new Map<string, number>()
       for (const apy of apys.apys) {

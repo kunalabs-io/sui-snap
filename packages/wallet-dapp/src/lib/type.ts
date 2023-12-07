@@ -20,7 +20,10 @@ export function typeToTag(type: Type): TypeTag {
  * @param name Name of the type to process
  * @returns Object with typeName and typeParams listed as Array
  */
-export function parseTypeName(name: Type): { typeName: string; typeArgs: Type[] } {
+export function parseTypeName(name: Type): {
+  typeName: string
+  typeArgs: Type[]
+} {
   const [left, right] = ['<', '>']
 
   const l_bound = name.indexOf(left)
@@ -179,7 +182,9 @@ function toString(type: TypeTag): string {
   if ('struct' in type) {
     const struct = type.struct
     const typeParams = struct.typeParams.map(toString).join(', ')
-    return `${struct.address}::${struct.module}::${struct.name}${typeParams ? `<${typeParams}>` : ''}`
+    return `${struct.address}::${struct.module}::${struct.name}${
+      typeParams ? `<${typeParams}>` : ''
+    }`
   }
   throw new Error('Invalid type tag')
 }

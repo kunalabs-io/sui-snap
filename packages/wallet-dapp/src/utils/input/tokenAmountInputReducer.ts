@@ -48,7 +48,8 @@ export function reducer(state: State, action: Action): State {
         }
       }
 
-      const decimals = state.enforceDecimals !== undefined ? state.enforceDecimals : countDecimals(cleanAmount)
+      const decimals =
+        state.enforceDecimals !== undefined ? state.enforceDecimals : countDecimals(cleanAmount)
 
       let nextAmount = Amount.fromNum(cleanAmount, decimals)
       if (state.tokenAmount && state.tokenAmount.equals(nextAmount)) {
@@ -86,7 +87,10 @@ export function reducer(state: State, action: Action): State {
       }
 
       if (state.enforceDecimals === undefined || action.value < state.enforceDecimals) {
-        let nextAmount = Amount.fromNum(truncateDecimals(state.tokenAmount.toString(), action.value), action.value)
+        let nextAmount = Amount.fromNum(
+          truncateDecimals(state.tokenAmount.toString(), action.value),
+          action.value
+        )
         if (nextAmount.equals(state.tokenAmount)) {
           nextAmount = state.tokenAmount
         }

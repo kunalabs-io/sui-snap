@@ -36,7 +36,8 @@ export function calcTotalGasFeesDec(tx?: SuiTransactionBlockResponse): number {
   if (!gasUsed) {
     return 0
   }
-  const totalGasFeesInt = BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
+  const totalGasFeesInt =
+    BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
 
   return Number(totalGasFeesInt.toString()) / 1e9
 }
@@ -46,7 +47,8 @@ export function getTxFees(tx?: SuiTransactionBlockResponse) {
   if (!gasUsed) {
     return null
   }
-  const totalGasFeesInt = BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
+  const totalGasFeesInt =
+    BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
 
   return {
     total: Number(totalGasFeesInt.toString()) / 1e9,
@@ -69,7 +71,11 @@ export const getChangesForEachTx = (
     }
     const { balanceChanges, digest } = tx
     for (const change of balanceChanges) {
-      if (change.owner === 'Immutable' || !('AddressOwner' in change.owner) || change.owner.AddressOwner !== address) {
+      if (
+        change.owner === 'Immutable' ||
+        !('AddressOwner' in change.owner) ||
+        change.owner.AddressOwner !== address
+      ) {
         continue
       }
       const value = txChanges.get(change.coinType) ?? 0n
@@ -163,7 +169,9 @@ export function genTxBlockForTxDetails(tx: SuiTransactionBlockResponse): string[
         const txMoveCall = tx as {
           MoveCall: MoveCallSuiTransaction
         }
-        txStrings.push(`${txMoveCall.MoveCall.package}::${txMoveCall.MoveCall.module}::${txMoveCall.MoveCall.function}`)
+        txStrings.push(
+          `${txMoveCall.MoveCall.package}::${txMoveCall.MoveCall.module}::${txMoveCall.MoveCall.function}`
+        )
         continue
       }
       case 'MergeCoins': {

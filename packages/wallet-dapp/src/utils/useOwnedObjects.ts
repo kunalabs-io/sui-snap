@@ -36,7 +36,13 @@ export const useOwnedObjects = (options?: {
   }, [network, currentAccount?.address])
 
   const ownedObjectsRes = useQuery({
-    queryKey: ['owned-objects', currentCursor || '', currentAccount?.address, options?.filter || '', network],
+    queryKey: [
+      'owned-objects',
+      currentCursor || '',
+      currentAccount?.address,
+      options?.filter || '',
+      network,
+    ],
     enabled: !!currentAccount?.address,
     queryFn: async () => {
       if (!currentAccount?.address) {
@@ -56,7 +62,9 @@ export const useOwnedObjects = (options?: {
       } else if (nextCursor === fetchedOwnedObjects.nextCursor) {
         const newOwnedObjects = ownedObjects ? [...ownedObjects] : []
         newOwnedObjects.map(ownedObj => {
-          const newOwnedObj = fetchedOwnedObjects.data.find(o => o.data?.objectId === ownedObj.data?.objectId)
+          const newOwnedObj = fetchedOwnedObjects.data.find(
+            o => o.data?.objectId === ownedObj.data?.objectId
+          )
           if (newOwnedObj) {
             return {
               ...newOwnedObj,
