@@ -65,7 +65,6 @@ const StakeValue = styled(Typography)<{ earned?: boolean }>`
   color: ${p => (p.earned ? p.theme.colors.text.success : p.theme.colors.text.alternative)};
   font-size: 18px;
   overflow: hidden;
-  text-overflow: ellipsis;
 `
 
 const StakeToken = styled(Typography)<{ earned?: boolean }>`
