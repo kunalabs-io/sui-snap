@@ -110,8 +110,6 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
     )
   }
 
-  const { currentAccount } = useWalletKit()
-
   const {
     infos,
     isLoading: isLoadingWalletBalances,
@@ -123,11 +121,6 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
   const suiCoin = infos?.get(suiTypeArg)
 
   const { sanitizedInputValue, amount } = useInputAmountValidate(rawInputStr, suiCoin?.meta.decimals || 9)
-
-  const handleAddressClick = useCallback(async () => {
-    await navigator.clipboard.writeText(currentAccount?.address || '')
-    toast.success('Address copied')
-  }, [currentAccount?.address])
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setRawInputStr(e.target.value)
@@ -218,7 +211,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
     }
   }, [client, selectedValidator, amount, walletKit, chain, network, triggerWalletBalancesUpdate, openStakeScreen])
 
-  if (isLoadingWalletBalances) {
+  if (isLoadingWalletBalances || systemStateRes.isLoading) {
     return (
       <Container>
         <Spinner />
@@ -280,10 +273,17 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
             <DetailsInfoLabel fontWeight="medium" variant="description">
               Address
             </DetailsInfoLabel>
-            <div onClick={handleAddressClick}>
-              <DetailsInfoValue fontWeight="medium" variant="description" isAddress>
-                {ellipsizeTokenAddress(selectedValidator.address)}
-              </DetailsInfoValue>
+            <div>
+              <a
+                target="_blank"
+                rel="noreferrer"
+                href={`https://suiexplorer.com/validator/${selectedValidator.address}?network=${network}`}
+                style={{ textDecoration: 'none' }}
+              >
+                <DetailsInfoValue fontWeight="medium" variant="description" isAddress>
+                  {ellipsizeTokenAddress(selectedValidator.address)}
+                </DetailsInfoValue>
+              </a>
             </div>
           </DetailsInfoContainer>
           <DetailsInfoContainer>

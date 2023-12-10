@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { IconBack } from 'components/Icons/IconBack'
 import Typography from 'components/Typography'
 import Button from 'components/Button'
-import { StakeItem } from './Stake'
+import { CustomPlaceholder, StakeItem } from './Stake'
 import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
 import { formatTimeDifference } from 'utils/helpers'
 import { useState } from 'react'
@@ -16,6 +16,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { invalidateWalletBalances } from 'utils/useWalletBalances'
 import { invalidateStakes } from 'utils/useStakes'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
+import ImageWithFallback from 'components/ImageWithFallback'
+import Spinner from 'components/Spinner'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -109,6 +111,14 @@ const DetailsInfoValue = styled(Typography)`
   color: ${p => p.theme.colors.text.alternative};
 `
 
+const StyledSpinner = styled(Spinner)`
+  margin: 0;
+  width: 24px;
+  height: 24px;
+  border: 3px solid ${p => p.theme.colors.button.primary};
+  border-bottom-color: transparent;
+`
+
 interface Props {
   onBackClick: () => void
   stake: StakeItem
@@ -179,7 +189,16 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
         <IconBack />
       </IconContainer>
       <ImgContainer>
-        <img src={stake.validator?.imgUrl} width={40} />
+        <ImageWithFallback
+          src={stake.validator?.imgUrl}
+          style={{ width: 40, height: 40 }}
+          alt={stake.validator?.name || ''}
+          customPlaceholder={
+            <CustomPlaceholder style={{ width: 40, height: 40, margin: 'auto', marginBottom: 4 }}>
+              {stake.validator?.name.slice(0, 2)}
+            </CustomPlaceholder>
+          }
+        />
         <Title variant="description" fontWeight="bold">
           {stake.validator?.name}
         </Title>
@@ -238,7 +257,7 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
       )}
       {stake.status === 'Active' && (
         <UnstakeButton variant="outlined" onClick={handleUnstakeClick}>
-          Unstake {stake.startedEarning && 'and Collect Earned'}
+          {isSending ? <StyledSpinner /> : <>Unstake {stake.startedEarning && 'and Collect Earned'}</>}
         </UnstakeButton>
       )}
       <DetailsContainer>

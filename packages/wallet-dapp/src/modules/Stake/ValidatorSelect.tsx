@@ -5,7 +5,7 @@ import Typography from 'components/Typography/Typography'
 import { FilterOption, Option, SelectValidator } from 'components/Select/Select'
 import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 import ImageWithFallback from 'components/ImageWithFallback'
-import { ValidatorInfo } from './Stake'
+import { CustomPlaceholder, ValidatorInfo } from './Stake'
 import { formatNumberToPct } from 'utils/formatting'
 
 interface Props {
@@ -77,6 +77,7 @@ export const ValidatorSelect = ({ label, selectedValidator, validators, handleVa
                 style={{ width: 27, height: 27 }}
                 alt={validator?.name || ''}
                 isSmallPlaceholder
+                customPlaceholder={<CustomPlaceholder>{validator.name.slice(0, 2)}</CustomPlaceholder>}
               />
             ) : typeof validator !== 'undefined' ? (
               <IconMissingImgSmall />

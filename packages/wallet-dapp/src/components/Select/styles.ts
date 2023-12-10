@@ -11,3 +11,16 @@ export const OptionWithImage = styled.div`
     background-color: ${p => p.theme.colors.background.hover};
   }
 `
+
+export const CustomPlaceholder = styled.div`
+  width: 27px;
+  height: 27px;
+  background-color: ${p => p.theme.colors.button.primary};
+  border-radius: 4px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  text-transform: uppercase;
+`

@@ -1,4 +1,4 @@
-import { CSSProperties, useCallback, useEffect, useState } from 'react'
+import { CSSProperties, ReactNode, useCallback, useEffect, useState } from 'react'
 
 import { IconMissingImg, IconMissingImgSmall } from 'components/Icons/IconMissingImg'
 import { Stylable } from 'utils/types'
@@ -8,6 +8,7 @@ interface Props extends Stylable {
   src?: string
   alt: string
   placeholderStyles?: CSSProperties
+  customPlaceholder?: ReactNode
 }
 
 const ImageWithFallback = (props: Props) => {
@@ -18,6 +19,10 @@ const ImageWithFallback = (props: Props) => {
   const handleImageLoaded = useCallback(() => setShowPlaceholder(false), [])
 
   const handleImageLoadError = useCallback(() => setShowPlaceholder(true), [])
+
+  if (showPlaceholder && props.customPlaceholder) {
+    return props.customPlaceholder
+  }
 
   return showPlaceholder ? (
     props.isSmallPlaceholder ? (

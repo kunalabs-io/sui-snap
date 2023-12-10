@@ -13,6 +13,7 @@ import { SUI_DECIMALS } from '@mysten/sui.js/utils'
 import { formatNumberWithCommas } from 'utils/formatting'
 import ImageWithFallback from 'components/ImageWithFallback'
 import { formatTimeDifference } from 'utils/helpers'
+import Spinner from 'components/Spinner'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -81,12 +82,12 @@ const StakeToken = styled(Typography)<{ earned?: boolean }>`
 const StakingContainer = styled.div<{ isScrollable?: boolean }>`
   margin-top: 16px;
   display: flex;
-  ${p => (p.isScrollable ? `flex-wrap: wrap; gap: 8px` : `justify-content: space-between`)}
+  ${p => (p.isScrollable ? `flex-wrap: wrap; gap: 12px` : `justify-content: space-between`)}
 `
 
 const StakingItem = styled.div`
-  width: 120px;
-  height: 120px;
+  width: 116px;
+  height: 116px;
   border: 1px solid #bbc0c5;
   border-radius: 13px;
   padding: 12px;
@@ -106,6 +107,19 @@ const EarnValue = styled(Typography)`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`
+
+export const CustomPlaceholder = styled.div`
+  width: 27px;
+  height: 27px;
+  background-color: ${p => p.theme.colors.button.primary};
+  border-radius: 4px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  text-transform: uppercase;
 `
 
 const RewardsLabel = styled(Typography)`
@@ -243,6 +257,10 @@ export const Stake = ({ onBackClick }: Props) => {
     return <StakeDetails onBackClick={openStakeScreen} stake={stakeDetailsItem} openStakeScreen={openStakeScreen} />
   }
 
+  if (stakesRes.isLoading || systemStateRes.isLoading) {
+    return <Spinner />
+  }
+
   return (
     <Container>
       <IconContainer onClick={onBackClick}>
@@ -295,6 +313,7 @@ export const Stake = ({ onBackClick }: Props) => {
               style={{ width: 27, height: 27 }}
               alt={stake.validator?.name || ''}
               isSmallPlaceholder
+              customPlaceholder={<CustomPlaceholder>{stake.validator?.name.slice(0, 2)}</CustomPlaceholder>}
             />
             <EarnName variant="body" fontWeight="medium" style={{ marginTop: 4 }}>
               {stake.validator?.name || ''}

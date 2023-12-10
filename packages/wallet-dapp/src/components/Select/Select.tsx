@@ -1,7 +1,7 @@
 import Select from 'react-select'
 import { useTheme } from 'styled-components'
 
-import { OptionWithImage } from './styles'
+import { CustomPlaceholder, OptionWithImage } from './styles'
 import { suiTypeArg } from 'utils/const'
 import { IconSuiSmall } from 'components/Icons/IconSui'
 import { IconMissingImgSmall } from 'components/Icons/IconMissingImg'
@@ -240,6 +240,9 @@ export const SelectValidator = ({
                     style={{ width: 27, height: 27, marginRight: 8 }}
                     placeholderStyles={{ marginRight: 8 }}
                     alt={data.label}
+                    customPlaceholder={
+                      <CustomPlaceholder style={{ marginRight: 8 }}>{data.label?.slice(0, 2)}</CustomPlaceholder>
+                    }
                   />
                 ) : (
                   <div style={{ marginRight: 8 }}>
