@@ -4,6 +4,7 @@ import { WalletKitProvider } from '@mysten/wallet-kit'
 import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Network } from '@mysten/kiosk'
 
 import Main from 'modules/Main'
 import { GlobalStyles } from 'styles/GlobalStyles'
@@ -14,6 +15,7 @@ import { SuiClientProvider } from 'utils/SuiClientProvider'
 import { NETWORK, NetworkContext, chainFromNetwork, fullnodeUrlFromNetwork } from 'utils/useNetworkProvider'
 import { Toast } from 'components/Toast/Toast'
 import { useLocalStorage } from 'utils/useLocalStorage'
+import { KioskClientProvider } from 'utils/KioskClientProvider'
 
 export type RootProps = {
   children: ReactNode
@@ -32,15 +34,17 @@ export const App = () => {
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={true} />
       <SuiClientProvider connectionUrl={fullnodeUrl}>
-        <WalletKitProvider>
-          <NetworkContext.Provider value={{ network, fullnodeUrl, chain, setNetwork }}>
-            <ThemeProvider theme={theme}>
-              <Toast />
-              <Main />
-              <GlobalStyles />
-            </ThemeProvider>
-          </NetworkContext.Provider>
-        </WalletKitProvider>
+        <KioskClientProvider network={network as Network}>
+          <WalletKitProvider>
+            <NetworkContext.Provider value={{ network, fullnodeUrl, chain, setNetwork }}>
+              <ThemeProvider theme={theme}>
+                <Toast />
+                <Main />
+                <GlobalStyles />
+              </ThemeProvider>
+            </NetworkContext.Provider>
+          </WalletKitProvider>
+        </KioskClientProvider>
       </SuiClientProvider>
     </QueryClientProvider>
   )

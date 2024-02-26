@@ -19,6 +19,7 @@ import { Tokens } from './Tokens'
 import { Nft } from './Nft'
 import { Activity } from './Activity'
 import { IconGroup } from 'components/Icons/IconGroup'
+import { KioskContainer } from './KioskContainer'
 
 interface Props {
   onSendClick: (selectedCoin?: CoinInfo) => void
@@ -29,6 +30,7 @@ enum Tab {
   Tokens = 'tokens',
   Nft = 'nft',
   Activity = 'activity',
+  Kiosk = 'kiosk',
 }
 
 const Info = ({ onSendClick, onStakeClick }: Props) => {
@@ -162,6 +164,11 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
             NFT
           </TokensLabel>
         </div>
+        <div onClick={() => handleTabChange(Tab.Kiosk)}>
+          <TokensLabel variant="body" isActive={activeTab === Tab.Kiosk}>
+            Kiosk
+          </TokensLabel>
+        </div>
         <div onClick={() => handleTabChange(Tab.Activity)}>
           <TokensLabel variant="body" isActive={activeTab === Tab.Activity}>
             Activity
@@ -172,6 +179,7 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
         <Tokens unrecognizedCoins={unrecognizedCoins} recognizedCoins={recognizedCoins} onSendClick={onSendClick} />
       )}
       {activeTab === Tab.Nft && <Nft />}
+      {activeTab === Tab.Kiosk && <KioskContainer />}
       {activeTab === Tab.Activity && <Activity />}
     </div>
   )

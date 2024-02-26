@@ -6,6 +6,7 @@
   "dependencies": {
     "@kunalabs-io/sui-snap-wallet": "workspace:*",
     "@mysten/bcs": "^0.7.4",
+    "@mysten/kiosk": "^0.8.3",
     "@mysten/sui.js": "^0.42.0",
     "@mysten/wallet-kit": "^0.7.3",
     "@mysten/wallet-standard": "^0.8.0",
