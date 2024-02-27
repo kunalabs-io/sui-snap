@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import styled from 'styled-components'
-import { KioskData } from '@mysten/kiosk'
 
 import Modal from 'components/Modal'
 import ModalBody from 'components/Modal/components/ModalBody'
@@ -10,10 +9,11 @@ import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
+import { Kiosk as KioskType } from 'utils/useGetKioskContents'
 
 interface Props {
   toggleModal: () => void
-  kiosk: KioskData
+  kiosk: KioskType
 }
 
 const IconSection = styled.div`
@@ -29,7 +29,7 @@ const IconSection = styled.div`
 const ImagesContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   margin-top: 32px;
 `
 
@@ -112,8 +112,8 @@ export const KioskDetails = ({ kiosk, toggleModal }: Props) => {
   const kioskImages = kiosk.items.map(i => i.data?.display?.data?.image_url)
 
   return (
-    <Modal onClose={toggleModal} style={{ padding: 20, maxHeight: 450 }}>
-      <ModalBody>
+    <Modal onClose={toggleModal} style={{ padding: 20, maxHeight: 450, overflowY: 'auto' }}>
+      <ModalBody style={{ overflowY: 'initial' }}>
         <IconSection onClick={handleClose}>
           <IconClose />
         </IconSection>
@@ -143,11 +143,11 @@ export const KioskDetails = ({ kiosk, toggleModal }: Props) => {
           </Typography>
           <InfoValue variant="description" fontWeight="medium" color="secondary">
             <InfoValueLink
-              href={`https://suiexplorer.com/object/${kiosk.kiosk?.id}?network=${network}`}
+              href={`https://suiexplorer.com/object/${kiosk.kioskId}?network=${network}`}
               target="_blank"
               rel="noreferrer"
             >
-              {ellipsizeTokenAddress(kiosk.kiosk?.id || '')}
+              {ellipsizeTokenAddress(kiosk.kioskId || '')}
               <IconLink />
             </InfoValueLink>
           </InfoValue>

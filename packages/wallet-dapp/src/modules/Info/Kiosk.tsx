@@ -1,28 +1,19 @@
-import { KioskData } from '@mysten/kiosk'
 import styled from 'styled-components'
 
 import Typography from 'components/Typography'
+import { Kiosk as KioskType } from 'utils/useGetKioskContents'
 
-const KioskWrapper = styled.div<{ width?: number; height?: number; showImgInfoOnHover?: boolean }>`
-  padding: 8px;
-  width: ${p => p.width || 126}px;
-  height: ${p => p.height || 126}px;
+const KioskWrapper = styled.div`
+  padding: 10px;
+  width: 124px;
+  height: 124px;
   border-radius: 13px;
   background: #f2f4f6;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
-  ${p => p.showImgInfoOnHover && `cursor: pointer;`}
-  position: relative;
-
-  .showName {
-    display: block;
-    position: absolute;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  cursor: pointer;
 `
 
 const KioskImage = styled.img`
@@ -59,19 +50,11 @@ const ImagesNumLabel = styled(Typography)`
 
 const SHOW_IMG_NUM = 3
 
-export const Kiosk = ({
-  kiosk,
-  showImgInfoOnHover,
-  toggleModal,
-}: {
-  kiosk: KioskData
-  showImgInfoOnHover?: boolean
-  toggleModal: (kiosk: KioskData) => void
-}) => {
+export const Kiosk = ({ kiosk, toggleModal }: { kiosk: KioskType; toggleModal: (kiosk: KioskType) => void }) => {
   const kioskImages = kiosk.items.map(i => i.data?.display?.data?.image_url)
 
   return (
-    <KioskWrapper showImgInfoOnHover={showImgInfoOnHover} onClick={() => toggleModal(kiosk)}>
+    <KioskWrapper onClick={() => toggleModal(kiosk)}>
       {kioskImages.slice(0, SHOW_IMG_NUM).map((img, index) => (
         <KioskImage key={img} src={img} style={index > 1 ? { marginTop: 5 } : {}} />
       ))}

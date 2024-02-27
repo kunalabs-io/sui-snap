@@ -9,6 +9,9 @@ import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import { NftDetails } from './NftDetails'
+import { Kiosk as KioskType, useGetKioskContents } from 'utils/useGetKioskContents'
+import { Kiosk } from './Kiosk'
+import { KioskDetails } from './KioskDetails'
 
 const Container = styled.div<{ isScrollable: boolean }>`
   padding-top: 16px;
@@ -216,6 +219,7 @@ export const NftImageContainer = ({
 }
 
 export const Nft = () => {
+  const [activeKiosk, setActiveKiosk] = useState<KioskType>()
   const [activeNft, setActiveNft] = useState<SuiObjectResponse>()
   const { isInitialFetch, isLoading, ownedObjects, hasNextPage, loadMore } = useOwnedObjects({
     filter: {
@@ -228,8 +232,14 @@ export const Nft = () => {
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
+  const { isLoading: isLoadingKiosks, data: ownedKiosks } = useGetKioskContents()
+
   const toggleModal = useCallback((nft?: SuiObjectResponse) => {
     setActiveNft(nft)
+  }, [])
+
+  const toggleKioskModal = useCallback((kiosk?: KioskType) => {
+    setActiveKiosk(kiosk)
   }, [])
 
   const handlePageLoad = useCallback(() => {
@@ -238,21 +248,28 @@ export const Nft = () => {
     }
   }, [loadMore, hasNextPage])
 
-  if (isLoading && isInitialFetch) {
+  if ((isLoading && isInitialFetch) || isLoadingKiosks) {
     return <Spinner style={{ marginTop: 48 }} />
   }
 
-  if (!ownedObjects) {
+  if (!ownedObjects || !ownedKiosks) {
     return null
   }
 
-  if (ownedObjects && ownedObjects.length === 0) {
+  if (ownedObjects && ownedObjects.length === 0 && ownedKiosks && ownedKiosks.length === 0) {
     return <EmptyList>The list is currently empty.</EmptyList>
   }
 
   return (
     <>
-      <Container isScrollable={ownedObjects.length > 2}>
+      <Container isScrollable={ownedObjects.length + ownedKiosks.length > 2}>
+        {ownedKiosks.map(k => {
+          const kioskImages = k.items.map(i => i.data?.display?.data?.image_url)
+          if (!kioskImages || kioskImages.length === 0) {
+            return null
+          }
+          return <Kiosk key={k.kioskId} kiosk={k} toggleModal={toggleKioskModal} />
+        })}
         {ownedObjects.map(o => {
           if (o.error) {
             return null
@@ -271,6 +288,7 @@ export const Nft = () => {
         <div style={{ height: 51 }} />
       )}
       {activeNft && <NftDetails nft={activeNft} toggleModal={toggleModal} />}
+      {activeKiosk && <KioskDetails kiosk={activeKiosk} toggleModal={toggleKioskModal} />}
     </>
   )
 }
