@@ -4,7 +4,7 @@ import styled, { useTheme } from 'styled-components'
 import Modal from 'components/Modal'
 import ModalBody from 'components/Modal/components/ModalBody'
 import { IconClose } from 'components/Icons/IconClose'
-import { NftImageContainer } from './Nft'
+import { NftImageContainer } from './NftImageContainer'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
 import Typography from 'components/Typography'
@@ -93,6 +93,7 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
   const projectUrl = nft.data?.display?.data?.['project_url' as keyof typeof nft.data.display.data] as string
   const creator = nft.data?.display?.data?.['creator' as keyof typeof nft.data.display.data] as string
 
+  const imgSrc = nft.data?.display?.data?.['image_url' as keyof typeof nft.data.display.data] as string
   const noDisplayData = nft.data?.display?.data === null
   const type = nft.data?.type || ''
   const address = nft.data?.objectId || ''
@@ -101,7 +102,16 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
     <Modal onClose={handleClose} style={{ padding: 20, maxHeight: 450 }}>
       <ModalBody>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <NftImageContainer nft={nft} imgHeight={200} imgWidth={200} />
+          <NftImageContainer
+            type={type}
+            address={address}
+            imgSrc={imgSrc}
+            name={name}
+            objectId={objectId}
+            imgHeight={200}
+            imgWidth={200}
+            noDisplayData={noDisplayData}
+          />
         </div>
         <IconSection onClick={handleClose}>
           <IconClose />

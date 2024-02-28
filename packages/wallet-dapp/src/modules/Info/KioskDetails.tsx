@@ -10,6 +10,7 @@ import { ellipsizeTokenAddress } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
 import { Kiosk as KioskType } from 'utils/useGetKioskContents'
+import { NftImageContainer } from './NftImageContainer'
 
 interface Props {
   toggleModal: () => void
@@ -112,15 +113,31 @@ export const KioskDetails = ({ kiosk, toggleModal }: Props) => {
   const kioskImages = kiosk.items.map(i => i.data?.display?.data?.image_url)
 
   return (
-    <Modal onClose={toggleModal} style={{ padding: 20, maxHeight: 450, overflowY: 'auto' }}>
+    <Modal onClose={handleClose} style={{ padding: 20, maxHeight: 450, overflowY: 'auto', width: 464 }}>
       <ModalBody style={{ overflowY: 'initial' }}>
         <IconSection onClick={handleClose}>
           <IconClose />
         </IconSection>
         <ImagesContainer>
-          {kioskImages.map(kImage => (
-            <KioskImageWithFallback key={kImage} imageSrc={kImage} />
-          ))}
+          {kiosk.items.map(k => {
+            const type = k.data?.type || ''
+            const address = k.data?.objectId || ''
+            const imgSrc = k.data?.display?.data?.['image_url' as keyof typeof k.data.display.data] as string
+            const name = k.data?.display?.data?.['name' as keyof typeof k.data.display.data] as string
+            const objectId = k?.data?.objectId
+            return (
+              <NftImageContainer
+                key={objectId}
+                type={type}
+                address={address}
+                imgSrc={imgSrc}
+                name={name}
+                objectId={objectId}
+                showImgInfoOnHover={true}
+                noDisplayData={k.data?.display?.data === null}
+              />
+            )
+          })}
         </ImagesContainer>
         <DetailsContainer>
           <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
