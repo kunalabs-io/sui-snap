@@ -1,16 +1,18 @@
 import { useState } from 'react'
+import { KioskItem } from '@mysten/kiosk'
 import styled from 'styled-components'
 
 import Modal from 'components/Modal'
 import ModalBody from 'components/Modal/components/ModalBody'
 import { IconClose } from 'components/Icons/IconClose'
-import { IconNftPlaceholder } from 'components/Icons/IconNftPlaceholder'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
 import { Kiosk as KioskType } from 'utils/useGetKioskContents'
 import { NftImageContainer } from './NftImageContainer'
+import { formatImgUrl } from 'utils/images'
+import { NftDetails } from './NftDetails'
 
 interface Props {
   toggleModal: () => void
@@ -32,22 +34,6 @@ const ImagesContainer = styled.div`
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 32px;
-`
-
-const Image = styled.img`
-  width: 89px;
-  height: 89px;
-  border-radius: 13px;
-`
-
-const EmptyPlaceholder = styled.div<{ width?: number; height?: number; showImgInfoOnHover?: boolean }>`
-  width: 89px;
-  height: 89px;
-  border-radius: 13px;
-  background: #f2f4f6;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 `
 
 const DetailsContainer = styled.div`
@@ -90,86 +76,81 @@ const InfoValueLink = styled.a`
   }
 `
 
-export const KioskImageWithFallback = ({ imageSrc }: { imageSrc?: string }) => {
-  const [showPlaceholder, setShowPlaceholder] = useState(false)
-
-  if (showPlaceholder) {
-    return (
-      <EmptyPlaceholder>
-        <IconNftPlaceholder />
-      </EmptyPlaceholder>
-    )
-  }
-  return <Image src={imageSrc} onLoad={() => setShowPlaceholder(false)} onError={() => setShowPlaceholder(true)} />
-}
-
 export const KioskDetails = ({ kiosk, toggleModal }: Props) => {
+  const [activeKioskItem, setActiveKioskItem] = useState<KioskItem>()
   const { network } = useNetwork()
 
   const handleClose = () => {
-    toggleModal()
+    if (!activeKioskItem) {
+      toggleModal()
+    }
   }
 
   const kioskImages = kiosk.items.map(i => i.data?.display?.data?.image_url)
 
   return (
-    <Modal onClose={handleClose} style={{ padding: 20, maxHeight: 450, overflowY: 'auto', width: 464 }}>
-      <ModalBody style={{ overflowY: 'initial' }}>
-        <IconSection onClick={handleClose}>
-          <IconClose />
-        </IconSection>
-        <ImagesContainer>
-          {kiosk.items.map(k => {
-            const type = k.data?.type || ''
-            const address = k.data?.objectId || ''
-            const imgSrc = k.data?.display?.data?.['image_url' as keyof typeof k.data.display.data] as string
-            const name = k.data?.display?.data?.['name' as keyof typeof k.data.display.data] as string
-            const objectId = k?.data?.objectId
-            return (
-              <NftImageContainer
-                key={objectId}
-                type={type}
-                address={address}
-                imgSrc={imgSrc}
-                name={name}
-                objectId={objectId}
-                showImgInfoOnHover={true}
-                noDisplayData={k.data?.display?.data === null}
-              />
-            )
-          })}
-        </ImagesContainer>
-        <DetailsContainer>
-          <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
-            Details
-          </DetailsLabel>
-          <HrLine />
-        </DetailsContainer>
-        {<div style={{ height: 24 }} />}
-        <InfoContainer>
-          <Typography variant="description" fontWeight="medium" color="secondary">
-            Number of items
-          </Typography>
-          <InfoValue variant="description" fontWeight="medium" color="secondary">
-            {kioskImages.length}
-          </InfoValue>
-        </InfoContainer>
-        <InfoContainer>
-          <Typography variant="description" fontWeight="medium" color="secondary">
-            Kiosk ID
-          </Typography>
-          <InfoValue variant="description" fontWeight="medium" color="secondary">
-            <InfoValueLink
-              href={`https://suiexplorer.com/object/${kiosk.kioskId}?network=${network}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {ellipsizeTokenAddress(kiosk.kioskId || '')}
-              <IconLink />
-            </InfoValueLink>
-          </InfoValue>
-        </InfoContainer>
-      </ModalBody>
-    </Modal>
+    <>
+      <Modal onClose={handleClose} style={{ padding: 20, maxHeight: 450, overflowY: 'auto', width: 464 }}>
+        <ModalBody style={{ overflowY: 'initial' }}>
+          <IconSection onClick={handleClose}>
+            <IconClose />
+          </IconSection>
+          <ImagesContainer>
+            {kiosk.items.map(k => {
+              const type = k.data?.type || ''
+              const address = k.data?.objectId || ''
+              const imgSrc = k.data?.display?.data?.['image_url' as keyof typeof k.data.display.data] as string
+              const name = k.data?.display?.data?.['name' as keyof typeof k.data.display.data] as string
+              const objectId = k?.data?.objectId
+              return (
+                <div key={objectId} onClick={() => setActiveKioskItem(k)}>
+                  <NftImageContainer
+                    key={objectId}
+                    type={type}
+                    address={address}
+                    imgSrc={formatImgUrl(imgSrc)}
+                    name={name}
+                    objectId={objectId}
+                    showImgInfoOnHover={true}
+                    noDisplayData={k.data?.display?.data === null}
+                  />
+                </div>
+              )
+            })}
+          </ImagesContainer>
+          <DetailsContainer>
+            <DetailsLabel variant="caption" fontWeight="bold" style={{ marginRight: 16 }}>
+              Details
+            </DetailsLabel>
+            <HrLine />
+          </DetailsContainer>
+          {<div style={{ height: 24 }} />}
+          <InfoContainer>
+            <Typography variant="description" fontWeight="medium" color="secondary">
+              Number of items
+            </Typography>
+            <InfoValue variant="description" fontWeight="medium" color="secondary">
+              {kioskImages.length}
+            </InfoValue>
+          </InfoContainer>
+          <InfoContainer>
+            <Typography variant="description" fontWeight="medium" color="secondary">
+              Kiosk ID
+            </Typography>
+            <InfoValue variant="description" fontWeight="medium" color="secondary">
+              <InfoValueLink
+                href={`https://suiexplorer.com/object/${kiosk.kioskId}?network=${network}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {ellipsizeTokenAddress(kiosk.kioskId || '')}
+                <IconLink />
+              </InfoValueLink>
+            </InfoValue>
+          </InfoContainer>
+        </ModalBody>
+      </Modal>
+      {activeKioskItem && <NftDetails nft={activeKioskItem.data} toggleModal={() => setActiveKioskItem(undefined)} />}
+    </>
   )
 }

@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import styled from 'styled-components'
 
 import { IconNftPlaceholder } from 'components/Icons/IconNftPlaceholder'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
+import Spinner from 'components/Spinner'
 
-const EmptyPlaceholder = styled.div<{ width?: number; height?: number; showImgInfoOnHover?: boolean }>`
+export const EmptyPlaceholder = styled.div<{ width?: number; height?: number; showImgInfoOnHover?: boolean }>`
   width: ${p => p.width || 144}px;
   height: ${p => p.height || 144}px;
   border-radius: 13px;
@@ -25,7 +26,7 @@ const EmptyPlaceholder = styled.div<{ width?: number; height?: number; showImgIn
   }
 `
 
-const PlaceholderWrapper = styled.div`
+export const PlaceholderWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -90,6 +91,20 @@ const NftTextOverflow = styled.div`
   white-space: nowrap;
 `
 
+const KioskImage = styled.img`
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+`
+
+const KioskSpinner = styled(Spinner)`
+  margin-top: 0px;
+  margin-left: 0px;
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+`
+
 interface NftImageProps {
   objectId?: string
   imgSrc?: string
@@ -114,17 +129,26 @@ interface NftImageContainerProps {
 }
 
 const NftImage = ({ objectId, imgSrc, name, onClick, imgWidth, imgHeight, showImgInfoOnHover }: NftImageProps) => {
-  const [showPlaceholder, setShowPlaceholder] = useState(false)
+  const [showPlaceholder, setShowPlaceholder] = useState(!imgSrc)
+  const [isLoading, setIsLoading] = useState(!!imgSrc)
 
-  useEffect(() => setShowPlaceholder(!imgSrc), [imgSrc])
+  const handleImageLoaded = useCallback(() => {
+    setIsLoading(false)
+  }, [])
 
-  const handleImageLoaded = useCallback(() => setShowPlaceholder(false), [])
-
-  const handleImageLoadError = useCallback(() => setShowPlaceholder(true), [])
+  const handleImageLoadError = useCallback(() => {
+    setIsLoading(false)
+    setShowPlaceholder(true)
+  }, [])
 
   return (
-    <div key={objectId} onClick={onClick}>
-      {showPlaceholder ? (
+    <div key={objectId} onClick={isLoading ? undefined : onClick}>
+      {isLoading && !showPlaceholder && (
+        <EmptyPlaceholder width={imgWidth} height={imgHeight}>
+          <Spinner style={{ marginTop: 0, marginLeft: 0 }} />
+        </EmptyPlaceholder>
+      )}
+      {showPlaceholder && (
         <EmptyPlaceholder width={imgWidth} height={imgHeight} showImgInfoOnHover={showImgInfoOnHover}>
           <PlaceholderWrapper>
             <IconNftPlaceholder />
@@ -135,23 +159,23 @@ const NftImage = ({ objectId, imgSrc, name, onClick, imgWidth, imgHeight, showIm
             </NftName>
           ) : null}
         </EmptyPlaceholder>
-      ) : (
-        <ImgWrapper>
-          <StyledNftImage
-            onLoad={handleImageLoaded}
-            onError={handleImageLoadError}
-            src={imgSrc}
-            width={imgWidth}
-            height={imgHeight}
-            showImgInfoOnHover={showImgInfoOnHover}
-          />
-          {name && showImgInfoOnHover ? (
-            <NftName variant="caption" className="hide">
-              {name}
-            </NftName>
-          ) : null}
-        </ImgWrapper>
       )}
+      <ImgWrapper>
+        <StyledNftImage
+          onLoad={handleImageLoaded}
+          onError={handleImageLoadError}
+          src={imgSrc}
+          width={imgWidth}
+          height={imgHeight}
+          showImgInfoOnHover={showImgInfoOnHover}
+          style={{ display: isLoading || showPlaceholder ? 'none' : 'block' }}
+        />
+        {name && showImgInfoOnHover ? (
+          <NftName variant="caption" className="hide">
+            {name}
+          </NftName>
+        ) : null}
+      </ImgWrapper>
     </div>
   )
 }
@@ -194,5 +218,46 @@ export const NftImageContainer = ({
       imgHeight={imgHeight}
       showImgInfoOnHover={showImgInfoOnHover}
     />
+  )
+}
+
+export const KioskSmallImageWithLoader = ({ imgSrc, index }: { index: number; imgSrc?: string }) => {
+  const [showPlaceholder, setShowPlaceholder] = useState(!imgSrc)
+  const [isLoading, setIsLoading] = useState(!!imgSrc)
+
+  const handleImageLoaded = useCallback(() => {
+    setIsLoading(false)
+  }, [])
+
+  const handleImageLoadError = useCallback(() => {
+    setIsLoading(false)
+    setShowPlaceholder(true)
+  }, [])
+
+  return (
+    <>
+      {isLoading && !showPlaceholder && (
+        <EmptyPlaceholder width={56} height={56}>
+          <KioskSpinner style={{ marginTop: 0, marginLeft: 0, width: 24, height: 24 }} />
+        </EmptyPlaceholder>
+      )}
+      {showPlaceholder && (
+        <EmptyPlaceholder width={56} height={56}>
+          <PlaceholderWrapper>
+            <IconNftPlaceholder />
+          </PlaceholderWrapper>
+        </EmptyPlaceholder>
+      )}
+      <KioskImage
+        src={imgSrc}
+        style={
+          index > 1
+            ? { marginTop: 5, display: isLoading || showPlaceholder ? 'none' : 'block' }
+            : { display: isLoading || showPlaceholder ? 'none' : 'block' }
+        }
+        onLoad={handleImageLoaded}
+        onError={handleImageLoadError}
+      />
+    </>
   )
 }

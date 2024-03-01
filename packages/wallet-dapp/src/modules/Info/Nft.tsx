@@ -10,6 +10,7 @@ import { Kiosk as KioskType, useGetKioskContents } from 'utils/useGetKioskConten
 import { Kiosk } from './Kiosk'
 import { KioskDetails } from './KioskDetails'
 import { NftImageContainer } from './NftImageContainer'
+import { formatImgUrl } from 'utils/images'
 
 const Container = styled.div<{ isScrollable: boolean }>`
   padding-top: 16px;
@@ -100,7 +101,7 @@ export const Nft = () => {
               toggleModal={() => toggleModal(o)}
               type={type}
               address={address}
-              imgSrc={imgSrc}
+              imgSrc={formatImgUrl(imgSrc)}
               name={name}
               objectId={objectId}
               showImgInfoOnHover={true}
@@ -116,7 +117,7 @@ export const Nft = () => {
       ) : (
         <div style={{ height: 51 }} />
       )}
-      {activeNft && <NftDetails nft={activeNft} toggleModal={toggleModal} />}
+      {activeNft && <NftDetails nft={activeNft.data} toggleModal={toggleModal} />}
       {activeKiosk && <KioskDetails kiosk={activeKiosk} toggleModal={toggleKioskModal} />}
     </>
   )

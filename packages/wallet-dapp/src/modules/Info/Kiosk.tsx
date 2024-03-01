@@ -2,6 +2,8 @@ import styled from 'styled-components'
 
 import Typography from 'components/Typography'
 import { Kiosk as KioskType } from 'utils/useGetKioskContents'
+import { formatImgUrl } from 'utils/images'
+import { KioskSmallImageWithLoader } from './NftImageContainer'
 
 const KioskWrapper = styled.div`
   padding: 10px;
@@ -14,12 +16,6 @@ const KioskWrapper = styled.div`
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
-`
-
-const KioskImage = styled.img`
-  width: 56px;
-  height: 56px;
-  border-radius: 4px;
 `
 
 const RemainingImagesContainer = styled.div`
@@ -56,7 +52,7 @@ export const Kiosk = ({ kiosk, toggleModal }: { kiosk: KioskType; toggleModal: (
   return (
     <KioskWrapper onClick={() => toggleModal(kiosk)}>
       {kioskImages.slice(0, SHOW_IMG_NUM).map((img, index) => (
-        <KioskImage key={img} src={img} style={index > 1 ? { marginTop: 5 } : {}} />
+        <KioskSmallImageWithLoader key={img} imgSrc={formatImgUrl(img)} index={index} />
       ))}
       {kioskImages.length > SHOW_IMG_NUM && (
         <div style={{ position: 'relative', marginTop: kioskImages.length > 2 ? 5 : 0 }}>
