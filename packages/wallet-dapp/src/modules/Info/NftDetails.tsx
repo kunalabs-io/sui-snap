@@ -1,18 +1,19 @@
-import { SuiObjectResponse } from '@mysten/sui.js/client'
+import { SuiObjectData } from '@mysten/sui.js/client'
 import styled, { useTheme } from 'styled-components'
 
 import Modal from 'components/Modal'
 import ModalBody from 'components/Modal/components/ModalBody'
 import { IconClose } from 'components/Icons/IconClose'
-import { NftImageContainer } from './Nft'
+import { NftImageContainer } from './NftImageContainer'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
 import Typography from 'components/Typography'
 import { ellipsizeTokenAddress } from 'utils/helpers'
+import { formatImgUrl } from 'utils/images'
 
 interface Props {
   toggleModal: () => void
-  nft: SuiObjectResponse
+  nft?: SuiObjectData | null
 }
 
 const IconSection = styled.div`
@@ -81,27 +82,37 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
   const { network } = useNetwork()
   const theme = useTheme()
 
-  const objectId = nft.data?.objectId || ''
+  const objectId = nft?.objectId || ''
 
   const handleClose = () => {
     toggleModal()
   }
 
-  const name = nft.data?.display?.data?.['name' as keyof typeof nft.data.display.data] as string
-  const description = nft.data?.display?.data?.['description' as keyof typeof nft.data.display.data] as string
-  const link = nft.data?.display?.data?.['link' as keyof typeof nft.data.display.data] as string
-  const projectUrl = nft.data?.display?.data?.['project_url' as keyof typeof nft.data.display.data] as string
-  const creator = nft.data?.display?.data?.['creator' as keyof typeof nft.data.display.data] as string
+  const name = nft?.display?.data?.['name' as keyof typeof nft.display.data]
+  const description = nft?.display?.data?.['description' as keyof typeof nft.display.data]
+  const link = nft?.display?.data?.['link' as keyof typeof nft.display.data]
+  const projectUrl = nft?.display?.data?.['project_url' as keyof typeof nft.display.data]
+  const creator = nft?.display?.data?.['creator' as keyof typeof nft.display.data]
 
-  const noDisplayData = nft.data?.display?.data === null
-  const type = nft.data?.type || ''
-  const address = nft.data?.objectId || ''
+  const imgSrc = nft?.display?.data?.['image_url' as keyof typeof nft.display.data]
+  const noDisplayData = nft?.display?.data === null
+  const type = nft?.type || ''
+  const address = nft?.objectId || ''
 
   return (
     <Modal onClose={handleClose} style={{ padding: 20, maxHeight: 450 }}>
       <ModalBody>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <NftImageContainer nft={nft} imgHeight={200} imgWidth={200} />
+          <NftImageContainer
+            type={type}
+            address={address}
+            imgSrc={formatImgUrl(imgSrc)}
+            name={name}
+            objectId={objectId}
+            imgHeight={200}
+            imgWidth={200}
+            noDisplayData={noDisplayData}
+          />
         </div>
         <IconSection onClick={handleClose}>
           <IconClose />

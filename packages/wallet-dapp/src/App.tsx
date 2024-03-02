@@ -14,6 +14,7 @@ import { SuiClientProvider } from 'utils/SuiClientProvider'
 import { NETWORK, NetworkContext, chainFromNetwork, fullnodeUrlFromNetwork } from 'utils/useNetworkProvider'
 import { Toast } from 'components/Toast/Toast'
 import { useLocalStorage } from 'utils/useLocalStorage'
+import { KioskClientProvider } from 'utils/KioskClientProvider'
 
 export type RootProps = {
   children: ReactNode
@@ -34,11 +35,13 @@ export const App = () => {
       <SuiClientProvider connectionUrl={fullnodeUrl}>
         <WalletKitProvider>
           <NetworkContext.Provider value={{ network, fullnodeUrl, chain, setNetwork }}>
-            <ThemeProvider theme={theme}>
-              <Toast />
-              <Main />
-              <GlobalStyles />
-            </ThemeProvider>
+            <KioskClientProvider>
+              <ThemeProvider theme={theme}>
+                <Toast />
+                <Main />
+                <GlobalStyles />
+              </ThemeProvider>
+            </KioskClientProvider>
           </NetworkContext.Provider>
         </WalletKitProvider>
       </SuiClientProvider>
