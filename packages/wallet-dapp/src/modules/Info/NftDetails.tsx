@@ -88,13 +88,13 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
     toggleModal()
   }
 
-  const name = nft?.display?.data?.['name' as keyof typeof nft.display.data] as string
-  const description = nft?.display?.data?.['description' as keyof typeof nft.display.data] as string
-  const link = nft?.display?.data?.['link' as keyof typeof nft.display.data] as string
-  const projectUrl = nft?.display?.data?.['project_url' as keyof typeof nft.display.data] as string
-  const creator = nft?.display?.data?.['creator' as keyof typeof nft.display.data] as string
+  const name = nft?.display?.data?.['name' as keyof typeof nft.display.data]
+  const description = nft?.display?.data?.['description' as keyof typeof nft.display.data]
+  const link = nft?.display?.data?.['link' as keyof typeof nft.display.data]
+  const projectUrl = nft?.display?.data?.['project_url' as keyof typeof nft.display.data]
+  const creator = nft?.display?.data?.['creator' as keyof typeof nft.display.data]
 
-  const imgSrc = nft?.display?.data?.['image_url' as keyof typeof nft.display.data] as string
+  const imgSrc = nft?.display?.data?.['image_url' as keyof typeof nft.display.data]
   const noDisplayData = nft?.display?.data === null
   const type = nft?.type || ''
   const address = nft?.objectId || ''

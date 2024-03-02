@@ -92,8 +92,8 @@ export const Nft = () => {
 
           const type = o.data?.type || ''
           const address = o.data?.objectId || ''
-          const imgSrc = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data] as string
-          const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data] as string
+          const imgSrc = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data]
+          const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data]
           const objectId = o?.data?.objectId
           return (
             <NftImageContainer

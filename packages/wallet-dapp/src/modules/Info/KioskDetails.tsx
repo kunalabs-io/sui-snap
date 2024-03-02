@@ -99,8 +99,8 @@ export const KioskDetails = ({ kiosk, toggleModal }: Props) => {
             {kiosk.items.map(k => {
               const type = k.data?.type || ''
               const address = k.data?.objectId || ''
-              const imgSrc = k.data?.display?.data?.['image_url' as keyof typeof k.data.display.data] as string
-              const name = k.data?.display?.data?.['name' as keyof typeof k.data.display.data] as string
+              const imgSrc = k.data?.display?.data?.['image_url' as keyof typeof k.data.display.data]
+              const name = k.data?.display?.data?.['name' as keyof typeof k.data.display.data]
               const objectId = k?.data?.objectId
               return (
                 <div key={objectId} onClick={() => setActiveKioskItem(k)}>
