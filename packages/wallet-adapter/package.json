@@ -29,13 +29,14 @@
   },
   "scripts": {
     "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
-    "build": "pnpm clean && pnpm tsc --build && pnpm tsup ./src/index.ts ./src/types.ts --format esm,cjs --sourcemap",
+    "build": "pnpm clean && pnpm tsup ./src/index.ts ./src/types.ts --format esm,cjs --sourcemap --experimental-dts",
     "dev": "pnpm build --watch",
     "check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.42.2",
     "@types/node": "^20.11.24",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
