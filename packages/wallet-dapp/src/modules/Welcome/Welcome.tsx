@@ -64,9 +64,9 @@ const Welcome = ({ mmStatus, connectedToSnap }: Props) => {
           </a>
         </>
       )}
-      {!statusLoading && mmAvailable && (
+      {!statusLoading && mmAvailable && supportsSnaps && (
         <>
-          <Typography variant="body" color="secondary" style={{ marginBottom: supportsSnaps ? 50 : 10 }}>
+          <Typography variant="body" color="secondary" style={{ marginBottom: 50 }}>
             Get started by connecting to MetaMask.
           </Typography>
           <ButtonWrapper variant="outlined" onClick={handleConnectClick}>
