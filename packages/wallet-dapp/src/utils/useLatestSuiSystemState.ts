@@ -26,7 +26,7 @@ export const useLatestSuiSystemState = () => {
       }
     },
     staleTime: 1000 * 60 * 1, // 1 minute
-    cacheTime: 1000 * 60 * 1, // 1 minute
+    gcTime: 1000 * 60 * 1, // 1 minute
   })
 
   return result
