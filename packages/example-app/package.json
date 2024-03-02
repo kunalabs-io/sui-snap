@@ -5,9 +5,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@kunalabs-io/sui-snap-wallet": "workspace:*",
+    "@mysten/dapp-kit": "^0.12.2",
     "@mysten/sui.js": "^0.50.1",
-    "@mysten/wallet-kit": "^0.8.6",
-    "@mysten/wallet-standard": "^0.10.3",
+    "@tanstack/react-query": "^5.24.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",

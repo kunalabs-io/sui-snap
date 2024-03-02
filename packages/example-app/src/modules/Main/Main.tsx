@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import {
-  SuiSnapWallet,
-  admin_getStoredState,
-  admin_setFullnodeUrl,
-  metaMaskAvailable,
-} from '@kunalabs-io/sui-snap-wallet'
+import { admin_getStoredState, admin_setFullnodeUrl, metaMaskAvailable } from '@kunalabs-io/sui-snap-wallet'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
-import { useWalletKit } from '@mysten/wallet-kit'
-import { SuiClient } from '@mysten/sui.js/client'
+import {
+  useConnectWallet,
+  useCurrentAccount,
+  useCurrentWallet,
+  useDisconnectWallet,
+  useSignPersonalMessage,
+  useSignTransactionBlock,
+  useWallets,
+} from '@mysten/dapp-kit'
 
 const Main = () => {
   const [error, setError] = useState<string | undefined>(undefined)
 
-  const kit = useWalletKit()
+  const { isConnected, currentWallet, isConnecting } = useCurrentWallet()
+  const { mutate: disconnect } = useDisconnectWallet()
+  const { mutate: connect } = useConnectWallet()
+  const wallets = useWallets()
 
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
   useEffect(() => {
@@ -28,15 +33,26 @@ const Main = () => {
       })
   }, [])
 
-  const connectedToSnap = kit.isConnected && kit.currentWallet?.name === 'Sui MetaMask Snap'
+  const currentAccount = useCurrentAccount()
+
+  const { mutate: signPersonalMessage } = useSignPersonalMessage()
+  const { mutate: signTransactionBlock } = useSignTransactionBlock()
+  const { mutate: signAndExecuteTransactionBlock } = useSignTransactionBlock()
+
+  const connectedToSnap = isConnected && currentWallet?.name === 'Sui MetaMask Snap'
 
   const handleConnectClick = async () => {
     if (connectedToSnap) {
-      await kit.disconnect()
+      disconnect()
+    }
+
+    const wallet = wallets.find(wallet => wallet.name === 'Sui MetaMask Snap')
+    if (!wallet) {
+      throw new Error('Snap wallet not found')
     }
 
     try {
-      await kit.connect(SuiSnapWallet.NAME)
+      connect({ wallet })
     } catch (e) {
       if (typeof e === 'string') {
         setError(e)
@@ -48,87 +64,99 @@ const Main = () => {
   }
 
   const signMessage = async () => {
-    if (!connectedToSnap || !kit.currentAccount) {
+    if (!connectedToSnap || !currentAccount) {
       return
     }
 
-    try {
-      const signed = await kit.signPersonalMessage({
+    signPersonalMessage(
+      {
         // message: new Uint8Array([1, 2, 3]),
         message: new TextEncoder().encode('Hello World!'),
-        account: kit.currentAccount,
-      })
-
-      console.log(signed)
-    } catch (e) {
-      if (typeof e === 'string') {
-        setError(e)
-      } else {
-        setError((e as Error).message)
+        account: currentAccount,
+      },
+      {
+        onSuccess: result => {
+          console.log(result)
+        },
+        onError: e => {
+          if (typeof e === 'string') {
+            setError(e)
+          } else {
+            setError((e as Error).message)
+          }
+          console.error(e)
+        },
       }
-      throw e
-    }
+    )
   }
 
-  const signTransactionBlock = async () => {
-    if (!connectedToSnap || !kit.currentAccount) {
+  const signTransactionBlockCb = async () => {
+    if (!connectedToSnap || !currentAccount) {
       return
     }
 
-    try {
-      const txb = new TransactionBlock()
-      const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
-      txb.transferObjects([coin], txb.pure(kit.currentAccount.address))
+    const txb = new TransactionBlock()
+    const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
+    txb.transferObjects([coin], txb.pure(currentAccount.address))
 
-      const signed = await kit.signTransactionBlock({
+    signTransactionBlock(
+      {
         transactionBlock: txb,
         chain: 'sui:testnet',
-      })
-
-      console.log(signed)
-    } catch (e) {
-      if (typeof e === 'string') {
-        setError(e)
-      } else {
-        setError((e as Error).message)
+      },
+      {
+        onSuccess: result => {
+          console.log(result)
+        },
+        onError: e => {
+          if (typeof e === 'string') {
+            setError(e)
+          } else {
+            setError((e as Error).message)
+          }
+          console.error(e)
+        },
       }
-      throw e
-    }
+    )
   }
 
-  const signAndExecuteTransactionBlock = async () => {
-    if (!connectedToSnap || !kit.currentAccount) {
+  const signAndExecuteTransactionBlockCb = async () => {
+    if (!connectedToSnap || !currentAccount) {
       return
     }
 
-    try {
-      const txb = new TransactionBlock()
-      const [coin1, coin2] = txb.splitCoins(txb.gas, [txb.pure(100n), txb.pure(200n)])
-      txb.moveCall({
-        target: '0x2::transfer::public_transfer',
-        typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
-        arguments: [coin1, txb.pure(kit.currentAccount.address)],
-      })
-      txb.moveCall({
-        target: '0x2::transfer::public_transfer',
-        typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
-        arguments: [coin2, txb.pure(kit.currentAccount.address)],
-      })
+    const txb = new TransactionBlock()
+    const [coin1, coin2] = txb.splitCoins(txb.gas, [txb.pure(100n), txb.pure(200n)])
+    txb.moveCall({
+      target: '0x2::transfer::public_transfer',
+      typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
+      arguments: [coin1, txb.pure(currentAccount.address)],
+    })
+    txb.moveCall({
+      target: '0x2::transfer::public_transfer',
+      typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
+      arguments: [coin2, txb.pure(currentAccount.address)],
+    })
 
-      const result = await kit.signAndExecuteTransactionBlock({
+    signAndExecuteTransactionBlock(
+      {
         transactionBlock: txb,
         chain: 'sui:testnet',
-      })
-
-      console.log(result)
-    } catch (e) {
-      if (typeof e === 'string') {
-        setError(e)
-      } else {
-        setError((e as Error).message)
+      },
+      {
+        onSuccess: result => {
+          console.log(result)
+        },
+        onError: e => {
+          if (typeof e === 'string') {
+            setError(e)
+          } else {
+            setError((e as Error).message)
+          }
+          console.error(e)
+        },
       }
-      throw e
-    }
+    )
   }
 
   const getStoredState = async () => {
@@ -152,10 +180,6 @@ const Main = () => {
     if (!connectedToSnap) {
       return
     }
-
-    const client = new SuiClient({ url: 'https://fullnode.testnet.sui.io:443' })
-    const version = await client.getRpcApiVersion()
-    console.log(version)
 
     try {
       const state = await admin_getStoredState(window.ethereum)
@@ -205,10 +229,10 @@ const Main = () => {
               title: 'Connect',
               description: 'Get started by connecting to and installing the Sui Snap.',
               button: (
-                <ConnectButton onClick={handleConnectClick} disabled={!flaskInstalled} connecting={kit.isConnecting} />
+                <ConnectButton onClick={handleConnectClick} disabled={!flaskInstalled} connecting={isConnecting} />
               ),
             }}
-            disabled={!flaskInstalled || kit.isConnecting}
+            disabled={!flaskInstalled || isConnecting}
           />
         )}
         {connectedToSnap && (
@@ -239,7 +263,7 @@ const Main = () => {
             title: 'Sign a transaction',
             description: 'Sign a transaction block using the Sui Snap.',
             button: (
-              <Button onClick={signTransactionBlock} disabled={!connectedToSnap}>
+              <Button onClick={signTransactionBlockCb} disabled={!connectedToSnap}>
                 Sign
               </Button>
             ),
@@ -251,7 +275,7 @@ const Main = () => {
             title: 'Execute a transaction',
             description: 'Sign and execute a transaction block using the Sui Snap.',
             button: (
-              <Button onClick={signAndExecuteTransactionBlock} disabled={!connectedToSnap}>
+              <Button onClick={signAndExecuteTransactionBlockCb} disabled={!connectedToSnap}>
                 Sign and execute
               </Button>
             ),

@@ -11,15 +11,15 @@ importers:
       '@kunalabs-io/sui-snap-wallet':
         specifier: workspace:*
         version: link:../wallet-adapter
+      '@mysten/dapp-kit':
+        specifier: ^0.12.2
+        version: 0.12.2(@tanstack/react-query@5.24.2)(@types/react-dom@18.2.19)(@types/react@18.2.61)(react-dom@18.2.0)(react@18.2.0)
       '@mysten/sui.js':
         specifier: ^0.50.1
         version: 0.50.1
-      '@mysten/wallet-kit':
-        specifier: ^0.8.6
-        version: 0.8.6(react-dom@18.2.0)(react@18.2.0)
-      '@mysten/wallet-standard':
-        specifier: ^0.10.3
-        version: 0.10.3
+      '@tanstack/react-query':
+        specifier: ^5.24.2
+        version: 5.24.2(react@18.2.0)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -2389,19 +2389,6 @@ packages:
       graphql: 16.8.1
     dev: false
 
-  /@headlessui/react@1.7.18(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-4i5DOrzwN4qSgNsL4Si61VMkUcWbcSKueUV7sFhpHzQcSShdlHENE5+QBntMSRvHt8NyoFO2AGG8si9lq+w4zQ==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: ^16 || ^17 || ^18
-      react-dom: ^16 || ^17 || ^18
-    dependencies:
-      '@tanstack/react-virtual': 3.1.3(react-dom@18.2.0)(react@18.2.0)
-      client-only: 0.0.1
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-    dev: false
-
   /@humanwhocodes/config-array@0.11.11:
     resolution: {integrity: sha512-N2brEuAadi0CcdeMXUkhbZB84eskAc8MEX1By6qEchoVywSgXPIjou4rYsl0V3Hj0ZnuGycGCjdNgockbzeWNA==}
     engines: {node: '>=10.10.0'}
@@ -3011,12 +2998,6 @@ packages:
       bs58: 5.0.0
     dev: false
 
-  /@mysten/bcs@0.9.0:
-    resolution: {integrity: sha512-h56essa8oSS4/J0Dby8k8stMoOSt+QZIEIeZNtgTOWh9HeV69yFg2BUg/+Rk7jzfWzvUmw9lFyKNipXcD5QOTw==}
-    dependencies:
-      bs58: 5.0.0
-    dev: false
-
   /@mysten/dapp-kit@0.12.2(@tanstack/react-query@5.24.2)(@types/react-dom@18.2.19)(@types/react@18.2.61)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-ALwzsq8dycW8/tEyVCl/hJxa0cpxXAT/FVN8QspSNBwb8CObkSm6aNV85FH9pZwhh6sATiJP0Y7+UQtdB3DneA==}
     peerDependencies:
@@ -3090,20 +3071,6 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mysten/sui.js@0.48.0:
-    resolution: {integrity: sha512-kGeV5F3IYThiliVbIou3YOOGAr8TdNyub4hGY2gevnphFQF8SukwQk8cyzuEEsAVSDUt0rsA9xxpncSgX+RjMA==}
-    engines: {node: '>=16'}
-    dependencies:
-      '@mysten/bcs': 0.9.0
-      '@noble/curves': 1.3.0
-      '@noble/hashes': 1.3.3
-      '@scure/bip32': 1.3.3
-      '@scure/bip39': 1.2.2
-      '@suchipi/femver': 1.0.0
-      superstruct: 1.0.3
-      tweetnacl: 1.0.3
-    dev: false
-
   /@mysten/sui.js@0.50.1:
     resolution: {integrity: sha512-AY0wb4n6PMTRsDGygzrrTHUK/m5KwKZ4aQcN9cayiwsq2iIhfjGo7uuqMA7Y5UiqvLCoF+z7Ig14Q5qejQ/S/w==}
     engines: {node: '>=16'}
@@ -3134,30 +3101,6 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@mysten/wallet-kit-core@0.6.14:
-    resolution: {integrity: sha512-Q1JWoWnFDDXU5ugVgCqcmgW26aEvvnlsRtO7RY6K86u6yiDVTSovLyHbJs38fxb0xuW8HApQPck/VZoK659HfA==}
-    deprecated: Wallet Kit has been replaced by @mysten/dapp-kit, and is no longer maintained
-    dependencies:
-      '@mysten/sui.js': 0.48.0
-      '@mysten/wallet-standard': 0.8.11
-    dev: false
-
-  /@mysten/wallet-kit@0.8.6(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-RT6F+TjnBAXK5tRF0DY/mXfVK8wlezQteqzSJGCLGhHWZcbVXc61zFaUrFWP5FdCy6HCGugMlZd/sOiOx6u+hA==}
-    deprecated: Wallet Kit has been replaced by @mysten/dapp-kit, and is no longer maintained
-    peerDependencies:
-      react: '*'
-      react-dom: '*'
-    dependencies:
-      '@headlessui/react': 1.7.18(react-dom@18.2.0)(react@18.2.0)
-      '@mysten/sui.js': 0.48.0
-      '@mysten/wallet-kit-core': 0.6.14
-      '@mysten/wallet-standard': 0.8.11
-      '@stitches/react': 1.2.8(react@18.2.0)
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-    dev: false
-
   /@mysten/wallet-standard@0.10.3:
     resolution: {integrity: sha512-StEMbJ7YkdjxoScmOJJjt9JaNgoRLD3FgU4LGFrKFtMXOhPu1Z4WF3qgfYBr+C3UgDh+JNiDIfN9TiGeM/Ahpw==}
     dependencies:
@@ -3185,13 +3128,6 @@ packages:
       - bufferutil
       - encoding
       - utf-8-validate
-    dev: false
-
-  /@mysten/wallet-standard@0.8.11:
-    resolution: {integrity: sha512-kkD/8vBzI0wMyeN/2QRVESINeufIJnJLE0jUT2Bl2eRSJDYhIIpVppVGPaVjYP+qMThZMk6WEgUVMLs9dVjJ2Q==}
-    dependencies:
-      '@mysten/sui.js': 0.48.0
-      '@wallet-standard/core': 1.0.3
     dev: false
 
   /@mysten/zksend@0.2.2:
@@ -3984,14 +3920,6 @@ packages:
     dependencies:
       apg-js: 4.2.1
 
-  /@stitches/react@1.2.8(react@18.2.0):
-    resolution: {integrity: sha512-9g9dWI4gsSVe8bNLlb+lMkBYsnIKCZTmvqvDG+Avnn69XfmHZKiaMrx7cgTaddq7aTPPmXiTsbFcUy0xgI4+wA==}
-    peerDependencies:
-      react: '>= 16.3.0'
-    dependencies:
-      react: 18.2.0
-    dev: false
-
   /@suchipi/femver@1.0.0:
     resolution: {integrity: sha512-bprE8+K5V+DPX7q2e2K57ImqNBdfGHDIWaGI5xHxZoxbKOuQZn4wzPiUxOAHnsUr3w3xHrWXwN7gnG/iIuEMIg==}
     dev: false
@@ -4134,21 +4062,6 @@ packages:
     dependencies:
       '@tanstack/query-core': 5.24.2
       react: 18.2.0
-    dev: false
-
-  /@tanstack/react-virtual@3.1.3(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-YCzcbF/Ws/uZ0q3Z6fagH+JVhx4JLvbSflgldMgLsuvB8aXjZLLb3HvrEVxY480F9wFlBiXlvQxOyXb5ENPrNA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      '@tanstack/virtual-core': 3.1.3
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-    dev: false
-
-  /@tanstack/virtual-core@3.1.3:
-    resolution: {integrity: sha512-Y5B4EYyv1j9V8LzeAoOVeTg0LI7Fo5InYKgAjkY1Pu9GjtUwX/EKxNcU7ng3sKr99WEf+bPTcktAeybyMOYo+g==}
     dev: false
 
   /@tootallnate/once@2.0.0:
@@ -5735,10 +5648,6 @@ packages:
     resolution: {integrity: sha512-jHgecW0pxkonBJdrKsqxgRX9AcG+u/5k0Q7WPDfi8AogLAdwxEkyYYNWwZ5GvVFoFx2uiY1eNcSK00fh+1+FyQ==}
     engines: {node: '>=6'}
     dev: true
-
-  /client-only@0.0.1:
-    resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
-    dev: false
 
   /cliui@7.0.4:
     resolution: {integrity: sha512-OcRE68cOsVMXp1Yvonl/fzkQOyjLSu/8bhPDfQt0e0/Eb283TKP20Fs2MqoPsr9SwA595rRCA+QMzYc9nBP+JQ==}

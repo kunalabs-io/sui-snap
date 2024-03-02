@@ -1,12 +1,21 @@
 import { ReactNode } from 'react'
 import { Footer } from './components'
-import { WalletKitProvider } from '@mysten/wallet-kit'
 
 import Main from 'modules/Main'
 import '../index.css'
 import styled, { ThemeProvider } from 'styled-components'
 import { GlobalStyle, theme } from 'config/theme'
 import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet'
+import { SuiClientProvider, WalletProvider, createNetworkConfig } from '@mysten/dapp-kit'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+registerSuiSnapWallet()
+
+const { networkConfig } = createNetworkConfig({
+  testnet: { url: 'https://fullnode.testnet.sui.io:443' },
+})
+
+const queryClient = new QueryClient()
 
 export type RootProps = {
   children: ReactNode
@@ -20,18 +29,20 @@ const Wrapper = styled.div`
   max-width: 100vw;
 `
 
-registerSuiSnapWallet()
-
 export const App = () => {
   return (
     <ThemeProvider theme={theme}>
-      <WalletKitProvider>
-        <GlobalStyle />
-        <Wrapper>
-          <Main />
-          <Footer />
-        </Wrapper>
-      </WalletKitProvider>
+      <QueryClientProvider client={queryClient}>
+        <SuiClientProvider networks={networkConfig} network="testnet">
+          <WalletProvider>
+            <GlobalStyle />
+            <Wrapper>
+              <Main />
+              <Footer />
+            </Wrapper>
+          </WalletProvider>
+        </SuiClientProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   )
 }
