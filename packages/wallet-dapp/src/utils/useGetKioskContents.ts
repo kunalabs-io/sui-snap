@@ -107,8 +107,10 @@ export function useGetKioskContents() {
       if (!currentAccount?.address) {
         throw new Error('invariant violation')
       }
-      const suiKiosks = await getSuiKioskContents(currentAccount.address, kioskClient)
-      const obKiosks = await getOriginByteKioskContents(currentAccount.address, suiClient)
+      const [suiKiosks, obKiosks] = await Promise.all([
+        getSuiKioskContents(currentAccount.address, kioskClient),
+        getOriginByteKioskContents(currentAccount.address, suiClient),
+      ])
       return [...suiKiosks, ...obKiosks]
     },
     enabled: !!currentAccount?.address,
