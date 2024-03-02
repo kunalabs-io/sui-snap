@@ -4,7 +4,6 @@ import { WalletKitProvider } from '@mysten/wallet-kit'
 import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { Network } from '@mysten/kiosk'
 
 import Main from 'modules/Main'
 import { GlobalStyles } from 'styles/GlobalStyles'
@@ -34,17 +33,17 @@ export const App = () => {
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={true} />
       <SuiClientProvider connectionUrl={fullnodeUrl}>
-        <KioskClientProvider network={network as Network}>
-          <WalletKitProvider>
-            <NetworkContext.Provider value={{ network, fullnodeUrl, chain, setNetwork }}>
+        <WalletKitProvider>
+          <NetworkContext.Provider value={{ network, fullnodeUrl, chain, setNetwork }}>
+            <KioskClientProvider>
               <ThemeProvider theme={theme}>
                 <Toast />
                 <Main />
                 <GlobalStyles />
               </ThemeProvider>
-            </NetworkContext.Provider>
-          </WalletKitProvider>
-        </KioskClientProvider>
+            </KioskClientProvider>
+          </NetworkContext.Provider>
+        </WalletKitProvider>
       </SuiClientProvider>
     </QueryClientProvider>
   )

@@ -3,22 +3,34 @@ import { FC, ReactNode, useMemo } from 'react'
 
 import { KioskClientProviderContext } from './useKioskClientProvider'
 import { useSuiClientProvider } from './useSuiClientProvider'
+import { useNetwork } from './useNetworkProvider'
 
 export interface KioskClientProviderProps {
   children: ReactNode
-  network: Network
 }
 
-export const KioskClientProvider: FC<KioskClientProviderProps> = ({ children, network }) => {
+export const KioskClientProvider: FC<KioskClientProviderProps> = ({ children }) => {
   const suiClient = useSuiClientProvider()
+  const { network } = useNetwork()
+
+  let kioskNetwork: Network = Network.CUSTOM
+  switch (network) {
+    case 'mainnet':
+      kioskNetwork = Network.MAINNET
+      break
+    case 'testnet':
+      kioskNetwork = Network.TESTNET
+      break
+  }
+  console.log(suiClient, kioskNetwork)
 
   const provider = useMemo(() => {
     const client = new KioskClient({
       client: suiClient,
-      network: network,
+      network: kioskNetwork,
     })
     return client
-  }, [suiClient, network])
+  }, [suiClient, kioskNetwork])
 
   return <KioskClientProviderContext.Provider value={{ provider }}>{children}</KioskClientProviderContext.Provider>
 }
