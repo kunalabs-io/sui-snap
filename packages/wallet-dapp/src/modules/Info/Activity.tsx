@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
-import { useWalletKit } from '@mysten/wallet-kit'
 import { useCallback, useState } from 'react'
 
 import Spinner from 'components/Spinner'
@@ -11,6 +10,7 @@ import { IconArrowTransaction } from 'components/Icons/ArrowTransaction'
 import { IconArrowReceived } from 'components/Icons/ArrowReceived'
 import { getFormattedDate } from 'utils/date'
 import { TransactionDetails } from './TransactionDetails'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 
 const Container = styled.div`
   padding: 20px 0px;
@@ -81,7 +81,7 @@ export const Activity = () => {
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
-  const { currentAccount } = useWalletKit()
+  const currentAccount = useCurrentAccount()
 
   const toggleModal = useCallback(
     (tx?: SuiTransactionBlockResponse) => {

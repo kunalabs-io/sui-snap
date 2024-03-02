@@ -2,10 +2,10 @@ import { useQueries } from '@tanstack/react-query'
 
 import { CoinMetadata } from 'lib/coin'
 import { Type, tagToType } from 'lib/type'
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { ONE_DAY } from './const'
 import { getTokenSymbolAndNameFromTypeArg } from './helpers'
 import { useNetwork } from './useNetworkProvider'
+import { useSuiClient } from '@mysten/dapp-kit'
 
 export interface UseCoinMetadataResult {
   meta: CoinMetadata
@@ -13,7 +13,7 @@ export interface UseCoinMetadataResult {
 }
 
 export const useCoinMetadatas = (coinTypes: Type[]) => {
-  const suiClient = useSuiClientProvider()
+  const suiClient = useSuiClient()
   const { network } = useNetwork()
 
   const fetchCoinMetadata = async (ct: Type) => {

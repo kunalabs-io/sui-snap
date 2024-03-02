@@ -1,6 +1,5 @@
-import { getFullnodeUrl } from '@mysten/sui.js/client'
+import { createNetworkConfig } from '@mysten/dapp-kit'
 import { createContext, useContext } from 'react'
-import { SuiChain } from '@mysten/wallet-standard'
 
 export const NETWORK_MAINNET = 'mainnet'
 export const NETWORK_TESTNET = 'testnet'
@@ -9,18 +8,14 @@ export const NETWORK_LOCAL = 'local'
 
 export type NETWORK = typeof NETWORK_MAINNET | typeof NETWORK_TESTNET | typeof NETWORK_DEVNET | typeof NETWORK_LOCAL
 
-export function fullnodeUrlFromNetwork(network: NETWORK): string {
-  switch (network) {
-    case NETWORK_MAINNET:
-      return 'https://sui-mainnet-rpc.allthatnode.com'
-    case NETWORK_TESTNET:
-      return 'https://fullnode.testnet.sui.io:443'
-    case NETWORK_DEVNET:
-      return 'https://fullnode.devnet.sui.io:443'
-    case NETWORK_LOCAL:
-      return 'http://127.0.0.1:9000'
-  }
-}
+export const { networkConfig } = createNetworkConfig({
+  [NETWORK_MAINNET]: { url: 'https://sui-mainnet-rpc.allthatnode.com' },
+  [NETWORK_TESTNET]: { url: 'https://fullnode.testnet.sui.io:443' },
+  [NETWORK_DEVNET]: { url: 'https://fullnode.devnet.sui.io:443' },
+  [NETWORK_LOCAL]: { url: 'http://127.0.0.1:9000' },
+})
+
+export type SuiChain = `${'sui'}:${'mainnet' | 'testnet' | 'devnet' | 'localnet'}`
 
 export function chainFromNetwork(network: NETWORK): SuiChain {
   switch (network) {
@@ -37,14 +32,12 @@ export function chainFromNetwork(network: NETWORK): SuiChain {
 
 interface NetworkContextType {
   network: NETWORK
-  fullnodeUrl: string
   chain: SuiChain
   setNetwork: (network: NETWORK) => void
 }
 
 export const NetworkContext = createContext<NetworkContextType>({
   network: 'mainnet',
-  fullnodeUrl: getFullnodeUrl('mainnet'),
   chain: 'sui:mainnet',
   setNetwork: () => {
     /* noop */

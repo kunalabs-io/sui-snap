@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import styled from 'styled-components'
-import { useWalletKit } from '@mysten/wallet-kit'
 import { toast } from 'react-toastify'
 
 import { IconBack } from 'components/Icons/IconBack'
@@ -18,10 +17,10 @@ import useLatestSuiSystemState from 'utils/useLatestSuiSystemState'
 import { Amount } from 'lib/amount'
 import { SUI_DECIMALS, SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui.js/utils'
 import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
-import { useSuiClientProvider } from 'utils/useSuiClientProvider'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
+import { useSignAndExecuteTransactionBlock, useSuiClient } from '@mysten/dapp-kit'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -75,9 +74,9 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
   const [rawInputStr, setRawInputStr] = useState('')
   const [isSending, setIsSending] = useState(false)
 
-  const client = useSuiClientProvider()
-  const walletKit = useWalletKit()
+  const client = useSuiClient()
   const { network, chain } = useNetwork()
+  const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock()
 
   const systemStateRes = useLatestSuiSystemState()
 
@@ -178,38 +177,52 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
       ],
     })
 
-    try {
-      const res = await walletKit.signAndExecuteTransactionBlock({
+    signAndExecuteTransactionBlock(
+      {
         transactionBlock: txb,
         requestType: 'WaitForLocalExecution',
         chain,
-      })
+      },
+      {
+        onSuccess: async res => {
+          const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+          toast.success(
+            <div>
+              Transaction succeeded:{' '}
+              <a href={url} target="_blank" rel="noreferrer">
+                {res.digest}
+              </a>
+            </div>
+          )
 
-      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
-      toast.success(
-        <div>
-          Transaction succeeded:{' '}
-          <a href={url} target="_blank" rel="noreferrer">
-            {res.digest}
-          </a>
-        </div>
-      )
+          triggerWalletBalancesUpdate()
+          openStakeScreen()
+        },
+        onError: e => {
+          if (e instanceof UserRejectionError) {
+            toast.warn('Transaction rejected')
+            return
+          }
 
-      triggerWalletBalancesUpdate()
-      openStakeScreen()
-    } catch (e) {
-      if (e instanceof UserRejectionError) {
-        toast.warn('Transaction rejected')
-        return
+          toast.error('Transaction failed')
+          console.error(e)
+          return
+        },
+        onSettled: () => {
+          setIsSending(false)
+        },
       }
-
-      toast.error('Transaction failed')
-      console.error(e)
-      return
-    } finally {
-      setIsSending(false)
-    }
-  }, [client, selectedValidator, amount, walletKit, chain, network, triggerWalletBalancesUpdate, openStakeScreen])
+    )
+  }, [
+    client,
+    selectedValidator,
+    amount,
+    signAndExecuteTransactionBlock,
+    chain,
+    network,
+    triggerWalletBalancesUpdate,
+    openStakeScreen,
+  ])
 
   if (isLoadingWalletBalances || systemStateRes.isLoading) {
     return (

@@ -1,13 +1,12 @@
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useWalletKit } from '@mysten/wallet-kit'
 
 import { Type } from 'lib/type'
 import { Amount } from 'lib/amount'
 import { CoinMetadata } from 'lib/coin'
 
 import useCoinMetadatas from './useCoinMetadatas'
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 
 export interface CoinInfo {
   amount: Amount
@@ -21,8 +20,8 @@ export interface WalletBalanceInfos {
 }
 
 export const useWalletBalances = (options?: { refetchInterval: number }): WalletBalanceInfos => {
-  const suiClient = useSuiClientProvider()
-  const { currentAccount } = useWalletKit()
+  const suiClient = useSuiClient()
+  const currentAccount = useCurrentAccount()
   const { network } = useNetwork()
 
   const balancesRes = useQuery({

@@ -9,8 +9,6 @@ import { useInputAmountValidate } from 'utils/input/useInputAmountValidate'
 import { toast } from 'react-toastify'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import Spinner from 'components/Spinner/Spinner'
-import { useSuiClientProvider } from 'utils/useSuiClientProvider'
-import { useWalletKit } from '@mysten/wallet-kit'
 import { TransactionArgument, TransactionBlock } from '@mysten/sui.js/transactions'
 import { SUI_TYPE_ARG } from '@mysten/sui.js/utils'
 import { useNetwork } from 'utils/useNetworkProvider'
@@ -19,6 +17,7 @@ import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 import { CoinStruct } from '@mysten/sui.js/client'
 import Typography from 'components/Typography'
+import { useCurrentAccount, useSignAndExecuteTransactionBlock, useSuiClient } from '@mysten/dapp-kit'
 
 interface Props {
   openInfoScreen: () => void
@@ -104,19 +103,18 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     amountError = 'Amount too large'
   }
 
-  const client = useSuiClientProvider()
-  const walletKit = useWalletKit()
+  const client = useSuiClient()
+  const currentAccount = useCurrentAccount()
   const { network, chain } = useNetwork()
+  const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock()
 
   const onSendClick = useCallback(async () => {
     setIsSending(true)
     // invariants
-    if (!recipient || !amount || !selectedCoin || !walletKit.currentAccount) {
+    if (!recipient || !amount || !selectedCoin || !currentAccount) {
       toast.error('Something went wrong')
       return
     }
-
-    const address = walletKit.currentAccount.address
 
     let coin: TransactionArgument
     const txb = new TransactionBlock()
@@ -130,7 +128,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       let hasNextPage = true
       while (hasNextPage && acc < amount.int) {
         const coinsResult = await client.getCoins({
-          owner: address,
+          owner: currentAccount.address,
           coinType: selectedCoin.meta.typeArg,
           cursor,
         })
@@ -176,37 +174,54 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
     txb.transferObjects([coin], txb.pure(recipient))
 
-    try {
-      const res = await walletKit.signAndExecuteTransactionBlock({
+    signAndExecuteTransactionBlock(
+      {
         transactionBlock: txb,
         requestType: 'WaitForLocalExecution',
         chain,
-      })
-      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
-      toast.success(
-        <div>
-          Transaction succeeded:{' '}
-          <a href={url} target="_blank" rel="noreferrer">
-            {res.digest}
-          </a>
-        </div>
-      )
+      },
+      {
+        onSuccess: async res => {
+          const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+          toast.success(
+            <div>
+              Transaction succeeded:{' '}
+              <a href={url} target="_blank" rel="noreferrer">
+                {res.digest}
+              </a>
+            </div>
+          )
 
-      triggerWalletBalancesUpdate()
-      openInfoScreen()
-    } catch (e) {
-      if (e instanceof UserRejectionError) {
-        toast.warn('Transaction rejected')
-        return
+          triggerWalletBalancesUpdate()
+          openInfoScreen()
+        },
+        onError: e => {
+          if (e instanceof UserRejectionError) {
+            toast.warn('Transaction rejected')
+            return
+          }
+
+          toast.error('Transaction failed')
+          console.error(e)
+          return
+        },
+        onSettled: () => {
+          setIsSending(false)
+        },
       }
-
-      toast.error('Transaction failed')
-      console.error(e)
-      return
-    } finally {
-      setIsSending(false)
-    }
-  }, [recipient, amount, selectedCoin, walletKit, client, network, chain, triggerWalletBalancesUpdate, openInfoScreen])
+    )
+  }, [
+    recipient,
+    amount,
+    selectedCoin,
+    currentAccount,
+    signAndExecuteTransactionBlock,
+    client,
+    network,
+    chain,
+    triggerWalletBalancesUpdate,
+    openInfoScreen,
+  ])
 
   if (isLoadingWalletBalances) {
     return <Spinner />

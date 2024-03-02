@@ -2,15 +2,15 @@ import { KioskClient, Network } from '@mysten/kiosk'
 import { FC, ReactNode, useMemo } from 'react'
 
 import { KioskClientProviderContext } from './useKioskClientProvider'
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
+import { useSuiClient } from '@mysten/dapp-kit'
 
 export interface KioskClientProviderProps {
   children: ReactNode
 }
 
 export const KioskClientProvider: FC<KioskClientProviderProps> = ({ children }) => {
-  const suiClient = useSuiClientProvider()
+  const suiClient = useSuiClient()
   const { network } = useNetwork()
 
   let kioskNetwork: Network = Network.CUSTOM
@@ -22,7 +22,6 @@ export const KioskClientProvider: FC<KioskClientProviderProps> = ({ children }) 
       kioskNetwork = Network.TESTNET
       break
   }
-  console.log(suiClient, kioskNetwork)
 
   const provider = useMemo(() => {
     const client = new KioskClient({

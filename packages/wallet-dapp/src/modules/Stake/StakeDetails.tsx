@@ -9,8 +9,8 @@ import { formatTimeDifference } from 'utils/helpers'
 import { useState } from 'react'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui.js/utils'
+import { useSignAndExecuteTransactionBlock } from '@mysten/dapp-kit'
 import { toast } from 'react-toastify'
-import { useWalletKit } from '@mysten/wallet-kit'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import { invalidateWalletBalances } from 'utils/useWalletBalances'
@@ -127,7 +127,7 @@ interface Props {
 export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => {
   const queryClient = useQueryClient()
 
-  const walletKit = useWalletKit()
+  const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock()
   const { network, chain } = useNetwork()
 
   const [isSending, setIsSending] = useState(false)
@@ -148,38 +148,42 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
       ],
     })
 
-    try {
-      const res = await walletKit.signAndExecuteTransactionBlock({
+    signAndExecuteTransactionBlock(
+      {
         transactionBlock: txb,
-        requestType: 'WaitForLocalExecution',
         chain,
-      })
+      },
+      {
+        onSuccess: async res => {
+          const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+          toast.success(
+            <div>
+              Transaction succeeded:{' '}
+              <a href={url} target="_blank" rel="noreferrer">
+                {res.digest}
+              </a>
+            </div>
+          )
 
-      const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
-      toast.success(
-        <div>
-          Transaction succeeded:{' '}
-          <a href={url} target="_blank" rel="noreferrer">
-            {res.digest}
-          </a>
-        </div>
-      )
+          await Promise.all([invalidateWalletBalances(queryClient), invalidateStakes(queryClient)])
+          setIsSending(false)
+          openStakeScreen()
+        },
+        onError: e => {
+          if (e instanceof UserRejectionError) {
+            toast.warn('Transaction rejected')
+            return
+          }
 
-      await Promise.all([invalidateWalletBalances(queryClient), invalidateStakes(queryClient)])
-      setIsSending(false)
-      openStakeScreen()
-    } catch (e) {
-      if (e instanceof UserRejectionError) {
-        toast.warn('Transaction rejected')
-        return
+          toast.error('Transaction failed')
+          console.error(e)
+          return
+        },
+        onSettled: () => {
+          setIsSending(false)
+        },
       }
-
-      toast.error('Transaction failed')
-      console.error(e)
-      return
-    } finally {
-      setIsSending(false)
-    }
+    )
   }
 
   return (

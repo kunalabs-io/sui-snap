@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { useWalletKit } from '@mysten/wallet-kit'
 import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
 
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
 import useCoinMetadatas from './useCoinMetadatas'
 import {
@@ -13,6 +11,7 @@ import {
   getCoinTypes,
   getTxTimestampStart,
 } from './transaction'
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 
 interface TransactionsInfos {
   isLoading: boolean
@@ -22,8 +21,8 @@ interface TransactionsInfos {
 }
 
 export const useTransactions = (options?: { refetchInterval?: number }): TransactionsInfos => {
-  const { currentAccount } = useWalletKit()
-  const suiClient = useSuiClientProvider()
+  const currentAccount = useCurrentAccount()
+  const suiClient = useSuiClient()
   const { network } = useNetwork()
 
   const result = useQuery({

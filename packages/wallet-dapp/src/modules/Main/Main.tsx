@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useWalletKit } from '@mysten/wallet-kit'
 import styled from 'styled-components'
 
 import Dashboard from 'modules/Dashboard/Dashboard'
 import Welcome from 'modules/Welcome/Welcome'
 import { MetaMaskStatus, metaMaskAvailable } from '@kunalabs-io/sui-snap-wallet'
+import { useCurrentWallet } from '@mysten/dapp-kit'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -18,8 +18,7 @@ const Wrapper = styled.div`
 `
 
 const Main = () => {
-  const kit = useWalletKit()
-
+  const { isConnected, currentWallet } = useCurrentWallet()
   const [mmStatus, setMMStatus] = useState<MetaMaskStatus>()
 
   useEffect(() => {
@@ -31,7 +30,7 @@ const Main = () => {
       })
   }, [])
 
-  const connectedToSnap = kit.isConnected && kit.currentWallet?.name === 'Sui MetaMask Snap'
+  const connectedToSnap = isConnected && currentWallet.name === 'Sui MetaMask Snap'
   const showDashboard = mmStatus && mmStatus.available && connectedToSnap
 
   return (

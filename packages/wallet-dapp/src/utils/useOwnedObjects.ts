@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useWalletKit } from '@mysten/wallet-kit'
 
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
 import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui.js/client'
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 
 interface OwnedObjectsInfos {
   isLoading: boolean
@@ -25,8 +24,8 @@ export const useOwnedObjects = (options?: {
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [ownedObjects, setOwnedObjects] = useState<SuiObjectResponse[]>()
 
-  const suiClient = useSuiClientProvider()
-  const { currentAccount } = useWalletKit()
+  const suiClient = useSuiClient()
+  const currentAccount = useCurrentAccount()
   const { network } = useNetwork()
 
   useEffect(() => {

@@ -1,5 +1,4 @@
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon'
-import { useWalletKit } from '@mysten/wallet-kit'
 import { useCallback, useState } from 'react'
 import { useTheme } from 'styled-components'
 
@@ -20,10 +19,11 @@ import { NetworkSelect, Option } from 'components/Select/Select'
 import ModalActions from 'components/Modal/components/ModalActions'
 import Button from 'components/Button/Button'
 import { toast } from 'react-toastify'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 
 const Header = () => {
   const { network, setNetwork } = useNetwork()
-  const { currentAccount } = useWalletKit()
+  const currentAccount = useCurrentAccount()
 
   const [isOpenInfoModal, setIsOpenInfoModal] = useState(false)
 

@@ -1,12 +1,11 @@
 import { KIOSK_ITEM, KioskClient, KioskItem, KioskOwnerCap } from '@mysten/kiosk'
 import { SuiClient } from '@mysten/sui.js/client'
 import { useQuery } from '@tanstack/react-query'
-import { useWalletKit } from '@mysten/wallet-kit'
 
 import { getKioskIdFromOwnerCap, ORIGINBYTE_KIOSK_OWNER_TOKEN } from './kiosk'
 import { useKioskClientProvider } from './useKioskClientProvider'
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 
 export enum KioskTypes {
   SUI = 'sui',
@@ -96,10 +95,10 @@ async function getSuiKioskContents(address: string, kioskClient: KioskClient) {
 }
 
 export function useGetKioskContents() {
-  const suiClient = useSuiClientProvider()
+  const suiClient = useSuiClient()
   const { network } = useNetwork()
   const kioskClient = useKioskClientProvider()
-  const { currentAccount } = useWalletKit()
+  const currentAccount = useCurrentAccount()
 
   return useQuery({
     queryKey: ['get-kiosk-contents', currentAccount?.address, network, kioskClient.network],

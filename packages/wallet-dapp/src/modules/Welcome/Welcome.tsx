@@ -1,9 +1,8 @@
-import { useWalletKit } from '@mysten/wallet-kit'
-
 import Typography from 'components/Typography/Typography'
 import { ButtonWrapper, Wrapper } from './styles'
 import { MetaMaskStatus } from '@kunalabs-io/sui-snap-wallet'
 import { IconMetaMask } from 'components/Icons/IconMetaMask'
+import { useConnectWallet, useDisconnectWallet, useWallets } from '@mysten/dapp-kit'
 
 interface Props {
   mmStatus?: MetaMaskStatus
@@ -11,19 +10,28 @@ interface Props {
 }
 
 const Welcome = ({ mmStatus, connectedToSnap }: Props) => {
-  const kit = useWalletKit()
+  const { mutate: connect } = useConnectWallet()
+  const { mutate: disconnect } = useDisconnectWallet()
+  const wallets = useWallets()
 
   const statusLoading = mmStatus === undefined
   const mmAvailable = !!mmStatus?.available
   const supportsSnaps = !!mmStatus?.supportsSnaps
 
-  const handleConnectClick = async () => {
+  const handleConnectClick = () => {
     if (connectedToSnap) {
-      await kit.disconnect()
+      disconnect()
+    }
+
+    const wallet = wallets.find(wallet => wallet.name === 'Sui MetaMask Snap')
+    if (!wallet) {
+      return
     }
 
     try {
-      await kit.connect('Sui MetaMask Snap')
+      connect({
+        wallet,
+      })
     } catch (e) {
       console.error(e)
     }

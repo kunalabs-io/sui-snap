@@ -1,11 +1,10 @@
 import { QueryClient, useQuery } from '@tanstack/react-query'
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
-import { useWalletKit } from '@mysten/wallet-kit'
+import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 
 export const useStakes = () => {
-  const client = useSuiClientProvider()
-  const { currentAccount } = useWalletKit()
+  const client = useSuiClient()
+  const currentAccount = useCurrentAccount()
 
   const { network } = useNetwork()
   client.getStakesByIds

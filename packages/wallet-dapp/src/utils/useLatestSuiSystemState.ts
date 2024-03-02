@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useSuiClientProvider } from './useSuiClientProvider'
 import { useNetwork } from './useNetworkProvider'
+import { useSuiClient } from '@mysten/dapp-kit'
 
 export const useLatestSuiSystemState = () => {
-  const client = useSuiClientProvider()
+  const client = useSuiClient()
   const { network } = useNetwork()
 
   const result = useQuery({

@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { useWalletKit } from '@mysten/wallet-kit'
 
 import IconButton from 'components/IconButton/IconButton'
 import { IconExplore } from 'components/Icons/IconExplore'
@@ -19,6 +18,7 @@ import { Tokens } from './Tokens'
 import { Nft } from './Nft'
 import { Activity } from './Activity'
 import { IconGroup } from 'components/Icons/IconGroup'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 
 interface Props {
   onSendClick: (selectedCoin?: CoinInfo) => void
@@ -34,7 +34,7 @@ enum Tab {
 const Info = ({ onSendClick, onStakeClick }: Props) => {
   const [activeTab, setActiveTab] = useState(Tab.Tokens)
 
-  const { currentAccount } = useWalletKit()
+  const currentAccount = useCurrentAccount()
   const { network } = useNetwork()
 
   const handleAddressClick = useCallback(async () => {
