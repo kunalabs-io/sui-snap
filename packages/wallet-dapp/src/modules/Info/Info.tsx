@@ -70,26 +70,28 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
 
   const suiCoinInfo = infos.get(suiTypeArg)
 
-  const infosKeys = [...infos.keys()]
   const unrecognizedCoins: CoinInfo[] = []
   const recognizedCoins: CoinInfo[] = []
 
-  infosKeys.forEach(typeArg => {
+  for (const [typeArg, coinInfo] of infos.entries()) {
+    if (coinInfo.amount.int === 0n) {
+      continue
+    }
+
+    let isRecognized = false
     if (network === NETWORK_MAINNET) {
       const packageId = getPackageIdFromTypeArg(typeArg)
       if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
-        recognizedCoins.push(infos.get(typeArg)!)
-      } else {
-        unrecognizedCoins.push(infos.get(typeArg)!)
-      }
-    } else {
-      if (typeArg === suiTypeArg) {
-        recognizedCoins.push(infos.get(typeArg)!)
-      } else {
-        unrecognizedCoins.push(infos.get(typeArg)!)
+        isRecognized = true
       }
     }
-  })
+
+    if (isRecognized) {
+      recognizedCoins.push(coinInfo)
+    } else {
+      unrecognizedCoins.push(coinInfo)
+    }
+  }
 
   return (
     <div style={{ marginTop: 25 }}>
