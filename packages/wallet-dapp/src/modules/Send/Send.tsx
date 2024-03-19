@@ -182,7 +182,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       },
       {
         onSuccess: async res => {
-          const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+          const url = `https://suivision.xyz/txblock/${res.digest}?network=${network}`
           toast.success(
             <div>
               Transaction succeeded:{' '}

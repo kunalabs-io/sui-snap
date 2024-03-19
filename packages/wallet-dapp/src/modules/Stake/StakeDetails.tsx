@@ -155,7 +155,7 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
       },
       {
         onSuccess: async res => {
-          const url = `https://suiexplorer.com/txblock/${res.digest}?network=${network}`
+          const url = `https://suivision.xyz/txblock/${res.digest}?network=${network}`
           toast.success(
             <div>
               Transaction succeeded:{' '}
