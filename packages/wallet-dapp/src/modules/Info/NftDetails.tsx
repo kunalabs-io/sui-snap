@@ -118,7 +118,7 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
           <IconClose />
         </IconSection>
         <ExplorerLink
-          href={`https://suiexplorer.com/object/${objectId}?network=${network}`}
+          href={`https://suivision.xyz/object/${objectId}?network=${network}`}
           target="_blank"
           rel="noreferrer"
           style={{ textDecoration: 'none' }}

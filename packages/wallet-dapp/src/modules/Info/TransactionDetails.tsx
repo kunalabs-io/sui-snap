@@ -105,7 +105,7 @@ export const TransactionDetails = ({ toggleModal, tx, balanceChanges }: Props) =
         )}
         <TxLink variant="caption">
           <a
-            href={`https://suiexplorer.com/txblock/${tx.digest}?network=${network}`}
+            href={`https://suivision.xyz/txblock/${tx.digest}?network=${network}`}
             target="_blank"
             rel="noreferrer"
             style={{ textDecoration: 'none' }}
@@ -146,7 +146,7 @@ export const TransactionDetails = ({ toggleModal, tx, balanceChanges }: Props) =
               blockToDisplay = (
                 <>
                   <a
-                    href={`https://suiexplorer.com/object/${blockParts[0]}?network=${network}`}
+                    href={`https://suivision.xyz/object/${blockParts[0]}?network=${network}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{ textDecoration: 'none' }}

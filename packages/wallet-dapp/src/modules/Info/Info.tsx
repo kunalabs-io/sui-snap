@@ -133,7 +133,7 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
         </IconButtonContainer>
 
         <a
-          href={`https://suiexplorer.com/address/${currentAccount?.address}?network=${network}`}
+          href={`https://suivision.xyz/address/${currentAccount?.address}?network=${network}`}
           target="_blank"
           rel="noreferrer"
           style={{ textDecoration: 'none' }}

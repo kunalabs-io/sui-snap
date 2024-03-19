@@ -139,7 +139,7 @@ export const KioskDetails = ({ kiosk, toggleModal }: Props) => {
             </Typography>
             <InfoValue variant="description" fontWeight="medium" color="secondary">
               <InfoValueLink
-                href={`https://suiexplorer.com/object/${kiosk.kioskId}?network=${network}`}
+                href={`https://suivision.xyz/object/${kiosk.kioskId}?network=${network}`}
                 target="_blank"
                 rel="noreferrer"
               >
