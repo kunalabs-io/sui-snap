@@ -1,6 +1,6 @@
 import {
   ExecuteTransactionRequestType,
-  SuiTransactionBlockResponseOptions,
+  SuiTransactionBlockResponseOptions as SuiTransactionBlockResponseOptionsType,
 } from '@mysten/sui.js/client'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { fromB64, toB64 } from '@mysten/sui.js/utils'
@@ -46,7 +46,7 @@ export type SerializedWalletAccount = Infer<typeof SerializedWalletAccount>
 export function serializeWalletAccount(account: WalletAccount): SerializedWalletAccount {
   return {
     address: account.address,
-    publicKey: toB64(account.publicKey),
+    publicKey: toB64(new Uint8Array(account.publicKey)),
     features: [...account.features],
     chains: [...account.chains],
     label: account.label,
@@ -126,7 +126,7 @@ export function deserializeSuiSignTransactionBlockInput(
 
 /* ======== SerializedSuiSignAndExecuteTransactionBlockInput ======== */
 
-const SuiTransactionBlockResponseOptions: Describe<SuiTransactionBlockResponseOptions> = object({
+const SuiTransactionBlockResponseOptions: Describe<SuiTransactionBlockResponseOptionsType> = object({
   showBalanceChanges: optional(boolean()),
   showEffects: optional(boolean()),
   showEvents: optional(boolean()),

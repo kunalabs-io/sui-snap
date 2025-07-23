@@ -23,7 +23,7 @@ import {
   getWallets,
 } from '@mysten/wallet-standard'
 import { ICON } from './icon'
-import { BaseProvider } from '@metamask/providers'
+import { MetaMaskInpageProvider } from '@metamask/providers'
 import {
   SerializedAdminSetFullnodeUrl,
   SerializedWalletAccount,
@@ -34,9 +34,12 @@ import {
   serializeSuiSignTransactionBlockInput,
 } from './types'
 import { convertError } from './errors'
+import { getMetaMaskProvider } from './metamask'
 
 export * from './types'
 export * from './errors'
+export { getMetaMaskProvider } from './metamask'
+export type { MetaMaskStatus, MetaMaskProviderInfo } from './metamask'
 
 export const SNAP_ORIGIN = 'npm:@kunalabs-io/sui-metamask-snap'
 export const SNAP_VERSION = '^1.0.0'
@@ -55,7 +58,7 @@ export function registerSuiSnapWallet(): SuiSnapWallet {
   return wallet
 }
 
-export async function getAccounts(provider: BaseProvider): Promise<ReadonlyWalletAccount[]> {
+export async function getAccounts(provider: MetaMaskInpageProvider): Promise<ReadonlyWalletAccount[]> {
   const res = (await provider.request({
     method: 'wallet_invokeSnap',
     params: {
@@ -69,7 +72,7 @@ export async function getAccounts(provider: BaseProvider): Promise<ReadonlyWalle
   return res.map(acc => new ReadonlyWalletAccount(deserializeWalletAccount(acc)))
 }
 
-export async function admin_getStoredState(provider: BaseProvider) {
+export async function admin_getStoredState(provider: MetaMaskInpageProvider) {
   const res = (await provider.request({
     method: 'wallet_invokeSnap',
     params: {
@@ -84,7 +87,7 @@ export async function admin_getStoredState(provider: BaseProvider) {
 }
 
 export async function admin_setFullnodeUrl(
-  provider: BaseProvider,
+  provider: MetaMaskInpageProvider,
   network: 'mainnet' | 'testnet' | 'devnet' | 'localnet',
   url: string
 ) {
@@ -105,7 +108,7 @@ export async function admin_setFullnodeUrl(
 }
 
 export async function signPersonalMessage(
-  provider: BaseProvider,
+  provider: MetaMaskInpageProvider,
   messageInput: SuiSignPersonalMessageInput
 ): Promise<SuiSignPersonalMessageOutput> {
   const serialized = serializeSuiSignMessageInput(messageInput)
@@ -127,7 +130,7 @@ export async function signPersonalMessage(
 }
 
 export async function signMessage(
-  provider: BaseProvider,
+  provider: MetaMaskInpageProvider,
   messageInput: SuiSignMessageInput
 ): Promise<SuiSignMessageOutput> {
   const res = await signPersonalMessage(provider, messageInput)
@@ -139,7 +142,7 @@ export async function signMessage(
 }
 
 export async function signTransactionBlock(
-  provider: BaseProvider,
+  provider: MetaMaskInpageProvider,
   transactionInput: SuiSignTransactionBlockInput
 ): Promise<SuiSignTransactionBlockOutput> {
   const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
@@ -161,7 +164,7 @@ export async function signTransactionBlock(
 }
 
 export async function signAndExecuteTransactionBlock(
-  provider: BaseProvider,
+  provider: MetaMaskInpageProvider,
   transactionInput: SuiSignTransactionBlockInput
 ): Promise<SuiSignAndExecuteTransactionBlockOutput> {
   const serialized = serializeSuiSignAndExecuteTransactionBlockInput(transactionInput)
@@ -182,55 +185,12 @@ export async function signAndExecuteTransactionBlock(
   }
 }
 
-export interface MetaMaskStatus {
-  available: boolean
-  version?: string
-  supportsSnaps: boolean
-  suiSnapInstalled: boolean
-}
-
-export async function metaMaskAvailable(): Promise<MetaMaskStatus> {
-  const provider = window.ethereum
-  if (!provider) {
-    return {
-      available: false,
-      supportsSnaps: false,
-      suiSnapInstalled: false,
-    }
-  }
-  if (!provider.isMetaMask) {
-    return {
-      available: false,
-      suiSnapInstalled: false,
-      supportsSnaps: false,
-    }
-  }
-  try {
-    const version = await provider.request<string>({ method: 'web3_clientVersion' })
-    const snaps = await provider.request<Record<string, unknown>>({ method: 'wallet_getSnaps' })
-    const suiSnapInstalled = !!snaps && 'npm:@kunalabs-io/sui-metamask-snap' in snaps
-
-    return {
-      available: true,
-      version: version!,
-      supportsSnaps: true,
-      suiSnapInstalled,
-    }
-  } catch (e) {
-    console.warn(e)
-    return {
-      available: true,
-      supportsSnaps: false,
-      suiSnapInstalled: false,
-    }
-  }
-}
-
 export class SuiSnapWallet implements Wallet {
   static NAME = 'Sui MetaMask Snap'
   #connecting: boolean
   #connected: boolean
 
+  #provider: MetaMaskInpageProvider | null = null
   #accounts: WalletAccount[] | null = null
 
   constructor() {
@@ -313,9 +273,8 @@ export class SuiSnapWallet implements Wallet {
     this.#connected = false
 
     try {
-      const provider = window.ethereum
-      const mmStatus = await metaMaskAvailable()
-      if (!mmStatus.available) {
+      const { available, provider, suiSnapInstalled } = await getMetaMaskProvider()
+      if (!available) {
         throw new Error('MetaMask not detected!')
       }
 
@@ -328,6 +287,7 @@ export class SuiSnapWallet implements Wallet {
         },
       })
 
+      this.#provider = provider
       this.#accounts = await getAccounts(provider)
 
       this.#connecting = false
@@ -347,17 +307,34 @@ export class SuiSnapWallet implements Wallet {
     this.#connecting = false
     this.#connected = false
     this.#accounts = null
+    this.#provider = null
   }
 
-  #signPersonalMessage: SuiSignPersonalMessageMethod = async messageInput =>
-    signPersonalMessage(window.ethereum, messageInput)
+  #signPersonalMessage: SuiSignPersonalMessageMethod = async messageInput => {
+    if (!this.#provider) {
+      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a personal message.')
+    }
+    return signPersonalMessage(this.#provider, messageInput)
+  }
 
-  #signMessage: SuiSignMessageMethod = async messageInput =>
-    signMessage(window.ethereum, messageInput)
+  #signMessage: SuiSignMessageMethod = async messageInput => {
+    if (!this.#provider) {
+      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a message.')
+    }
+    return signMessage(this.#provider, messageInput)
+  }
 
-  #signTransactionBlock: SuiSignTransactionBlockMethod = async transactionInput =>
-    signTransactionBlock(window.ethereum, transactionInput)
+  #signTransactionBlock: SuiSignTransactionBlockMethod = async transactionInput => {
+    if (!this.#provider) {
+      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a transaction block.')
+    }
+    return signTransactionBlock(this.#provider, transactionInput)
+  }
 
-  #signAndExecuteTransactionBlock: SuiSignAndExecuteTransactionBlockMethod =
-    async transactionInput => signAndExecuteTransactionBlock(window.ethereum, transactionInput)
+  #signAndExecuteTransactionBlock: SuiSignAndExecuteTransactionBlockMethod = async transactionInput => {
+    if (!this.#provider) {
+      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing and executing a transaction block.')
+    }
+    return signAndExecuteTransactionBlock(this.#provider, transactionInput)
+  }
 }

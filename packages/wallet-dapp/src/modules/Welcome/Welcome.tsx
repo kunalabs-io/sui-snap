@@ -1,22 +1,22 @@
 import Typography from 'components/Typography/Typography'
 import { ButtonWrapper, Wrapper } from './styles'
-import { MetaMaskStatus } from '@kunalabs-io/sui-snap-wallet'
+import { MetaMaskProviderInfo } from '@kunalabs-io/sui-snap-wallet'
 import { IconMetaMask } from 'components/Icons/IconMetaMask'
 import { useConnectWallet, useDisconnectWallet, useWallets } from '@mysten/dapp-kit'
 
 interface Props {
-  mmStatus?: MetaMaskStatus
+  mmInfo?: MetaMaskProviderInfo
   connectedToSnap: boolean
 }
 
-const Welcome = ({ mmStatus, connectedToSnap }: Props) => {
+const Welcome = ({ mmInfo, connectedToSnap }: Props) => {
   const { mutate: connect } = useConnectWallet()
   const { mutate: disconnect } = useDisconnectWallet()
   const wallets = useWallets()
 
-  const statusLoading = mmStatus === undefined
-  const mmAvailable = !!mmStatus?.available
-  const supportsSnaps = !!mmStatus?.supportsSnaps
+  const statusLoading = mmInfo === undefined
+  const mmAvailable = !!mmInfo?.available
+  const supportsSnaps = !!mmInfo?.supportsSnaps
 
   const handleConnectClick = () => {
     if (connectedToSnap) {

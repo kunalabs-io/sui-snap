@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
-import { admin_getStoredState, admin_setFullnodeUrl, metaMaskAvailable } from '@kunalabs-io/sui-snap-wallet'
+import { admin_getStoredState, admin_setFullnodeUrl, getMetaMaskProvider } from '@kunalabs-io/sui-snap-wallet'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import {
   useConnectWallet,
@@ -23,9 +23,10 @@ const Main = () => {
 
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
   useEffect(() => {
-    metaMaskAvailable()
-      .then(metaMaskState => {
-        setFlaskInstalled(metaMaskState.available)
+    getMetaMaskProvider()
+      .then(metamaskInfo => {
+        console.log(metamaskInfo.provider?.request({ method: 'wallet_getSnaps' }).then(console.log))
+        setFlaskInstalled(metamaskInfo.available && metamaskInfo.supportsSnaps)
       })
       .catch(e => {
         setFlaskInstalled(false)
