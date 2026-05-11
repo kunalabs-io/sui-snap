@@ -1,24 +1,17 @@
+import { Transaction } from '@mysten/sui/transactions'
+import { fromBase64, toBase64 } from '@mysten/sui/utils'
 import {
-  ExecuteTransactionRequestType,
-  SuiTransactionBlockResponseOptions as SuiTransactionBlockResponseOptionsType,
-} from '@mysten/sui.js/client'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
-import { fromB64, toB64 } from '@mysten/sui.js/utils'
-import {
-  SuiSignAndExecuteTransactionBlockInput,
   SuiSignPersonalMessageInput,
-  SuiSignTransactionBlockInput,
+  SuiSignTransactionInput,
   WalletAccount,
   WalletIcon,
 } from '@mysten/wallet-standard'
 import {
   Infer,
-  Describe,
   array,
   object,
   optional,
   string,
-  boolean,
   literal,
   union,
 } from 'superstruct'
@@ -46,7 +39,7 @@ export type SerializedWalletAccount = Infer<typeof SerializedWalletAccount>
 export function serializeWalletAccount(account: WalletAccount): SerializedWalletAccount {
   return {
     address: account.address,
-    publicKey: toB64(new Uint8Array(account.publicKey)),
+    publicKey: toBase64(new Uint8Array(account.publicKey)),
     features: [...account.features],
     chains: [...account.chains],
     label: account.label,
@@ -57,7 +50,7 @@ export function serializeWalletAccount(account: WalletAccount): SerializedWallet
 export function deserializeWalletAccount(account: SerializedWalletAccount): WalletAccount {
   return {
     address: account.address,
-    publicKey: fromB64(account.publicKey),
+    publicKey: fromBase64(account.publicKey),
     chains: account.chains.map(chain => chain as `${string}:${string}`),
     features: account.features.map(feature => feature as `${string}:${string}`),
     label: account.label,
@@ -65,109 +58,66 @@ export function deserializeWalletAccount(account: SerializedWalletAccount): Wall
   }
 }
 
-/* ======== SerializedSuiSignMessageInput ======== */
+/* ======== SerializedSuiSignPersonalMessageInput ======== */
 
 export const SerializedSuiSignPersonalMessageInput = object({
   message: string(),
   account: SerializedWalletAccount,
 })
 
-export type SerializedSuiSignMessageInput = Infer<typeof SerializedSuiSignPersonalMessageInput>
+export type SerializedSuiSignPersonalMessageInput = Infer<typeof SerializedSuiSignPersonalMessageInput>
 
-export function serializeSuiSignMessageInput(
+export function serializeSuiSignPersonalMessageInput(
   input: SuiSignPersonalMessageInput
-): SerializedSuiSignMessageInput {
+): SerializedSuiSignPersonalMessageInput {
   return {
-    message: toB64(input.message),
+    message: toBase64(input.message),
     account: serializeWalletAccount(input.account),
   }
 }
 
-export function deserializeSuiSignMessageInput(
-  input: SerializedSuiSignMessageInput
+export function deserializeSuiSignPersonalMessageInput(
+  input: SerializedSuiSignPersonalMessageInput
 ): SuiSignPersonalMessageInput {
   return {
-    message: fromB64(input.message),
+    message: fromBase64(input.message),
     account: deserializeWalletAccount(input.account),
   }
 }
 
-/* ======== SerializedSuiSignTransactionBlockInput ======== */
+/* ======== SerializedSuiSignTransactionInput ======== */
 
-export const SerializedSuiSignTransactionBlockInput = object({
-  transactionBlock: string(),
+export const SerializedSuiSignTransactionInput = object({
+  transaction: string(),
   account: SerializedWalletAccount,
   chain: string(),
 })
 
-export type SerializedSuiSignTransactionBlockInput = Infer<
-  typeof SerializedSuiSignTransactionBlockInput
->
+export type SerializedSuiSignTransactionInput = Infer<typeof SerializedSuiSignTransactionInput>
 
-export function serializeSuiSignTransactionBlockInput(
-  input: SuiSignTransactionBlockInput
-): SerializedSuiSignTransactionBlockInput {
+export async function serializeSuiSignTransactionInput(
+  input: SuiSignTransactionInput
+): Promise<SerializedSuiSignTransactionInput> {
   return {
-    transactionBlock: input.transactionBlock.serialize(),
+    transaction: await input.transaction.toJSON(),
     account: serializeWalletAccount(input.account),
     chain: input.chain,
   }
 }
 
-export function deserializeSuiSignTransactionBlockInput(
-  input: SerializedSuiSignTransactionBlockInput
-): SuiSignTransactionBlockInput {
-  return {
-    transactionBlock: TransactionBlock.from(input.transactionBlock),
-    account: deserializeWalletAccount(input.account),
-    chain: input.chain as `${string}:${string}`,
-  }
+export interface DeserializedSuiSignTransactionInput {
+  transaction: Transaction
+  account: WalletAccount
+  chain: `${string}:${string}`
 }
 
-/* ======== SerializedSuiSignAndExecuteTransactionBlockInput ======== */
-
-const SuiTransactionBlockResponseOptions: Describe<SuiTransactionBlockResponseOptionsType> = object({
-  showBalanceChanges: optional(boolean()),
-  showEffects: optional(boolean()),
-  showEvents: optional(boolean()),
-  showInput: optional(boolean()),
-  showObjectChanges: optional(boolean()),
-  showRawInput: optional(boolean()),
-})
-
-export const SerializedSuiSignAndExecuteTransactionBlockInput = object({
-  transactionBlock: string(),
-  account: SerializedWalletAccount,
-  chain: string(),
-  requestType: optional(string()),
-  options: optional(SuiTransactionBlockResponseOptions),
-})
-
-export type SerializedSuiSignAndExecuteTransactionBlockInput = Infer<
-  typeof SerializedSuiSignAndExecuteTransactionBlockInput
->
-
-export function serializeSuiSignAndExecuteTransactionBlockInput(
-  input: SuiSignAndExecuteTransactionBlockInput
-): SerializedSuiSignAndExecuteTransactionBlockInput {
+export function deserializeSuiSignTransactionInput(
+  input: SerializedSuiSignTransactionInput
+): DeserializedSuiSignTransactionInput {
   return {
-    transactionBlock: input.transactionBlock.serialize(),
-    account: serializeWalletAccount(input.account),
-    chain: input.chain,
-    requestType: input.requestType,
-    options: input.options,
-  }
-}
-
-export function deserializeSuiSignAndExecuteTransactionBlockInput(
-  input: SerializedSuiSignAndExecuteTransactionBlockInput
-): SuiSignAndExecuteTransactionBlockInput {
-  return {
-    ...input,
-    transactionBlock: TransactionBlock.from(input.transactionBlock),
+    transaction: Transaction.from(input.transaction),
     account: deserializeWalletAccount(input.account),
     chain: input.chain as `${string}:${string}`,
-    requestType: input.requestType as ExecuteTransactionRequestType | undefined,
   }
 }
 
