@@ -12,7 +12,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 registerSuiSnapWallet()
 
 const { networkConfig } = createNetworkConfig({
-  testnet: { url: 'https://fullnode.testnet.sui.io:443' },
+  testnet: { url: 'https://fullnode.testnet.sui.io:443', network: 'testnet' },
 })
 
 const queryClient = new QueryClient()

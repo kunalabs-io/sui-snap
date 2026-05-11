@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react'
 import { ConnectButton, InstallFlaskButton, ReconnectButton, Card, Button } from '../../components'
 import { CardContainer, Container, ErrorMessage, Heading, Notice, Span, Subtitle } from './styles'
 import { admin_getStoredState, admin_setFullnodeUrl, getMetaMaskProvider } from '@kunalabs-io/sui-snap-wallet'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { Transaction } from '@mysten/sui/transactions'
 import {
   useConnectWallet,
   useCurrentAccount,
   useCurrentWallet,
   useDisconnectWallet,
+  useSignAndExecuteTransaction,
   useSignPersonalMessage,
-  useSignTransactionBlock,
+  useSignTransaction,
   useWallets,
 } from '@mysten/dapp-kit'
 
@@ -37,8 +38,8 @@ const Main = () => {
   const currentAccount = useCurrentAccount()
 
   const { mutate: signPersonalMessage } = useSignPersonalMessage()
-  const { mutate: signTransactionBlock } = useSignTransactionBlock()
-  const { mutate: signAndExecuteTransactionBlock } = useSignTransactionBlock()
+  const { mutate: signTransaction } = useSignTransaction()
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
 
   const connectedToSnap = isConnected && currentWallet?.name === 'Sui MetaMask Snap'
 
@@ -71,7 +72,6 @@ const Main = () => {
 
     signPersonalMessage(
       {
-        // message: new Uint8Array([1, 2, 3]),
         message: new TextEncoder().encode('Hello World!'),
         account: currentAccount,
       },
@@ -91,18 +91,18 @@ const Main = () => {
     )
   }
 
-  const signTransactionBlockCb = async () => {
+  const signTransactionCb = async () => {
     if (!connectedToSnap || !currentAccount) {
       return
     }
 
-    const txb = new TransactionBlock()
-    const [coin] = txb.splitCoins(txb.gas, [txb.pure(100n)])
-    txb.transferObjects([coin], txb.pure(currentAccount.address))
+    const txb = new Transaction()
+    const [coin] = txb.splitCoins(txb.gas, [100n])
+    txb.transferObjects([coin], currentAccount.address)
 
-    signTransactionBlock(
+    signTransaction(
       {
-        transactionBlock: txb,
+        transaction: txb,
         chain: 'sui:testnet',
       },
       {
@@ -121,27 +121,27 @@ const Main = () => {
     )
   }
 
-  const signAndExecuteTransactionBlockCb = async () => {
+  const signAndExecuteTransactionCb = async () => {
     if (!connectedToSnap || !currentAccount) {
       return
     }
 
-    const txb = new TransactionBlock()
-    const [coin1, coin2] = txb.splitCoins(txb.gas, [txb.pure(100n), txb.pure(200n)])
+    const txb = new Transaction()
+    const [coin1, coin2] = txb.splitCoins(txb.gas, [100n, 200n])
     txb.moveCall({
       target: '0x2::transfer::public_transfer',
       typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
-      arguments: [coin1, txb.pure(currentAccount.address)],
+      arguments: [coin1, txb.pure.address(currentAccount.address)],
     })
     txb.moveCall({
       target: '0x2::transfer::public_transfer',
       typeArguments: ['0x2::coin::Coin<0x2::sui::SUI>'],
-      arguments: [coin2, txb.pure(currentAccount.address)],
+      arguments: [coin2, txb.pure.address(currentAccount.address)],
     })
 
-    signAndExecuteTransactionBlock(
+    signAndExecuteTransaction(
       {
-        transactionBlock: txb,
+        transaction: txb,
         chain: 'sui:testnet',
       },
       {
@@ -262,9 +262,9 @@ const Main = () => {
         <Card
           content={{
             title: 'Sign a transaction',
-            description: 'Sign a transaction block using the Sui Snap.',
+            description: 'Sign a transaction using the Sui Snap.',
             button: (
-              <Button onClick={signTransactionBlockCb} disabled={!connectedToSnap}>
+              <Button onClick={signTransactionCb} disabled={!connectedToSnap}>
                 Sign
               </Button>
             ),
@@ -274,9 +274,9 @@ const Main = () => {
         <Card
           content={{
             title: 'Execute a transaction',
-            description: 'Sign and execute a transaction block using the Sui Snap.',
+            description: 'Sign and execute a transaction using the Sui Snap.',
             button: (
-              <Button onClick={signAndExecuteTransactionBlockCb} disabled={!connectedToSnap}>
+              <Button onClick={signAndExecuteTransactionCb} disabled={!connectedToSnap}>
                 Sign and execute
               </Button>
             ),
