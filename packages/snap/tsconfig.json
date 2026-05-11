@@ -4,15 +4,18 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["DOM", "ES2020"],
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "strict": true,
     "target": "ES2020",
     "useUnknownInCatchVariables": false,
     "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@metamask/snaps-sdk"
   },
-  "include": ["src"],
+  "include": ["src", "snap.config.ts"],
   "references": [
     { "path": "../wallet-adapter" }
   ]
