@@ -7,9 +7,9 @@ import { CustomPlaceholder, StakeItem } from './Stake'
 import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
 import { formatTimeDifference } from 'utils/helpers'
 import { useState } from 'react'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
-import { SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui.js/utils'
-import { useSignAndExecuteTransactionBlock } from '@mysten/dapp-kit'
+import { Transaction } from '@mysten/sui/transactions'
+import { SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui/utils'
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
 import { toast } from 'react-toastify'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { useQueryClient } from '@tanstack/react-query'
@@ -127,7 +127,7 @@ interface Props {
 export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => {
   const queryClient = useQueryClient()
 
-  const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock()
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
   const { network, chain } = useNetwork()
 
   const [isSending, setIsSending] = useState(false)
@@ -135,7 +135,7 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
   const handleUnstakeClick = async () => {
     setIsSending(true)
 
-    const txb = new TransactionBlock()
+    const txb = new Transaction()
     txb.moveCall({
       target: '0x3::sui_system::request_withdraw_stake',
       arguments: [
@@ -148,9 +148,9 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
       ],
     })
 
-    signAndExecuteTransactionBlock(
+    signAndExecuteTransaction(
       {
-        transactionBlock: txb,
+        transaction: txb,
         chain,
       },
       {

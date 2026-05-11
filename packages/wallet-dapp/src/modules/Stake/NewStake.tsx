@@ -15,12 +15,12 @@ import Spinner from 'components/Spinner'
 import { ellipsizeTokenAddress, formatTimeDifference } from 'utils/helpers'
 import useLatestSuiSystemState from 'utils/useLatestSuiSystemState'
 import { Amount } from 'lib/amount'
-import { SUI_DECIMALS, SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui.js/utils'
+import { SUI_DECIMALS, SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui/utils'
 import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { Transaction } from '@mysten/sui/transactions'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
-import { useSignAndExecuteTransactionBlock, useSuiClient } from '@mysten/dapp-kit'
+import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 
 const Container = styled.div`
   padding-top: 16px;
@@ -76,7 +76,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
 
   const client = useSuiClient()
   const { network, chain } = useNetwork()
-  const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock()
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
 
   const systemStateRes = useLatestSuiSystemState()
 
@@ -162,8 +162,8 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
 
     setIsSending(true)
 
-    const txb = new TransactionBlock()
-    const stakeCoin = txb.splitCoins(txb.gas, [txb.pure(amount.int)])
+    const txb = new Transaction()
+    const stakeCoin = txb.splitCoins(txb.gas, [amount.int])
     txb.moveCall({
       target: '0x3::sui_system::request_add_stake',
       arguments: [
@@ -173,14 +173,13 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
           mutable: true,
         }),
         stakeCoin,
-        txb.pure(selectedValidator.address), // txb.pure.address(validator)
+        txb.pure.address(selectedValidator.address),
       ],
     })
 
-    signAndExecuteTransactionBlock(
+    signAndExecuteTransaction(
       {
-        transactionBlock: txb,
-        requestType: 'WaitForLocalExecution',
+        transaction: txb,
         chain,
       },
       {
@@ -217,7 +216,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
     client,
     selectedValidator,
     amount,
-    signAndExecuteTransactionBlock,
+    signAndExecuteTransaction,
     chain,
     network,
     triggerWalletBalancesUpdate,

@@ -1,4 +1,13 @@
-import { SuiObjectData } from '@mysten/sui.js/client'
+// NftDetails reads only a small subset of fields shared between SuiObjectData
+// (json-rpc) and ObjectWithDisplay (from @mysten/kiosk), so we type the prop
+// structurally rather than pinning it to one of those shapes.
+type NftData = {
+  objectId?: string
+  type?: string | null
+  display?: {
+    data?: Record<string, unknown> | null
+  } | null
+}
 import styled, { useTheme } from 'styled-components'
 
 import Modal from 'components/Modal'
@@ -13,7 +22,7 @@ import { formatImgUrl } from 'utils/images'
 
 interface Props {
   toggleModal: () => void
-  nft?: SuiObjectData | null
+  nft?: NftData | null
 }
 
 const IconSection = styled.div`
@@ -88,13 +97,14 @@ export const NftDetails = ({ nft, toggleModal }: Props) => {
     toggleModal()
   }
 
-  const name = nft?.display?.data?.['name' as keyof typeof nft.display.data]
-  const description = nft?.display?.data?.['description' as keyof typeof nft.display.data]
-  const link = nft?.display?.data?.['link' as keyof typeof nft.display.data]
-  const projectUrl = nft?.display?.data?.['project_url' as keyof typeof nft.display.data]
-  const creator = nft?.display?.data?.['creator' as keyof typeof nft.display.data]
+  const data = nft?.display?.data as Record<string, string> | undefined | null
+  const name = data?.name as string | undefined
+  const description = data?.description as string | undefined
+  const link = data?.link as string | undefined
+  const projectUrl = data?.project_url as string | undefined
+  const creator = data?.creator as string | undefined
 
-  const imgSrc = nft?.display?.data?.['image_url' as keyof typeof nft.display.data]
+  const imgSrc = data?.image_url as string | undefined
   const noDisplayData = nft?.display?.data === null
   const type = nft?.type || ''
   const address = nft?.objectId || ''

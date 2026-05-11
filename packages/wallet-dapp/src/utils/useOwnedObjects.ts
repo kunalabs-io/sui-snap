@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { useNetwork } from './useNetworkProvider'
-import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui.js/client'
+import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui/jsonRpc'
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 
 interface OwnedObjectsInfos {

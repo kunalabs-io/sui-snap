@@ -1,5 +1,5 @@
 import { KIOSK_ITEM, KioskClient, KioskItem, KioskOwnerCap } from '@mysten/kiosk'
-import { SuiClient } from '@mysten/sui.js/client'
+import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc'
 import { useQuery } from '@tanstack/react-query'
 
 import { getKioskIdFromOwnerCap, ORIGINBYTE_KIOSK_OWNER_TOKEN } from './kiosk'
@@ -20,7 +20,7 @@ export type Kiosk = {
   ownerCap?: KioskOwnerCap
 }
 
-async function getOriginByteKioskContents(address: string, client: SuiClient) {
+async function getOriginByteKioskContents(address: string, client: SuiJsonRpcClient) {
   const data = await client.getOwnedObjects({
     owner: address,
     filter: {
@@ -79,7 +79,6 @@ async function getSuiKioskContents(address: string, kioskClient: KioskClient) {
         id,
         options: {
           withObjects: true,
-          objectOptions: { showDisplay: true, showContent: true },
         },
       })
       return {

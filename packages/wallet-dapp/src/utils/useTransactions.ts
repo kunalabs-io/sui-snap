@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
+import { SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
 
 import { useNetwork } from './useNetworkProvider'
 import useCoinMetadatas from './useCoinMetadatas'

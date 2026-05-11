@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
+import { SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
 import { useCallback, useState } from 'react'
 
 import Spinner from 'components/Spinner'

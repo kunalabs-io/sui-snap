@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import styled from 'styled-components'
-import { SuiObjectResponse } from '@mysten/sui.js/client'
+import { SuiObjectResponse } from '@mysten/sui/jsonRpc'
 
 import Spinner from 'components/Spinner'
 import { useOwnedObjects } from 'utils/useOwnedObjects'
@@ -92,8 +92,9 @@ export const Nft = () => {
 
           const type = o.data?.type || ''
           const address = o.data?.objectId || ''
-          const imgSrc = o.data?.display?.data?.['image_url' as keyof typeof o.data.display.data]
-          const name = o.data?.display?.data?.['name' as keyof typeof o.data.display.data]
+          const displayData = o.data?.display?.data as Record<string, string> | undefined | null
+          const imgSrc = displayData?.image_url
+          const name = displayData?.name
           const objectId = o?.data?.objectId
           return (
             <NftImageContainer
