@@ -1,11 +1,8 @@
-import { NonAdminOrigin } from '@kunalabs-io/sui-snap-wallet/dist/errors'
+import { NonAdminOrigin } from '@kunalabs-io/sui-snap-wallet/errors'
 import { IdentifierString, SuiChain } from '@mysten/wallet-standard'
-import {
-  DryRunTransactionBlockResponse,
-  SuiClient,
-} from '@mysten/sui.js/client'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
-import { parseStructTag } from '@mysten/sui.js/utils'
+import { SuiJsonRpcClient, DryRunTransactionBlockResponse } from '@mysten/sui/jsonRpc'
+import { Transaction } from '@mysten/sui/transactions'
+import { parseStructTag } from '@mysten/sui/utils'
 
 export const ALLOWED_ADMIN_ORIGIN = 'https://suisnap.com'
 
@@ -56,21 +53,37 @@ export async function updateState(newState: StoredState): Promise<void> {
   })
 }
 
+export type SuiNetwork = 'mainnet' | 'testnet' | 'devnet' | 'localnet'
+
+export function networkFromChain(chain: SuiChain | IdentifierString): SuiNetwork {
+  switch (chain) {
+    case 'sui:mainnet':
+      return 'mainnet'
+    case 'sui:testnet':
+      return 'testnet'
+    case 'sui:devnet':
+      return 'devnet'
+    case 'sui:localnet':
+      return 'localnet'
+    default:
+      throw new Error(`Unsupported chain: ${chain}`)
+  }
+}
+
 export async function getFullnodeUrlForChain(
   chain: SuiChain | IdentifierString
 ) {
   const state = await getStoredState()
-  switch (chain) {
-    case 'sui:mainnet':
+  const network = networkFromChain(chain)
+  switch (network) {
+    case 'mainnet':
       return state.mainnetUrl
-    case 'sui:testnet':
+    case 'testnet':
       return state.testnetUrl
-    case 'sui:devnet':
+    case 'devnet':
       return state.devnetUrl
-    case 'sui:localnet':
+    case 'localnet':
       return state.localnetUrl
-    default:
-      throw new Error(`Unsupported chain: ${chain}`)
   }
 }
 
@@ -103,7 +116,7 @@ export interface BalanceChange {
 }
 
 export async function getBalanceChanges(
-  client: SuiClient,
+  client: SuiJsonRpcClient,
   dryRunRes: DryRunTransactionBlockResponse,
   sender: string
 ): Promise<Array<BalanceChange>> {
@@ -167,34 +180,51 @@ function getErrorMessage(e: unknown): string | null {
   return null
 }
 
-export interface BuildTransactionBlockInput {
+export interface BuildTransactionInput {
   chain: IdentifierString
-  transactionBlock: TransactionBlock
+  transaction: Transaction
   sender: string
 }
 
-export interface BuildTransactionBlockResult {
-  transactionBlockBytes: Uint8Array | undefined
+export interface BuildTransactionResult {
+  transactionBytes: Uint8Array | undefined
   balanceChanges: Array<BalanceChange> | undefined
   dryRunRes: DryRunTransactionBlockResponse | undefined
   isError: boolean
   errorMessage: string
 }
 
-export async function buildTransactionBlock(
-  input: BuildTransactionBlockInput
-): Promise<BuildTransactionBlockResult> {
+export async function buildTransaction(
+  input: BuildTransactionInput
+): Promise<BuildTransactionResult> {
   const url = await getFullnodeUrlForChain(input.chain)
-  const client = new SuiClient({ url })
+  const network = networkFromChain(input.chain)
+  const client = new SuiJsonRpcClient({ url, network })
 
-  input.transactionBlock.setSender(input.sender)
+  input.transaction.setSender(input.sender)
 
   let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
   let balanceChanges = undefined
   const dryRunError = { hasError: false, message: '' }
+
+  let transactionBytes: Uint8Array
+  try {
+    transactionBytes = await input.transaction.build({
+      client,
+    })
+  } catch (e) {
+    return {
+      transactionBytes: undefined,
+      balanceChanges,
+      dryRunRes,
+      isError: true,
+      errorMessage: getErrorMessage(e) ?? 'Unexpected error',
+    }
+  }
+
   try {
     dryRunRes = await client.dryRunTransactionBlock({
-      transactionBlock: await input.transactionBlock.build({ client }),
+      transactionBlock: await input.transaction.build({ client }),
     })
     if (dryRunRes.effects.status.status === 'failure') {
       dryRunError.hasError = true
@@ -208,7 +238,7 @@ export async function buildTransactionBlock(
 
   if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
     return {
-      transactionBlockBytes: undefined,
+      transactionBytes: undefined,
       balanceChanges,
       dryRunRes,
       isError: true,
@@ -216,23 +246,8 @@ export async function buildTransactionBlock(
     }
   }
 
-  let transactionBlockBytes
-  try {
-    transactionBlockBytes = await input.transactionBlock.build({
-      client,
-    })
-  } catch (e) {
-    return {
-      transactionBlockBytes: undefined,
-      balanceChanges,
-      dryRunRes,
-      isError: true,
-      errorMessage: getErrorMessage(e) ?? 'Unexpected error',
-    }
-  }
-
   return {
-    transactionBlockBytes,
+    transactionBytes,
     balanceChanges,
     dryRunRes,
     isError: false,
