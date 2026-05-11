@@ -1,5 +1,5 @@
-import { MoveCallSuiTransaction, SuiTransactionBlockResponse } from '@mysten/sui.js/client'
-import { parseStructTag } from '@mysten/sui.js/utils'
+import { MoveCallSuiTransaction, SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
+import { parseStructTag } from '@mysten/sui/utils'
 
 import { CoinMetadata } from 'lib/coin'
 

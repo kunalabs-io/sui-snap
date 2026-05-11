@@ -47,7 +47,10 @@ const ImagesNumLabel = styled(Typography)`
 const SHOW_IMG_NUM = 3
 
 export const Kiosk = ({ kiosk, toggleModal }: { kiosk: KioskType; toggleModal: (kiosk: KioskType) => void }) => {
-  const kioskImages = kiosk.items.map(i => i.data?.display?.data?.image_url)
+  const kioskImages = kiosk.items.map(i => {
+    const data = i.data?.display?.data as Record<string, string> | undefined | null
+    return data?.image_url
+  })
 
   return (
     <KioskWrapper onClick={() => toggleModal(kiosk)}>

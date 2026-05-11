@@ -9,15 +9,15 @@ import { useInputAmountValidate } from 'utils/input/useInputAmountValidate'
 import { toast } from 'react-toastify'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import Spinner from 'components/Spinner/Spinner'
-import { TransactionArgument, TransactionBlock } from '@mysten/sui.js/transactions'
-import { SUI_TYPE_ARG } from '@mysten/sui.js/utils'
+import { Transaction, TransactionArgument } from '@mysten/sui/transactions'
+import { SUI_TYPE_ARG } from '@mysten/sui/utils'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
-import { CoinStruct } from '@mysten/sui.js/client'
+import { CoinStruct } from '@mysten/sui/jsonRpc'
 import Typography from 'components/Typography'
-import { useCurrentAccount, useSignAndExecuteTransactionBlock, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 
 interface Props {
   openInfoScreen: () => void
@@ -106,7 +106,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   const client = useSuiClient()
   const currentAccount = useCurrentAccount()
   const { network, chain } = useNetwork()
-  const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock()
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
 
   const onSendClick = useCallback(async () => {
     setIsSending(true)
@@ -117,10 +117,10 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     }
 
     let coin: TransactionArgument
-    const txb = new TransactionBlock()
+    const txb = new Transaction()
 
     if (selectedCoin.meta.typeArg === SUI_TYPE_ARG) {
-      coin = txb.splitCoins(txb.gas, [txb.pure(amount.int)])
+      coin = txb.splitCoins(txb.gas, [amount.int])
     } else {
       let acc = 0n
       const coins: Array<CoinStruct> = []
@@ -168,16 +168,15 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       coin = txb.object(coinIds[0])
       // split the coin to the exact amount if necessary
       if (selectedAmount > amount.int) {
-        coin = txb.splitCoins(txb.object(coinIds[0]), [txb.pure(amount.int)])
+        coin = txb.splitCoins(txb.object(coinIds[0]), [amount.int])
       }
     }
 
-    txb.transferObjects([coin], txb.pure(recipient))
+    txb.transferObjects([coin], recipient)
 
-    signAndExecuteTransactionBlock(
+    signAndExecuteTransaction(
       {
-        transactionBlock: txb,
-        requestType: 'WaitForLocalExecution',
+        transaction: txb,
         chain,
       },
       {
@@ -215,7 +214,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     amount,
     selectedCoin,
     currentAccount,
-    signAndExecuteTransactionBlock,
+    signAndExecuteTransaction,
     client,
     network,
     chain,

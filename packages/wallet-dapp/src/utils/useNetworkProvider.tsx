@@ -9,10 +9,10 @@ export const NETWORK_LOCAL = 'local'
 export type NETWORK = typeof NETWORK_MAINNET | typeof NETWORK_TESTNET | typeof NETWORK_DEVNET | typeof NETWORK_LOCAL
 
 export const { networkConfig } = createNetworkConfig({
-  [NETWORK_MAINNET]: { url: 'https://fullnode.mainnet.sui.io:443' },
-  [NETWORK_TESTNET]: { url: 'https://fullnode.testnet.sui.io:443' },
-  [NETWORK_DEVNET]: { url: 'https://fullnode.devnet.sui.io:443' },
-  [NETWORK_LOCAL]: { url: 'http://127.0.0.1:9000' },
+  [NETWORK_MAINNET]: { url: 'https://fullnode.mainnet.sui.io:443', network: 'mainnet' },
+  [NETWORK_TESTNET]: { url: 'https://fullnode.testnet.sui.io:443', network: 'testnet' },
+  [NETWORK_DEVNET]: { url: 'https://fullnode.devnet.sui.io:443', network: 'devnet' },
+  [NETWORK_LOCAL]: { url: 'http://127.0.0.1:9000', network: 'localnet' },
 })
 
 export type SuiChain = `${'sui'}:${'mainnet' | 'testnet' | 'devnet' | 'localnet'}`

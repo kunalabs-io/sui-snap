@@ -1,4 +1,4 @@
-import { KioskClient, Network } from '@mysten/kiosk'
+import { KioskClient } from '@mysten/kiosk'
 import { FC, ReactNode, useMemo } from 'react'
 
 import { KioskClientProviderContext } from './useKioskClientProvider'
@@ -13,15 +13,8 @@ export const KioskClientProvider: FC<KioskClientProviderProps> = ({ children }) 
   const suiClient = useSuiClient()
   const { network } = useNetwork()
 
-  let kioskNetwork: Network = Network.CUSTOM
-  switch (network) {
-    case 'mainnet':
-      kioskNetwork = Network.MAINNET
-      break
-    case 'testnet':
-      kioskNetwork = Network.TESTNET
-      break
-  }
+  // The kiosk client treats unknown values the same as 'custom' (no preloaded rules).
+  const kioskNetwork = network === 'mainnet' || network === 'testnet' ? network : 'custom'
 
   const provider = useMemo(() => {
     const client = new KioskClient({

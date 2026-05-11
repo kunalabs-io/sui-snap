@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { SuiTransactionBlockResponse } from '@mysten/sui.js/client'
+import { SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
 import styled from 'styled-components'
 
 import Modal from 'components/Modal'

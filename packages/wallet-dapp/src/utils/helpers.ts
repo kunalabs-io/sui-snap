@@ -1,4 +1,4 @@
-import { parseStructTag } from '@mysten/sui.js/utils'
+import { parseStructTag } from '@mysten/sui/utils'
 
 export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
   const tag = parseStructTag(typeArg)
