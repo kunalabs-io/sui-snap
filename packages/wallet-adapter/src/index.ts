@@ -7,17 +7,12 @@ import {
   StandardDisconnectMethod,
   StandardEventsFeature,
   SuiFeatures,
-  SuiSignAndExecuteTransactionBlockMethod,
-  SuiSignAndExecuteTransactionBlockOutput,
-  SuiSignMessageInput,
-  SuiSignMessageMethod,
-  SuiSignMessageOutput,
-  SuiSignPersonalMessageInput,
+  SuiSignAndExecuteTransactionMethod,
+  SuiSignAndExecuteTransactionOutput,
   SuiSignPersonalMessageMethod,
   SuiSignPersonalMessageOutput,
-  SuiSignTransactionBlockInput,
-  SuiSignTransactionBlockMethod,
-  SuiSignTransactionBlockOutput,
+  SuiSignTransactionMethod,
+  SignedTransaction,
   Wallet,
   WalletAccount,
   getWallets,
@@ -29,9 +24,8 @@ import {
   SerializedWalletAccount,
   StoredState,
   deserializeWalletAccount,
-  serializeSuiSignAndExecuteTransactionBlockInput,
-  serializeSuiSignMessageInput,
-  serializeSuiSignTransactionBlockInput,
+  serializeSuiSignPersonalMessageInput,
+  serializeSuiSignTransactionInput,
 } from './types'
 import { convertError } from './errors'
 import { getMetaMaskProvider } from './metamask'
@@ -42,7 +36,7 @@ export { getMetaMaskProvider } from './metamask'
 export type { MetaMaskStatus, MetaMaskProviderInfo } from './metamask'
 
 export const SNAP_ORIGIN = 'npm:@kunalabs-io/sui-metamask-snap'
-export const SNAP_VERSION = '^1.0.0'
+export const SNAP_VERSION = '^2.0.0'
 
 export function registerSuiSnapWallet(): SuiSnapWallet {
   const wallets = getWallets()
@@ -109,9 +103,9 @@ export async function admin_setFullnodeUrl(
 
 export async function signPersonalMessage(
   provider: MetaMaskInpageProvider,
-  messageInput: SuiSignPersonalMessageInput
+  input: Parameters<SuiSignPersonalMessageMethod>[0]
 ): Promise<SuiSignPersonalMessageOutput> {
-  const serialized = serializeSuiSignMessageInput(messageInput)
+  const serialized = serializeSuiSignPersonalMessageInput(input)
 
   try {
     return (await provider.request({
@@ -129,23 +123,11 @@ export async function signPersonalMessage(
   }
 }
 
-export async function signMessage(
+export async function signTransaction(
   provider: MetaMaskInpageProvider,
-  messageInput: SuiSignMessageInput
-): Promise<SuiSignMessageOutput> {
-  const res = await signPersonalMessage(provider, messageInput)
-
-  return {
-    messageBytes: res.bytes,
-    signature: res.signature,
-  }
-}
-
-export async function signTransactionBlock(
-  provider: MetaMaskInpageProvider,
-  transactionInput: SuiSignTransactionBlockInput
-): Promise<SuiSignTransactionBlockOutput> {
-  const serialized = serializeSuiSignTransactionBlockInput(transactionInput)
+  input: Parameters<SuiSignTransactionMethod>[0]
+): Promise<SignedTransaction> {
+  const serialized = await serializeSuiSignTransactionInput(input)
 
   try {
     return (await provider.request({
@@ -153,21 +135,21 @@ export async function signTransactionBlock(
       params: {
         snapId: SNAP_ORIGIN,
         request: {
-          method: 'signTransactionBlock',
+          method: 'signTransaction',
           params: JSON.parse(JSON.stringify(serialized)),
         },
       },
-    })) as SuiSignTransactionBlockOutput
+    })) as SignedTransaction
   } catch (e) {
     throw convertError(e)
   }
 }
 
-export async function signAndExecuteTransactionBlock(
+export async function signAndExecuteTransaction(
   provider: MetaMaskInpageProvider,
-  transactionInput: SuiSignTransactionBlockInput
-): Promise<SuiSignAndExecuteTransactionBlockOutput> {
-  const serialized = serializeSuiSignAndExecuteTransactionBlockInput(transactionInput)
+  input: Parameters<SuiSignAndExecuteTransactionMethod>[0]
+): Promise<SuiSignAndExecuteTransactionOutput> {
+  const serialized = await serializeSuiSignTransactionInput(input)
 
   try {
     return (await provider.request({
@@ -175,11 +157,11 @@ export async function signAndExecuteTransactionBlock(
       params: {
         snapId: SNAP_ORIGIN,
         request: {
-          method: 'signAndExecuteTransactionBlock',
+          method: 'signAndExecuteTransaction',
           params: JSON.parse(JSON.stringify(serialized)),
         },
       },
-    })) as SuiSignAndExecuteTransactionBlockOutput
+    })) as SuiSignAndExecuteTransactionOutput
   } catch (e) {
     throw convertError(e)
   }
@@ -240,20 +222,16 @@ export class SuiSnapWallet implements Wallet {
         disconnect: this.#disconnect,
       },
       'sui:signPersonalMessage': {
-        version: '1.0.0',
+        version: '1.1.0',
         signPersonalMessage: this.#signPersonalMessage,
       },
-      'sui:signMessage': {
-        version: '1.0.0',
-        signMessage: this.#signMessage,
+      'sui:signTransaction': {
+        version: '2.0.0',
+        signTransaction: this.#signTransaction,
       },
-      'sui:signTransactionBlock': {
-        version: '1.0.0',
-        signTransactionBlock: this.#signTransactionBlock,
-      },
-      'sui:signAndExecuteTransactionBlock': {
-        version: '1.0.0',
-        signAndExecuteTransactionBlock: this.#signAndExecuteTransactionBlock,
+      'sui:signAndExecuteTransaction': {
+        version: '2.0.0',
+        signAndExecuteTransaction: this.#signAndExecuteTransaction,
       },
       'standard:events': {
         version: '1.0.0',
@@ -273,7 +251,7 @@ export class SuiSnapWallet implements Wallet {
     this.#connected = false
 
     try {
-      const { available, provider, suiSnapInstalled } = await getMetaMaskProvider()
+      const { available, provider } = await getMetaMaskProvider()
       if (!available) {
         throw new Error('MetaMask not detected!')
       }
@@ -310,31 +288,24 @@ export class SuiSnapWallet implements Wallet {
     this.#provider = null
   }
 
-  #signPersonalMessage: SuiSignPersonalMessageMethod = async messageInput => {
+  #signPersonalMessage: SuiSignPersonalMessageMethod = async input => {
     if (!this.#provider) {
       throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a personal message.')
     }
-    return signPersonalMessage(this.#provider, messageInput)
+    return signPersonalMessage(this.#provider, input)
   }
 
-  #signMessage: SuiSignMessageMethod = async messageInput => {
+  #signTransaction: SuiSignTransactionMethod = async input => {
     if (!this.#provider) {
-      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a message.')
+      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a transaction.')
     }
-    return signMessage(this.#provider, messageInput)
+    return signTransaction(this.#provider, input)
   }
 
-  #signTransactionBlock: SuiSignTransactionBlockMethod = async transactionInput => {
+  #signAndExecuteTransaction: SuiSignAndExecuteTransactionMethod = async input => {
     if (!this.#provider) {
-      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing a transaction block.')
+      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing and executing a transaction.')
     }
-    return signTransactionBlock(this.#provider, transactionInput)
-  }
-
-  #signAndExecuteTransactionBlock: SuiSignAndExecuteTransactionBlockMethod = async transactionInput => {
-    if (!this.#provider) {
-      throw new Error('Not connected: Please connect to MetaMask Sui Snap before signing and executing a transaction block.')
-    }
-    return signAndExecuteTransactionBlock(this.#provider, transactionInput)
+    return signAndExecuteTransaction(this.#provider, input)
   }
 }

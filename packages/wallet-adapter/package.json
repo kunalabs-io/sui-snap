@@ -1,21 +1,30 @@
 {
   "name": "@kunalabs-io/sui-snap-wallet",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "author": "Kuna Labs <build@kunalabs.io>",
+  "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./types": {
       "source": "./src/types.ts",
-      "import": "./dist/types.mjs",
-      "require": "./dist/types.js"
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
+    },
+    "./errors": {
+      "source": "./src/errors.ts",
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js",
+      "default": "./dist/errors.js"
     }
   },
   "files": [
@@ -29,7 +38,7 @@
   },
   "scripts": {
     "clean": "rm -rf tsconfig.tsbuildinfo ./dist",
-    "build": "pnpm clean && pnpm tsup ./src/index.ts ./src/types.ts --format esm,cjs --sourcemap --experimental-dts",
+    "build": "pnpm clean && pnpm tsup ./src/index.ts ./src/types.ts ./src/errors.ts --format esm --sourcemap --experimental-dts",
     "dev": "pnpm build --watch",
     "check": "tsc --noEmit",
     "lint": "eslint .",
@@ -49,10 +58,9 @@
   },
   "dependencies": {
     "@metamask/detect-provider": "^2.0.0",
-    "@metamask/providers": "^22.1.0",
-    "@mysten/sui.js": "^0.50.1",
-    "@mysten/wallet-adapter-base": "^0.9.0",
-    "@mysten/wallet-standard": "^0.10.3",
+    "@metamask/providers": "^22.1.1",
+    "@mysten/sui": "^2.16.2",
+    "@mysten/wallet-standard": "^0.20.3",
     "superstruct": "^2.0.2"
   }
 }
