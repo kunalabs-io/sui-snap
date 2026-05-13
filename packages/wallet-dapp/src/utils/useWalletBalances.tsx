@@ -32,11 +32,20 @@ export const useWalletBalances = (options?: { refetchInterval: number }): Wallet
         throw new Error('invariant violation')
       }
 
+      // client.core.listBalances is paginated; iterate through the cursor to
+      // replicate the legacy getAllBalances "give me everything" behaviour.
       const balances = new Map<Type, bigint>()
-      const res = await suiClient.getAllBalances({ owner: currentAccount?.address })
-      res.forEach(balance => {
-        balances.set(balance.coinType, BigInt(balance.totalBalance))
-      })
+      let cursor: string | null | undefined = undefined
+      do {
+        const page = await suiClient.core.listBalances({
+          owner: currentAccount.address,
+          cursor,
+        })
+        for (const balance of page.balances) {
+          balances.set(balance.coinType, BigInt(balance.balance))
+        }
+        cursor = page.hasNextPage ? page.cursor : null
+      } while (cursor)
       return balances
     },
     refetchInterval: options?.refetchInterval,

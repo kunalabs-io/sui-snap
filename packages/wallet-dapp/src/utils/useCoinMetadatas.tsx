@@ -23,8 +23,8 @@ export const useCoinMetadatas = (coinTypes: Type[]) => {
     } else {
       typeStr = tagToType(ct)
     }
-    const res = await suiClient.getCoinMetadata({ coinType: typeStr })
-    if (res === null) {
+    const { coinMetadata } = await suiClient.core.getCoinMetadata({ coinType: typeStr })
+    if (coinMetadata === null) {
       const { symbol, name } = getTokenSymbolAndNameFromTypeArg(typeStr)
       return new CoinMetadata(typeStr, {
         id: '',
@@ -33,16 +33,15 @@ export const useCoinMetadatas = (coinTypes: Type[]) => {
         symbol,
         description: '',
       })
-    } else {
-      return new CoinMetadata(typeStr, {
-        id: res.id!,
-        decimals: res.decimals,
-        name: res.name,
-        symbol: res.symbol,
-        description: res.description,
-        iconUrl: res.iconUrl || undefined,
-      })
     }
+    return new CoinMetadata(typeStr, {
+      id: coinMetadata.id ?? '',
+      decimals: coinMetadata.decimals,
+      name: coinMetadata.name,
+      symbol: coinMetadata.symbol,
+      description: coinMetadata.description,
+      iconUrl: coinMetadata.iconUrl ?? undefined,
+    })
   }
 
   const results = useQueries({

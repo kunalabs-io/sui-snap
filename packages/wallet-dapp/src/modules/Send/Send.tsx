@@ -15,7 +15,7 @@ import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
-import { CoinStruct } from '@mysten/sui/jsonRpc'
+import type { SuiClientTypes } from '@mysten/sui/client'
 import Typography from 'components/Typography'
 import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react'
 
@@ -124,21 +124,21 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       coin = txb.splitCoins(txb.gas, [amount.int])
     } else {
       let acc = 0n
-      const coins: Array<CoinStruct> = []
-      let cursor = undefined
+      const coins: Array<SuiClientTypes.Coin> = []
+      let cursor: string | null | undefined = undefined
       let hasNextPage = true
       while (hasNextPage && acc < amount.int) {
-        const coinsResult = await client.getCoins({
+        const page = await client.core.listCoins({
           owner: currentAccount.address,
           coinType: selectedCoin.meta.typeArg,
           cursor,
         })
-        for (const coin of coinsResult.data) {
+        for (const coin of page.objects) {
           acc += BigInt(coin.balance)
           coins.push(coin)
         }
-        cursor = coinsResult.nextCursor
-        hasNextPage = coinsResult.hasNextPage
+        cursor = page.cursor
+        hasNextPage = page.hasNextPage
       }
 
       if (acc < amount.int || coins.length === 0) {
@@ -154,7 +154,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         const idx = Math.floor(Math.random() * coins.length)
         const coin = coins[idx]
         selectedAmount += BigInt(coin.balance)
-        coinIds.push(coin.coinObjectId)
+        coinIds.push(coin.objectId)
         // remove the coin from the array
         coins.splice(idx, 1)
       }
