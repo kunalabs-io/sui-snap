@@ -29,14 +29,13 @@ import {
 } from './types'
 import { convertError } from './errors'
 import { getMetaMaskProvider } from './metamask'
+import { SNAP_ORIGIN, SNAP_VERSION } from './snap'
 
 export * from './types'
 export * from './errors'
-export { getMetaMaskProvider } from './metamask'
+export { getMetaMaskProvider, subscribeMetaMaskProvider } from './metamask'
 export type { MetaMaskStatus, MetaMaskProviderInfo } from './metamask'
-
-export const SNAP_ORIGIN = 'npm:@kunalabs-io/sui-metamask-snap'
-export const SNAP_VERSION = '^2.0.0'
+export { SNAP_ORIGIN, SNAP_VERSION } from './snap'
 
 export function registerSuiSnapWallet(): SuiSnapWallet {
   const wallets = getWallets()
