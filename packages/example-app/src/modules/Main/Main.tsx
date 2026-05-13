@@ -166,7 +166,11 @@ const Main = () => {
     }
 
     try {
-      console.log(await admin_getStoredState(window.ethereum))
+      const { provider } = await getMetaMaskProvider()
+      if (!provider) {
+        throw new Error('MetaMask not detected')
+      }
+      console.log(await admin_getStoredState(provider))
     } catch (e) {
       if (typeof e === 'string') {
         setError(e)
@@ -183,12 +187,16 @@ const Main = () => {
     }
 
     try {
-      const state = await admin_getStoredState(window.ethereum)
+      const { provider } = await getMetaMaskProvider()
+      if (!provider) {
+        throw new Error('MetaMask not detected')
+      }
+      const state = await admin_getStoredState(provider)
       const newUrl =
         state.testnetUrl === 'https://fullnode.testnet.sui.io:443'
           ? 'http://localhost:9000'
           : 'https://fullnode.testnet.sui.io:443'
-      await admin_setFullnodeUrl(window.ethereum, 'testnet', newUrl)
+      await admin_setFullnodeUrl(provider, 'testnet', newUrl)
     } catch (e) {
       if (typeof e === 'string') {
         setError(e)
