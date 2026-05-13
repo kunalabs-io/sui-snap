@@ -11,7 +11,7 @@ import {
   getCoinTypes,
   getTxTimestampStart,
 } from './transaction'
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react'
 
 interface TransactionsInfos {
   isLoading: boolean
@@ -22,7 +22,7 @@ interface TransactionsInfos {
 
 export const useTransactions = (options?: { refetchInterval?: number }): TransactionsInfos => {
   const currentAccount = useCurrentAccount()
-  const suiClient = useSuiClient()
+  const suiClient = useCurrentClient()
   const { network } = useNetwork()
 
   const result = useQuery({

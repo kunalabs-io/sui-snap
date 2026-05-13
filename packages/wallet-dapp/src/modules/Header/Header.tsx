@@ -19,7 +19,7 @@ import { NetworkSelect, Option } from 'components/Select/Select'
 import ModalActions from 'components/Modal/components/ModalActions'
 import Button from 'components/Button/Button'
 import { toast } from 'react-toastify'
-import { useCurrentAccount } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit-react'
 
 const Header = () => {
   const { network, setNetwork } = useNetwork()

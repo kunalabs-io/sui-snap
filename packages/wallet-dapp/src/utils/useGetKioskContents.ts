@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getKioskIdFromOwnerCap, ORIGINBYTE_KIOSK_OWNER_TOKEN } from './kiosk'
 import { useKioskClientProvider } from './useKioskClientProvider'
 import { useNetwork } from './useNetworkProvider'
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react'
 
 export enum KioskTypes {
   SUI = 'sui',
@@ -94,7 +94,7 @@ async function getSuiKioskContents(address: string, kioskClient: KioskClient) {
 }
 
 export function useGetKioskContents() {
-  const suiClient = useSuiClient()
+  const suiClient = useCurrentClient()
   const { network } = useNetwork()
   const kioskClient = useKioskClientProvider()
   const currentAccount = useCurrentAccount()

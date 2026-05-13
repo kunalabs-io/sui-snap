@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import Dashboard from 'modules/Dashboard/Dashboard'
 import Welcome from 'modules/Welcome/Welcome'
 import { MetaMaskProviderInfo, subscribeMetaMaskProvider } from '@kunalabs-io/sui-snap-wallet'
-import { useCurrentWallet } from '@mysten/dapp-kit'
+import { useWalletConnection } from '@mysten/dapp-kit-react'
 
 const Wrapper = styled.div`
   background-color: ${p => p.theme.colors.background.primary};
@@ -18,12 +18,12 @@ const Wrapper = styled.div`
 `
 
 const Main = () => {
-  const { isConnected, currentWallet } = useCurrentWallet()
+  const { isConnected, wallet } = useWalletConnection()
   const [mmInfo, setMMInfo] = useState<MetaMaskProviderInfo>()
 
   useEffect(() => subscribeMetaMaskProvider(setMMInfo), [])
 
-  const connectedToSnap = isConnected && currentWallet.name === 'Sui MetaMask Snap'
+  const connectedToSnap = isConnected && wallet?.name === 'Sui MetaMask Snap'
   const showDashboard = mmInfo && mmInfo.available && connectedToSnap
 
   return (

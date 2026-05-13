@@ -18,7 +18,7 @@ import { Tokens } from './Tokens'
 import { Nft } from './Nft'
 import { Activity } from './Activity'
 import { IconGroup } from 'components/Icons/IconGroup'
-import { useCurrentAccount } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit-react'
 
 interface Props {
   onSendClick: (selectedCoin?: CoinInfo) => void

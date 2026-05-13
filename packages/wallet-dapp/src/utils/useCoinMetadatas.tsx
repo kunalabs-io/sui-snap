@@ -5,7 +5,7 @@ import { Type, tagToType } from 'lib/type'
 import { ONE_DAY } from './const'
 import { getTokenSymbolAndNameFromTypeArg } from './helpers'
 import { useNetwork } from './useNetworkProvider'
-import { useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentClient } from '@mysten/dapp-kit-react'
 
 export interface UseCoinMetadataResult {
   meta: CoinMetadata
@@ -13,7 +13,7 @@ export interface UseCoinMetadataResult {
 }
 
 export const useCoinMetadatas = (coinTypes: Type[]) => {
-  const suiClient = useSuiClient()
+  const suiClient = useCurrentClient()
   const { network } = useNetwork()
 
   const fetchCoinMetadata = async (ct: Type) => {
