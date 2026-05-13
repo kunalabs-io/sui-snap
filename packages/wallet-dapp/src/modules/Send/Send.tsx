@@ -17,7 +17,7 @@ import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 import { CoinStruct } from '@mysten/sui/jsonRpc'
 import Typography from 'components/Typography'
-import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react'
 
 interface Props {
   openInfoScreen: () => void
@@ -103,16 +103,17 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     amountError = 'Amount too large'
   }
 
-  const client = useSuiClient()
+  const client = useCurrentClient()
   const currentAccount = useCurrentAccount()
-  const { network, chain } = useNetwork()
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
+  const { network } = useNetwork()
+  const dAppKit = useDAppKit()
 
   const onSendClick = useCallback(async () => {
     setIsSending(true)
     // invariants
     if (!recipient || !amount || !selectedCoin || !currentAccount) {
       toast.error('Something went wrong')
+      setIsSending(false)
       return
     }
 
@@ -174,50 +175,43 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
 
     txb.transferObjects([coin], recipient)
 
-    signAndExecuteTransaction(
-      {
-        transaction: txb,
-        chain,
-      },
-      {
-        onSuccess: async res => {
-          const url = `https://suivision.xyz/txblock/${res.digest}?network=${network}`
-          toast.success(
-            <div>
-              Transaction succeeded:{' '}
-              <a href={url} target="_blank" rel="noreferrer">
-                {res.digest}
-              </a>
-            </div>
-          )
-
-          triggerWalletBalancesUpdate()
-          openInfoScreen()
-        },
-        onError: e => {
-          if (e instanceof UserRejectionError) {
-            toast.warn('Transaction rejected')
-            return
-          }
-
-          toast.error('Transaction failed')
-          console.error(e)
-          return
-        },
-        onSettled: () => {
-          setIsSending(false)
-        },
+    try {
+      const res = await dAppKit.signAndExecuteTransaction({ transaction: txb })
+      if (res.$kind === 'FailedTransaction') {
+        toast.error(`Transaction failed: ${res.FailedTransaction.status.error || 'unknown error'}`)
+        return
       }
-    )
+      const digest = res.Transaction.digest
+      const url = `https://suivision.xyz/txblock/${digest}?network=${network}`
+      toast.success(
+        <div>
+          Transaction succeeded:{' '}
+          <a href={url} target="_blank" rel="noreferrer">
+            {digest}
+          </a>
+        </div>
+      )
+
+      triggerWalletBalancesUpdate()
+      openInfoScreen()
+    } catch (e) {
+      if (e instanceof UserRejectionError) {
+        toast.warn('Transaction rejected')
+      } else {
+        toast.error('Transaction failed')
+        console.error(e)
+      }
+    } finally {
+      setIsSending(false)
+    }
   }, [
     recipient,
     amount,
     selectedCoin,
     currentAccount,
-    signAndExecuteTransaction,
+    dAppKit,
     client,
     network,
-    chain,
     triggerWalletBalancesUpdate,
     openInfoScreen,
   ])

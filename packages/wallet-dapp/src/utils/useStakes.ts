@@ -1,9 +1,9 @@
 import { QueryClient, useQuery } from '@tanstack/react-query'
 import { useNetwork } from './useNetworkProvider'
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react'
 
 export const useStakes = () => {
-  const client = useSuiClient()
+  const client = useCurrentClient()
   const currentAccount = useCurrentAccount()
 
   const { network } = useNetwork()

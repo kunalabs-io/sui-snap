@@ -6,7 +6,7 @@
   "dependencies": {
     "@kunalabs-io/sui-snap-wallet": "workspace:*",
     "@mysten/bcs": "^2.0.5",
-    "@mysten/dapp-kit": "^1.0.6",
+    "@mysten/dapp-kit-react": "^2.0.3",
     "@mysten/kiosk": "^1.2.6",
     "@mysten/sui": "^2.16.2",
     "@tanstack/react-query": "^5.62.0",

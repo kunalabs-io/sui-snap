@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { useNetwork } from './useNetworkProvider'
 import { SuiObjectDataFilter, SuiObjectResponse } from '@mysten/sui/jsonRpc'
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react'
 
 interface OwnedObjectsInfos {
   isLoading: boolean
@@ -24,7 +24,7 @@ export const useOwnedObjects = (options?: {
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [ownedObjects, setOwnedObjects] = useState<SuiObjectResponse[]>()
 
-  const suiClient = useSuiClient()
+  const suiClient = useCurrentClient()
   const currentAccount = useCurrentAccount()
   const { network } = useNetwork()
 

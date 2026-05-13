@@ -9,7 +9,7 @@ import { formatTimeDifference } from 'utils/helpers'
 import { useState } from 'react'
 import { Transaction } from '@mysten/sui/transactions'
 import { SUI_SYSTEM_STATE_OBJECT_ID } from '@mysten/sui/utils'
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useDAppKit } from '@mysten/dapp-kit-react'
 import { toast } from 'react-toastify'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { useQueryClient } from '@tanstack/react-query'
@@ -127,8 +127,8 @@ interface Props {
 export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => {
   const queryClient = useQueryClient()
 
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
-  const { network, chain } = useNetwork()
+  const dAppKit = useDAppKit()
+  const { network } = useNetwork()
 
   const [isSending, setIsSending] = useState(false)
 
@@ -148,42 +148,35 @@ export const StakeDetails = ({ onBackClick, stake, openStakeScreen }: Props) => 
       ],
     })
 
-    signAndExecuteTransaction(
-      {
-        transaction: txb,
-        chain,
-      },
-      {
-        onSuccess: async res => {
-          const url = `https://suivision.xyz/txblock/${res.digest}?network=${network}`
-          toast.success(
-            <div>
-              Transaction succeeded:{' '}
-              <a href={url} target="_blank" rel="noreferrer">
-                {res.digest}
-              </a>
-            </div>
-          )
-
-          await Promise.all([invalidateWalletBalances(queryClient), invalidateStakes(queryClient)])
-          setIsSending(false)
-          openStakeScreen()
-        },
-        onError: e => {
-          if (e instanceof UserRejectionError) {
-            toast.warn('Transaction rejected')
-            return
-          }
-
-          toast.error('Transaction failed')
-          console.error(e)
-          return
-        },
-        onSettled: () => {
-          setIsSending(false)
-        },
+    try {
+      const res = await dAppKit.signAndExecuteTransaction({ transaction: txb })
+      if (res.$kind === 'FailedTransaction') {
+        toast.error(`Transaction failed: ${res.FailedTransaction.status.error || 'unknown error'}`)
+        return
       }
-    )
+      const digest = res.Transaction.digest
+      const url = `https://suivision.xyz/txblock/${digest}?network=${network}`
+      toast.success(
+        <div>
+          Transaction succeeded:{' '}
+          <a href={url} target="_blank" rel="noreferrer">
+            {digest}
+          </a>
+        </div>
+      )
+
+      await Promise.all([invalidateWalletBalances(queryClient), invalidateStakes(queryClient)])
+      openStakeScreen()
+    } catch (e) {
+      if (e instanceof UserRejectionError) {
+        toast.warn('Transaction rejected')
+      } else {
+        toast.error('Transaction failed')
+        console.error(e)
+      }
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (

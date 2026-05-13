@@ -6,7 +6,7 @@ import { CoinMetadata } from 'lib/coin'
 
 import useCoinMetadatas from './useCoinMetadatas'
 import { useNetwork } from './useNetworkProvider'
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useCurrentClient } from '@mysten/dapp-kit-react'
 
 export interface CoinInfo {
   amount: Amount
@@ -20,7 +20,7 @@ export interface WalletBalanceInfos {
 }
 
 export const useWalletBalances = (options?: { refetchInterval: number }): WalletBalanceInfos => {
-  const suiClient = useSuiClient()
+  const suiClient = useCurrentClient()
   const currentAccount = useCurrentAccount()
   const { network } = useNetwork()
 

@@ -10,7 +10,7 @@ import { IconArrowTransaction } from 'components/Icons/ArrowTransaction'
 import { IconArrowReceived } from 'components/Icons/ArrowReceived'
 import { getFormattedDate } from 'utils/date'
 import { TransactionDetails } from './TransactionDetails'
-import { useCurrentAccount } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit-react'
 
 const Container = styled.div`
   padding: 20px 0px;
