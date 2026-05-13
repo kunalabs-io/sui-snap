@@ -3,7 +3,7 @@ import styled from 'styled-components'
 
 import Dashboard from 'modules/Dashboard/Dashboard'
 import Welcome from 'modules/Welcome/Welcome'
-import { MetaMaskProviderInfo, getMetaMaskProvider } from '@kunalabs-io/sui-snap-wallet'
+import { MetaMaskProviderInfo, subscribeMetaMaskProvider } from '@kunalabs-io/sui-snap-wallet'
 import { useCurrentWallet } from '@mysten/dapp-kit'
 
 const Wrapper = styled.div`
@@ -21,14 +21,7 @@ const Main = () => {
   const { isConnected, currentWallet } = useCurrentWallet()
   const [mmInfo, setMMInfo] = useState<MetaMaskProviderInfo>()
 
-  useEffect(() => {
-    getMetaMaskProvider()
-      .then(info => setMMInfo(info))
-      .catch(e => {
-        setMMInfo(undefined)
-        console.error(e)
-      })
-  }, [])
+  useEffect(() => subscribeMetaMaskProvider(setMMInfo), [])
 
   const connectedToSnap = isConnected && currentWallet.name === 'Sui MetaMask Snap'
   const showDashboard = mmInfo && mmInfo.available && connectedToSnap
