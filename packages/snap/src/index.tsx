@@ -6,6 +6,7 @@ import {
   Copyable,
   Divider,
   Heading,
+  Link,
   Row,
   Section,
   Text,
@@ -105,39 +106,68 @@ function prettyNetwork(chain: IdentifierString): string {
 }
 
 /**
- * Human-readable label for a single PTB command. The label is split into a
- * verb (bolded by the renderer), a rest, and an optional trailing emphasis
- * (also bolded). For Move calls, the resolved package id is surfaced
- * separately so the caller can render it as <Copyable>.
+ * Human-readable description of a single PTB command. Move calls are
+ * called out separately so the package id can be rendered as a link to
+ * the network explorer; everything else is just a verb + tail.
  */
-interface CommandLabel {
-  verb: string
-  rest: string
-  emphasis?: string
-  packageId?: string
-}
+type CommandLabel =
+  | { kind: 'move-call'; pkg: string; module: string; fn: string }
+  | { kind: 'other'; verb: string; rest: string }
 
 function summarizeCommands(tx: Transaction): CommandLabel[] {
   const out: CommandLabel[] = []
   for (const cmd of tx.getData().commands) {
     if ('MoveCall' in cmd && cmd.MoveCall) {
       const { module, function: fn, package: pkg } = cmd.MoveCall
-      out.push({ verb: 'Call', rest: ` ${module}::`, emphasis: fn, packageId: pkg })
+      out.push({ kind: 'move-call', pkg, module, fn })
     } else if ('MergeCoins' in cmd && cmd.MergeCoins) {
-      out.push({ verb: 'Merge', rest: ` ${cmd.MergeCoins.sources.length + 1} coin objects` })
+      out.push({ kind: 'other', verb: 'Merge', rest: ` ${cmd.MergeCoins.sources.length + 1} coin objects` })
     } else if ('SplitCoins' in cmd && cmd.SplitCoins) {
-      out.push({ verb: 'Split', rest: ` a coin into ${cmd.SplitCoins.amounts.length} parts` })
+      out.push({ kind: 'other', verb: 'Split', rest: ` a coin into ${cmd.SplitCoins.amounts.length} parts` })
     } else if ('TransferObjects' in cmd && cmd.TransferObjects) {
-      out.push({ verb: 'Transfer', rest: ` ${cmd.TransferObjects.objects.length} objects` })
+      out.push({ kind: 'other', verb: 'Transfer', rest: ` ${cmd.TransferObjects.objects.length} objects` })
     } else if ('Publish' in cmd && cmd.Publish) {
-      out.push({ verb: 'Publish', rest: ' a Move package' })
+      out.push({ kind: 'other', verb: 'Publish', rest: ' a Move package' })
     } else if ('Upgrade' in cmd && cmd.Upgrade) {
-      out.push({ verb: 'Upgrade', rest: ' a Move package' })
+      out.push({ kind: 'other', verb: 'Upgrade', rest: ' a Move package' })
     } else if ('MakeMoveVec' in cmd && cmd.MakeMoveVec) {
-      out.push({ verb: 'Build', rest: ' a Move vector' })
+      out.push({ kind: 'other', verb: 'Build', rest: ' a Move vector' })
     }
   }
   return out
+}
+
+function ellipsizeAddress(addr: string): string {
+  if (addr.length <= 12) {
+    return addr
+  }
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
+}
+
+/**
+ * Render the package id of a MoveCall row. Returns a small muted Text
+ * containing a Link to the network explorer when one is available, or
+ * plain text for localnet (the snap-sdk's <Link> rejects non-https
+ * URLs). Always lives on its own line below the function name so it
+ * doesn't push the rest of the call signature onto a wrap.
+ */
+function renderPackageLine(pkg: string, chain: IdentifierString): JSXElement {
+  const truncated = ellipsizeAddress(pkg)
+  const network = networkFromChain(chain)
+  if (network === 'localnet') {
+    return (
+      <Text size="sm" color="muted">
+        {truncated}
+      </Text>
+    )
+  }
+  return (
+    <Text size="sm" color="muted">
+      <Link href={`https://suivision.xyz/package/${pkg}?network=${network}`}>
+        {truncated}
+      </Link>
+    </Text>
+  )
 }
 
 /* ============================================================ *
@@ -190,7 +220,13 @@ function BalanceChangesSection({
   )
 }
 
-function OperationsSection({ tx }: { tx: Transaction }): JSXElement | null {
+function OperationsSection({
+  tx,
+  chain,
+}: {
+  tx: Transaction
+  chain: IdentifierString
+}): JSXElement | null {
   const cmds = summarizeCommands(tx)
   if (cmds.length === 0) {
     return null
@@ -200,26 +236,21 @@ function OperationsSection({ tx }: { tx: Transaction }): JSXElement | null {
       <Heading size="sm">Operations</Heading>
       {cmds.map((cmd, i) => (
         <Row label={`#${i + 1}`}>
-          <Text>
-            <Bold>{cmd.verb}</Bold>
-            {cmd.rest}
-            {cmd.emphasis ? <Bold>{cmd.emphasis}</Bold> : ''}
-          </Text>
+          {cmd.kind === 'move-call' ? (
+            <Box>
+              <Text>
+                <Bold>Call</Bold> {cmd.module}::<Bold>{cmd.fn}</Bold>
+              </Text>
+              {renderPackageLine(cmd.pkg, chain)}
+            </Box>
+          ) : (
+            <Text>
+              <Bold>{cmd.verb}</Bold>
+              {cmd.rest}
+            </Text>
+          )}
         </Row>
       ))}
-      {/* Render package ids separately as click-to-copy so users can verify them. */}
-      {cmds.some(c => c.packageId) ? (
-        <Box>
-          <Text size="sm" color="muted">
-            Move call packages
-          </Text>
-          {cmds
-            .filter((c): c is CommandLabel & { packageId: string } => !!c.packageId)
-            .map(c => (
-              <Copyable value={c.packageId} />
-            ))}
-        </Box>
-      ) : null}
     </Section>
   )
 }
@@ -250,7 +281,7 @@ function FailedDialogContent({
         </Text>
       </Banner>
       <BalanceChangesSection changes={changes} />
-      <OperationsSection tx={tx} />
+      <OperationsSection tx={tx} chain={chain} />
     </Box>
   )
 }
@@ -278,7 +309,7 @@ function TransactionDialogContent({
       <Text color="muted">{origin}</Text>
       <SummarySection chain={chain} fee={fee} />
       <BalanceChangesSection changes={changes} />
-      <OperationsSection tx={tx} />
+      <OperationsSection tx={tx} chain={chain} />
       <Divider />
       <Text size="sm" color="muted">
         Manage your wallet at <Link href="https://suisnap.com/">suisnap.com</Link>
