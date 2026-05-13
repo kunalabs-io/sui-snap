@@ -6,16 +6,27 @@ import '../index.css'
 import styled, { ThemeProvider } from 'styled-components'
 import { GlobalStyle, theme } from 'config/theme'
 import { registerSuiSnapWallet } from '@kunalabs-io/sui-snap-wallet'
-import { SuiClientProvider, WalletProvider, createNetworkConfig } from '@mysten/dapp-kit'
+import { DAppKitProvider, createDAppKit } from '@mysten/dapp-kit-react'
+import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 registerSuiSnapWallet()
 
-const { networkConfig } = createNetworkConfig({
-  testnet: { url: 'https://fullnode.testnet.sui.io:443', network: 'testnet' },
+const queryClient = new QueryClient()
+
+const dAppKit = createDAppKit({
+  networks: ['testnet'],
+  defaultNetwork: 'testnet',
+  autoConnect: true,
+  createClient: network =>
+    new SuiJsonRpcClient({ url: 'https://fullnode.testnet.sui.io:443', network }),
 })
 
-const queryClient = new QueryClient()
+declare module '@mysten/dapp-kit-react' {
+  interface Register {
+    dAppKit: typeof dAppKit
+  }
+}
 
 export type RootProps = {
   children: ReactNode
@@ -33,15 +44,13 @@ export const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
-        <SuiClientProvider networks={networkConfig} network="testnet">
-          <WalletProvider>
-            <GlobalStyle />
-            <Wrapper>
-              <Main />
-              <Footer />
-            </Wrapper>
-          </WalletProvider>
-        </SuiClientProvider>
+        <DAppKitProvider dAppKit={dAppKit}>
+          <GlobalStyle />
+          <Wrapper>
+            <Main />
+            <Footer />
+          </Wrapper>
+        </DAppKitProvider>
       </QueryClientProvider>
     </ThemeProvider>
   )
