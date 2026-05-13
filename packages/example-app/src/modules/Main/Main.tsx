@@ -9,22 +9,23 @@ import {
 } from '@kunalabs-io/sui-snap-wallet'
 import { Transaction } from '@mysten/sui/transactions'
 import {
-  useConnectWallet,
   useCurrentAccount,
-  useCurrentWallet,
-  useDisconnectWallet,
-  useSignAndExecuteTransaction,
-  useSignPersonalMessage,
-  useSignTransaction,
+  useDAppKit,
+  useWalletConnection,
   useWallets,
-} from '@mysten/dapp-kit'
+} from '@mysten/dapp-kit-react'
+
+function errorMessage(e: unknown): string {
+  if (typeof e === 'string') return e
+  if (e instanceof Error) return e.message
+  return String(e)
+}
 
 const Main = () => {
   const [error, setError] = useState<string | undefined>(undefined)
 
-  const { isConnected, currentWallet, isConnecting } = useCurrentWallet()
-  const { mutate: disconnect } = useDisconnectWallet()
-  const { mutate: connect } = useConnectWallet()
+  const { isConnected, isConnecting, wallet: currentWallet } = useWalletConnection()
+  const dAppKit = useDAppKit()
   const wallets = useWallets()
 
   const [flaskInstalled, setFlaskInstalled] = useState<boolean>(false)
@@ -38,30 +39,22 @@ const Main = () => {
 
   const currentAccount = useCurrentAccount()
 
-  const { mutate: signPersonalMessage } = useSignPersonalMessage()
-  const { mutate: signTransaction } = useSignTransaction()
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
-
   const connectedToSnap = isConnected && currentWallet?.name === 'Sui MetaMask Snap'
 
   const handleConnectClick = async () => {
-    if (connectedToSnap) {
-      disconnect()
-    }
-
-    const wallet = wallets.find(wallet => wallet.name === 'Sui MetaMask Snap')
-    if (!wallet) {
-      throw new Error('Snap wallet not found')
-    }
-
     try {
-      connect({ wallet })
-    } catch (e) {
-      if (typeof e === 'string') {
-        setError(e)
-      } else {
-        setError((e as Error).message)
+      if (connectedToSnap) {
+        await dAppKit.disconnectWallet()
       }
+
+      const wallet = wallets.find(w => w.name === 'Sui MetaMask Snap')
+      if (!wallet) {
+        throw new Error('Snap wallet not found')
+      }
+
+      await dAppKit.connectWallet({ wallet })
+    } catch (e) {
+      setError(errorMessage(e))
       throw e
     }
   }
@@ -71,25 +64,15 @@ const Main = () => {
       return
     }
 
-    signPersonalMessage(
-      {
+    try {
+      const result = await dAppKit.signPersonalMessage({
         message: new TextEncoder().encode('Hello World!'),
-        account: currentAccount,
-      },
-      {
-        onSuccess: result => {
-          console.log(result)
-        },
-        onError: e => {
-          if (typeof e === 'string') {
-            setError(e)
-          } else {
-            setError((e as Error).message)
-          }
-          console.error(e)
-        },
-      }
-    )
+      })
+      console.log(result)
+    } catch (e) {
+      setError(errorMessage(e))
+      console.error(e)
+    }
   }
 
   const signTransactionCb = async () => {
@@ -101,25 +84,13 @@ const Main = () => {
     const [coin] = txb.splitCoins(txb.gas, [100n])
     txb.transferObjects([coin], currentAccount.address)
 
-    signTransaction(
-      {
-        transaction: txb,
-        chain: 'sui:testnet',
-      },
-      {
-        onSuccess: result => {
-          console.log(result)
-        },
-        onError: e => {
-          if (typeof e === 'string') {
-            setError(e)
-          } else {
-            setError((e as Error).message)
-          }
-          console.error(e)
-        },
-      }
-    )
+    try {
+      const result = await dAppKit.signTransaction({ transaction: txb })
+      console.log(result)
+    } catch (e) {
+      setError(errorMessage(e))
+      console.error(e)
+    }
   }
 
   const signAndExecuteTransactionCb = async () => {
@@ -140,25 +111,13 @@ const Main = () => {
       arguments: [coin2, txb.pure.address(currentAccount.address)],
     })
 
-    signAndExecuteTransaction(
-      {
-        transaction: txb,
-        chain: 'sui:testnet',
-      },
-      {
-        onSuccess: result => {
-          console.log(result)
-        },
-        onError: e => {
-          if (typeof e === 'string') {
-            setError(e)
-          } else {
-            setError((e as Error).message)
-          }
-          console.error(e)
-        },
-      }
-    )
+    try {
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: txb })
+      console.log(result)
+    } catch (e) {
+      setError(errorMessage(e))
+      console.error(e)
+    }
   }
 
   const getStoredState = async () => {
@@ -173,11 +132,7 @@ const Main = () => {
       }
       console.log(await admin_getStoredState(provider))
     } catch (e) {
-      if (typeof e === 'string') {
-        setError(e)
-      } else {
-        setError((e as Error).message)
-      }
+      setError(errorMessage(e))
       throw e
     }
   }
@@ -199,11 +154,7 @@ const Main = () => {
           : 'https://fullnode.testnet.sui.io:443'
       await admin_setFullnodeUrl(provider, 'testnet', newUrl)
     } catch (e) {
-      if (typeof e === 'string') {
-        setError(e)
-      } else {
-        setError((e as Error).message)
-      }
+      setError(errorMessage(e))
       throw e
     }
   }
