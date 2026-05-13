@@ -1,5 +1,16 @@
 import type { Json, OnRpcRequestHandler } from '@metamask/snaps-sdk'
-import { Box, Heading, Text, Divider } from '@metamask/snaps-sdk/jsx'
+import {
+  Banner,
+  Bold,
+  Box,
+  Copyable,
+  Divider,
+  Heading,
+  Row,
+  Section,
+  Text,
+} from '@metamask/snaps-sdk/jsx'
+import type { JSXElement } from '@metamask/snaps-sdk/jsx'
 import { SLIP10Node } from '@metamask/key-tree'
 
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
@@ -31,6 +42,7 @@ import {
   networkFromChain,
   updateState,
 } from './util'
+import type { IdentifierString } from '@mysten/wallet-standard'
 import type {
   SuiSignAndExecuteTransactionOutput,
   SuiSignPersonalMessageOutput,
@@ -38,11 +50,10 @@ import type {
 } from '@mysten/wallet-standard'
 import type { Transaction } from '@mysten/sui/transactions'
 
-/**
- * Derive the Ed25519 keypair from user's MetaMask seed phrase.
- *
- * @returns The keypair.
- */
+/* ============================================================ *
+ *  Helpers                                                     *
+ * ============================================================ */
+
 async function deriveKeypair() {
   const res = await snap.request({
     method: 'snap_getBip32Entropy',
@@ -78,65 +89,241 @@ function serializedWalletAccountForKeypair(
   }
 }
 
-function genTxCommandsText(tx: Transaction): string[] {
-  const txStrings: string[] = []
-  for (const cmd of tx.getData().commands) {
-    if ('MoveCall' in cmd && cmd.MoveCall) {
-      const target = cmd.MoveCall.package + '::' + cmd.MoveCall.module + '::' + cmd.MoveCall.function
-      txStrings.push(`**Call** ${cmd.MoveCall.package}::${cmd.MoveCall.module}::**${cmd.MoveCall.function}**`)
-      void target
-    } else if ('MergeCoins' in cmd && cmd.MergeCoins) {
-      txStrings.push(`**Merge** (${cmd.MergeCoins.sources.length + 1}) coin objects`)
-    } else if ('SplitCoins' in cmd && cmd.SplitCoins) {
-      txStrings.push(`**Split** a coin into (${cmd.SplitCoins.amounts.length}) objects`)
-    } else if ('TransferObjects' in cmd && cmd.TransferObjects) {
-      txStrings.push(`**Transfer** (${cmd.TransferObjects.objects.length}) objects`)
-    } else if ('Publish' in cmd && cmd.Publish) {
-      txStrings.push('**Publish** a Move package')
-    } else if ('Upgrade' in cmd && cmd.Upgrade) {
-      txStrings.push('**Upgrade** a Move package')
-    } else if ('MakeMoveVec' in cmd && cmd.MakeMoveVec) {
-      txStrings.push('**MakeMoveVec**')
-    }
+function prettyNetwork(chain: IdentifierString): string {
+  switch (chain) {
+    case 'sui:mainnet':
+      return 'Sui mainnet'
+    case 'sui:testnet':
+      return 'Sui testnet'
+    case 'sui:devnet':
+      return 'Sui devnet'
+    case 'sui:localnet':
+      return 'Sui localnet'
+    default:
+      return chain
   }
-
-  return txStrings
-}
-
-function balanceChangesSection(
-  balanceChanges: Array<BalanceChange> | undefined
-) {
-  if (!balanceChanges || balanceChanges.length === 0) {
-    return null
-  }
-
-  return (
-    <Box>
-      <Divider />
-      <Text>**Balance Changes:**</Text>
-      {balanceChanges.map(change => (
-        <Text>{`${change.amount} ${change.symbol}`}</Text>
-      ))}
-    </Box>
-  )
-}
-
-function operationsSection(tx: Transaction) {
-  const strings = genTxCommandsText(tx)
-  return (
-    <Box>
-      <Divider />
-      <Text>**Operations:**</Text>
-      {strings.map((str, n) => (
-        <Text>{`[${n + 1}] ${str}`}</Text>
-      ))}
-    </Box>
-  )
 }
 
 /**
- * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
+ * Human-readable label for a single PTB command. The label is split into a
+ * verb (bolded by the renderer), a rest, and an optional trailing emphasis
+ * (also bolded). For Move calls, the resolved package id is surfaced
+ * separately so the caller can render it as <Copyable>.
  */
+interface CommandLabel {
+  verb: string
+  rest: string
+  emphasis?: string
+  packageId?: string
+}
+
+function summarizeCommands(tx: Transaction): CommandLabel[] {
+  const out: CommandLabel[] = []
+  for (const cmd of tx.getData().commands) {
+    if ('MoveCall' in cmd && cmd.MoveCall) {
+      const { module, function: fn, package: pkg } = cmd.MoveCall
+      out.push({ verb: 'Call', rest: ` ${module}::`, emphasis: fn, packageId: pkg })
+    } else if ('MergeCoins' in cmd && cmd.MergeCoins) {
+      out.push({ verb: 'Merge', rest: ` ${cmd.MergeCoins.sources.length + 1} coin objects` })
+    } else if ('SplitCoins' in cmd && cmd.SplitCoins) {
+      out.push({ verb: 'Split', rest: ` a coin into ${cmd.SplitCoins.amounts.length} parts` })
+    } else if ('TransferObjects' in cmd && cmd.TransferObjects) {
+      out.push({ verb: 'Transfer', rest: ` ${cmd.TransferObjects.objects.length} objects` })
+    } else if ('Publish' in cmd && cmd.Publish) {
+      out.push({ verb: 'Publish', rest: ' a Move package' })
+    } else if ('Upgrade' in cmd && cmd.Upgrade) {
+      out.push({ verb: 'Upgrade', rest: ' a Move package' })
+    } else if ('MakeMoveVec' in cmd && cmd.MakeMoveVec) {
+      out.push({ verb: 'Build', rest: ' a Move vector' })
+    }
+  }
+  return out
+}
+
+/* ============================================================ *
+ *  Dialog content                                              *
+ * ============================================================ */
+
+function SummarySection({
+  chain,
+  fee,
+}: {
+  chain: IdentifierString
+  fee?: number
+}): JSXElement {
+  return (
+    <Section>
+      <Row label="Network">
+        <Text>{prettyNetwork(chain)}</Text>
+      </Row>
+      {fee !== undefined ? (
+        <Row label="Estimated fee">
+          <Text>{`${fee} SUI`}</Text>
+        </Row>
+      ) : null}
+    </Section>
+  )
+}
+
+function BalanceChangesSection({
+  changes,
+}: {
+  changes: BalanceChange[] | undefined
+}): JSXElement | null {
+  if (!changes || changes.length === 0) {
+    return null
+  }
+  return (
+    <Section>
+      <Heading size="sm">Balance changes</Heading>
+      {changes.map(c => (
+        <Row label={c.symbol}>
+          <Text
+            color={c.amount.startsWith('-') ? 'error' : 'success'}
+            fontWeight="medium"
+          >
+            {c.amount}
+          </Text>
+        </Row>
+      ))}
+    </Section>
+  )
+}
+
+function OperationsSection({ tx }: { tx: Transaction }): JSXElement | null {
+  const cmds = summarizeCommands(tx)
+  if (cmds.length === 0) {
+    return null
+  }
+  return (
+    <Section>
+      <Heading size="sm">Operations</Heading>
+      {cmds.map((cmd, i) => (
+        <Row label={`#${i + 1}`}>
+          <Text>
+            <Bold>{cmd.verb}</Bold>
+            {cmd.rest}
+            {cmd.emphasis ? <Bold>{cmd.emphasis}</Bold> : ''}
+          </Text>
+        </Row>
+      ))}
+      {/* Render package ids separately as click-to-copy so users can verify them. */}
+      {cmds.some(c => c.packageId) ? (
+        <Box>
+          <Text size="sm" color="muted">
+            Move call packages
+          </Text>
+          {cmds
+            .filter((c): c is CommandLabel & { packageId: string } => !!c.packageId)
+            .map(c => (
+              <Copyable value={c.packageId} />
+            ))}
+        </Box>
+      ) : null}
+    </Section>
+  )
+}
+
+function FailedDialogContent({
+  origin,
+  chain,
+  errorMessage,
+  changes,
+  tx,
+  action,
+}: {
+  origin: string
+  chain: IdentifierString
+  errorMessage: string
+  changes: BalanceChange[] | undefined
+  tx: Transaction
+  action: 'sign' | 'execute'
+}): JSXElement {
+  return (
+    <Box>
+      <Heading size="md">Transaction would fail</Heading>
+      <Text color="muted">{origin}</Text>
+      <Banner severity="danger" title="Dry run failed">
+        <Text>
+          {errorMessage ||
+            `The transaction could not be ${action === 'sign' ? 'signed' : 'executed'} on ${prettyNetwork(chain)}.`}
+        </Text>
+      </Banner>
+      <BalanceChangesSection changes={changes} />
+      <OperationsSection tx={tx} />
+    </Box>
+  )
+}
+
+function TransactionDialogContent({
+  origin,
+  chain,
+  fee,
+  changes,
+  tx,
+  action,
+}: {
+  origin: string
+  chain: IdentifierString
+  fee: number
+  changes: BalanceChange[] | undefined
+  tx: Transaction
+  action: 'sign' | 'execute'
+}): JSXElement {
+  return (
+    <Box>
+      <Heading size="md">
+        {action === 'execute' ? 'Approve transaction' : 'Sign transaction'}
+      </Heading>
+      <Text color="muted">{origin}</Text>
+      <SummarySection chain={chain} fee={fee} />
+      <BalanceChangesSection changes={changes} />
+      <OperationsSection tx={tx} />
+      <Divider />
+      <Text size="sm" color="muted">
+        Manage your wallet at <Link href="https://suisnap.com/">suisnap.com</Link>
+      </Text>
+    </Box>
+  )
+}
+
+function PersonalMessageDialogContent({
+  origin,
+  message,
+}: {
+  origin: string
+  message: Uint8Array
+}): JSXElement {
+  const decoded = new TextDecoder().decode(message)
+  // eslint-disable-next-line no-control-regex
+  const isBinary = /[\x00-\x09\x0E-\x1F]/.test(decoded)
+
+  return (
+    <Box>
+      <Heading size="md">Sign message</Heading>
+      <Text color="muted">{origin}</Text>
+      {isBinary ? (
+        <Box>
+          <Banner severity="warning" title="Binary message">
+            <Text>
+              The requested message is not human-readable. Its base64 encoding is shown below.
+            </Text>
+          </Banner>
+          <Copyable value={toBase64(message)} />
+        </Box>
+      ) : (
+        <Section>
+          <Text>{decoded}</Text>
+        </Section>
+      )}
+    </Box>
+  )
+}
+
+/* ============================================================ *
+ *  RPC entry point                                             *
+ * ============================================================ */
+
 export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
@@ -154,26 +341,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       const keypair = await deriveKeypair()
 
-      let decodedMessage = new TextDecoder().decode(input.message)
-      let info = `**${origin}** is requesting to sign the following message:`
-      /* eslint-disable-next-line no-control-regex */
-      if (/[\x00-\x09\x0E-\x1F]/.test(decodedMessage)) {
-        decodedMessage = toBase64(input.message)
-        info = `**${origin}** is requesting to sign the following message (base64 encoded):`
-      }
-
       const response = await snap.request({
         method: 'snap_dialog',
         params: {
           type: 'confirmation',
           content: (
-            <Box>
-              <Heading>Sign Message</Heading>
-              <Text>{info}</Text>
-              <Divider />
-              <Text>{decodedMessage}</Text>
-              <Divider />
-            </Box>
+            <PersonalMessageDialogContent
+              origin={origin}
+              message={input.message}
+            />
           ),
         },
       })
@@ -209,28 +385,20 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         sender,
       })
 
-      const balancesUi = balanceChangesSection(result.balanceChanges)
-      const operationsUi = operationsSection(input.transaction)
-
       if (result.isError) {
-        let resultText = 'Dry run failed.'
-        if (result.errorMessage) {
-          resultText = `Dry run failed with the following error: **${result.errorMessage}**`
-        }
-
         await snap.request({
           method: 'snap_dialog',
           params: {
             type: 'alert',
             content: (
-              <Box>
-                <Heading>Transaction failed.</Heading>
-                <Text>{`**${origin}** is requesting to **sign** a transaction for **${input.chain}** but the **dry run failed**.`}</Text>
-                {balancesUi}
-                {operationsUi}
-                <Divider />
-                <Text>{resultText}</Text>
-              </Box>
+              <FailedDialogContent
+                origin={origin}
+                chain={input.chain}
+                errorMessage={result.errorMessage}
+                changes={result.balanceChanges}
+                tx={input.transaction}
+                action="sign"
+              />
             ),
           },
         })
@@ -243,15 +411,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         params: {
           type: 'confirmation',
           content: (
-            <Box>
-              <Heading>Sign a Transaction</Heading>
-              <Text>{`**${origin}** is requesting to **sign** a transaction for **${input.chain}**.`}</Text>
-              <Text>Hint: you can manage your wallet at https://suisnap.com/</Text>
-              {balancesUi}
-              {operationsUi}
-              <Divider />
-              <Text>{`Estimated gas fees: **${calcTotalGasFeesDec(result.dryRunRes!)} SUI**`}</Text>
-            </Box>
+            <TransactionDialogContent
+              origin={origin}
+              chain={input.chain}
+              fee={calcTotalGasFeesDec(result.dryRunRes!)}
+              changes={result.balanceChanges}
+              tx={input.transaction}
+              action="sign"
+            />
           ),
         },
       })
@@ -292,28 +459,20 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         sender,
       })
 
-      const balancesUi = balanceChangesSection(result.balanceChanges)
-      const operationsUi = operationsSection(input.transaction)
-
       if (result.isError) {
-        let resultText = 'Dry run failed.'
-        if (result.errorMessage) {
-          resultText = `Dry run failed with the following error: **${result.errorMessage}**`
-        }
-
         await snap.request({
           method: 'snap_dialog',
           params: {
             type: 'alert',
             content: (
-              <Box>
-                <Heading>Transaction failed.</Heading>
-                <Text>{`**${origin}** is requesting to **execute** a transaction on **${input.chain}** but the **dry run failed**.`}</Text>
-                {balancesUi}
-                {operationsUi}
-                <Divider />
-                <Text>{resultText}</Text>
-              </Box>
+              <FailedDialogContent
+                origin={origin}
+                chain={input.chain}
+                errorMessage={result.errorMessage}
+                changes={result.balanceChanges}
+                tx={input.transaction}
+                action="execute"
+              />
             ),
           },
         })
@@ -326,15 +485,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         params: {
           type: 'confirmation',
           content: (
-            <Box>
-              <Heading>Approve a Transaction</Heading>
-              <Text>{`**${origin}** is requesting to **execute** a transaction on **${input.chain}**.`}</Text>
-              <Text>Hint: you can manage your wallet at https://suisnap.com/</Text>
-              {balancesUi}
-              {operationsUi}
-              <Divider />
-              <Text>{`Estimated gas fees: **${calcTotalGasFeesDec(result.dryRunRes!)} SUI**`}</Text>
-            </Box>
+            <TransactionDialogContent
+              origin={origin}
+              chain={input.chain}
+              fee={calcTotalGasFeesDec(result.dryRunRes!)}
+              changes={result.balanceChanges}
+              tx={input.transaction}
+              action="execute"
+            />
           ),
         },
       })
