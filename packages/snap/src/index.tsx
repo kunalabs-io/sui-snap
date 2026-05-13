@@ -16,7 +16,6 @@ import { SLIP10Node } from '@metamask/key-tree'
 
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
 import { toBase64 } from '@mysten/sui/utils'
-import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc'
 
 import {
   SerializedSuiSignPersonalMessageInput,
@@ -38,7 +37,7 @@ import {
   assertAdminOrigin,
   buildTransaction,
   calcTotalGasFeesDec,
-  getFullnodeUrlForChain,
+  formatExecutionError,
   getStoredState,
   networkFromChain,
   updateState,
@@ -445,7 +444,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             <TransactionDialogContent
               origin={origin}
               chain={input.chain}
-              fee={calcTotalGasFeesDec(result.dryRunRes!)}
+              fee={calcTotalGasFeesDec(result.simRes!)}
               changes={result.balanceChanges}
               tx={input.transaction}
               action="sign"
@@ -477,10 +476,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       const input = deserializeSuiSignTransactionInput(serialized)
-
-      const url = await getFullnodeUrlForChain(input.chain)
-      const network = networkFromChain(input.chain)
-      const client = new SuiJsonRpcClient({ url, network })
 
       const keypair = await deriveKeypair()
       const sender = keypair.getPublicKey().toSuiAddress()
@@ -519,7 +514,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             <TransactionDialogContent
               origin={origin}
               chain={input.chain}
-              fee={calcTotalGasFeesDec(result.dryRunRes!)}
+              fee={calcTotalGasFeesDec(result.simRes!)}
               changes={result.balanceChanges}
               tx={input.transaction}
               action="execute"
@@ -533,23 +528,26 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       const signed = await keypair.signTransaction(result.transactionBytes!)
-      const txBytes = toBase64(result.transactionBytes!)
 
-      const execRes = await client.executeTransactionBlock({
-        transactionBlock: txBytes,
-        signature: [signed.signature],
-        options: {
-          showRawEffects: true,
-        } as { showRawEffects: true },
+      const execRes = await result.client.core.executeTransaction({
+        transaction: result.transactionBytes!,
+        signatures: [signed.signature],
+        include: { effects: true },
       })
 
-      const rawEffects = (execRes as unknown as { rawEffects?: number[] }).rawEffects
-      const effectsBase64 = rawEffects ? toBase64(Uint8Array.from(rawEffects)) : ''
+      if (execRes.$kind === 'FailedTransaction') {
+        throw DryRunFailedError.asSimpleError(
+          formatExecutionError(execRes.FailedTransaction.status)
+        )
+      }
+
+      const effects = execRes.Transaction.effects
+      const effectsBase64 = effects?.bcs ? toBase64(effects.bcs) : ''
 
       const ret: SuiSignAndExecuteTransactionOutput = {
         bytes: signed.bytes,
         signature: signed.signature,
-        digest: execRes.digest,
+        digest: execRes.Transaction.digest,
         effects: effectsBase64,
       }
       return ret as unknown as Json

@@ -1,6 +1,7 @@
 import { NonAdminOrigin } from '@kunalabs-io/sui-snap-wallet/errors'
 import { IdentifierString, SuiChain } from '@mysten/wallet-standard'
-import { SuiJsonRpcClient, DryRunTransactionBlockResponse } from '@mysten/sui/jsonRpc'
+import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc'
+import type { SuiClientTypes } from '@mysten/sui/client'
 import { Transaction } from '@mysten/sui/transactions'
 import { parseStructTag } from '@mysten/sui/utils'
 
@@ -115,57 +116,82 @@ export interface BalanceChange {
   amount: string
 }
 
-export async function getBalanceChanges(
+// The simulation result includes balance changes when requested. We thread the
+// concrete result type so consumers can pull gas fees off it without re-typing.
+export type SimResult = SuiClientTypes.SimulateTransactionResult<{
+  effects: true
+  balanceChanges: true
+}>
+export type SimSuccess = Extract<SimResult, { $kind: 'Transaction' }>
+
+async function summarizeBalanceChanges(
   client: SuiJsonRpcClient,
-  dryRunRes: DryRunTransactionBlockResponse,
+  changes: SuiClientTypes.BalanceChange[],
   sender: string
 ): Promise<Array<BalanceChange>> {
-  const changes: Map<string, bigint> = new Map()
-  for (const change of dryRunRes.balanceChanges) {
-    if (
-      change.owner === 'Immutable' ||
-      !('AddressOwner' in change.owner) ||
-      change.owner.AddressOwner !== sender
-    ) {
+  const grouped: Map<string, bigint> = new Map()
+  for (const change of changes) {
+    // The core-API BalanceChange is { coinType, address, amount }. We only
+    // surface entries that touch the signer's address.
+    if (change.address !== sender) {
       continue
     }
-    const value = changes.get(change.coinType) ?? 0n
-    changes.set(change.coinType, value + BigInt(change.amount))
+    const value = grouped.get(change.coinType) ?? 0n
+    grouped.set(change.coinType, value + BigInt(change.amount))
   }
 
-  const res = await Promise.all(
-    Array.from(changes.entries()).map(async ([coinType, amount]) => {
-      const metadata = await client.getCoinMetadata({ coinType })
-      if (metadata === null) {
+  return Promise.all(
+    Array.from(grouped.entries()).map(async ([coinType, amount]) => {
+      const { coinMetadata } = await client.core.getCoinMetadata({ coinType })
+      if (coinMetadata === null) {
         return {
           symbol: getTokenSymbolAndNameFromTypeArg(coinType).name,
           amount: amount.toString(),
         }
-      } else {
-        const positive = amount >= 0n
-        const abs = positive ? amount : -amount
-        const integral = abs / 10n ** BigInt(metadata.decimals)
-        const fractional = abs % 10n ** BigInt(metadata.decimals)
+      }
 
-        let value = positive ? '+' : '-'
-        value += integral.toString()
-        if (fractional > 0n) {
-          value += '.'
-          value += fractional
-            .toString()
-            .padStart(metadata.decimals, '0')
-            .replace(/0+$/, '')
-        }
+      const positive = amount >= 0n
+      const abs = positive ? amount : -amount
+      const integral = abs / 10n ** BigInt(coinMetadata.decimals)
+      const fractional = abs % 10n ** BigInt(coinMetadata.decimals)
 
-        return {
-          symbol: metadata.symbol,
-          amount: value,
-        }
+      let value = positive ? '+' : '-'
+      value += integral.toString()
+      if (fractional > 0n) {
+        value += '.'
+        value += fractional
+          .toString()
+          .padStart(coinMetadata.decimals, '0')
+          .replace(/0+$/, '')
+      }
+
+      return {
+        symbol: coinMetadata.symbol,
+        amount: value,
       }
     })
   )
+}
 
-  return res
+/**
+ * Coerce an ExecutionStatus into a human-readable error string. In v2 the
+ * `error` field is structured (MoveAbort / CommandArgumentError / ...), so
+ * we collapse it back to a single line for the dialog.
+ */
+export function formatExecutionError(status: SuiClientTypes.ExecutionStatus): string {
+  if (status.success || status.error == null) {
+    return 'Dry run failed'
+  }
+  const err = status.error
+  if (err.$kind === 'MoveAbort') {
+    const abort = err.MoveAbort
+    const loc = abort.location
+    const where = loc?.functionName
+      ? ` in ${loc.module ?? '?'}::${loc.functionName}`
+      : ''
+    return `Move abort (code ${abort.abortCode})${where}`
+  }
+  return err.$kind || 'Dry run failed'
 }
 
 function getErrorMessage(e: unknown): string | null {
@@ -187,9 +213,10 @@ export interface BuildTransactionInput {
 }
 
 export interface BuildTransactionResult {
+  client: SuiJsonRpcClient
   transactionBytes: Uint8Array | undefined
   balanceChanges: Array<BalanceChange> | undefined
-  dryRunRes: DryRunTransactionBlockResponse | undefined
+  simRes: SimSuccess | undefined
   isError: boolean
   errorMessage: string
 }
@@ -203,62 +230,67 @@ export async function buildTransaction(
 
   input.transaction.setSender(input.sender)
 
-  let dryRunRes: DryRunTransactionBlockResponse | undefined = undefined
-  let balanceChanges = undefined
-  const dryRunError = { hasError: false, message: '' }
-
   let transactionBytes: Uint8Array
   try {
-    transactionBytes = await input.transaction.build({
-      client,
-    })
+    transactionBytes = await input.transaction.build({ client })
   } catch (e) {
     return {
+      client,
       transactionBytes: undefined,
-      balanceChanges,
-      dryRunRes,
+      balanceChanges: undefined,
+      simRes: undefined,
       isError: true,
       errorMessage: getErrorMessage(e) ?? 'Unexpected error',
     }
   }
 
+  let simResult: SimResult
   try {
-    dryRunRes = await client.dryRunTransactionBlock({
-      transactionBlock: await input.transaction.build({ client }),
+    simResult = await client.core.simulateTransaction({
+      transaction: transactionBytes,
+      include: { effects: true, balanceChanges: true },
     })
-    if (dryRunRes.effects.status.status === 'failure') {
-      dryRunError.hasError = true
-      dryRunError.message = dryRunRes.effects.status.error || ''
+  } catch (e) {
+    return {
+      client,
+      transactionBytes: undefined,
+      balanceChanges: undefined,
+      simRes: undefined,
+      isError: true,
+      errorMessage: getErrorMessage(e) ?? 'Unexpected error',
     }
-    balanceChanges = await getBalanceChanges(client, dryRunRes, input.sender)
-  } catch (e: unknown) {
-    dryRunError.hasError = true
-    dryRunError.message = getErrorMessage(e) ?? 'Unexpected error'
   }
 
-  if (!dryRunRes || !balanceChanges || dryRunError.hasError) {
+  if (simResult.$kind === 'FailedTransaction') {
+    const status = simResult.FailedTransaction.status
     return {
+      client,
       transactionBytes: undefined,
-      balanceChanges,
-      dryRunRes,
+      balanceChanges: undefined,
+      simRes: undefined,
       isError: true,
-      errorMessage: dryRunError.message,
+      errorMessage: formatExecutionError(status),
     }
   }
+
+  const balanceChanges = await summarizeBalanceChanges(
+    client,
+    simResult.Transaction.balanceChanges ?? [],
+    input.sender
+  )
 
   return {
+    client,
     transactionBytes,
     balanceChanges,
-    dryRunRes,
+    simRes: simResult,
     isError: false,
     errorMessage: '',
   }
 }
 
-export function calcTotalGasFeesDec(
-  dryRunRes: DryRunTransactionBlockResponse
-): number {
-  const gasUsed = dryRunRes.effects.gasUsed
+export function calcTotalGasFeesDec(simRes: SimSuccess): number {
+  const gasUsed = simRes.Transaction.effects!.gasUsed
   const totalGasFeesInt =
     BigInt(gasUsed.computationCost) +
     BigInt(gasUsed.storageCost) -
