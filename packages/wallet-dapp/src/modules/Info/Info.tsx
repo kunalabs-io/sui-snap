@@ -8,9 +8,8 @@ import { AddressContainer, AddressTypography, IconButtonContainer, StyledTypogra
 import { IconCopy } from 'components/Icons/IconCopy'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { CoinInfo, useWalletBalances } from 'utils/useWalletBalances'
-import { RECOGNIZED_TOKENS_PACKAGE_IDS, WALLET_BALANCES_REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
-import { getPackageIdFromTypeArg } from 'utils/helpers'
-import { NETWORK_MAINNET, useNetwork } from 'utils/useNetworkProvider'
+import { WALLET_BALANCES_REFETCH_INTERVAL, suiTypeArg } from 'utils/const'
+import { useNetwork } from 'utils/useNetworkProvider'
 import { toast } from 'react-toastify'
 import { formatNumberWithCommas } from 'utils/formatting'
 import Spinner from 'components/Spinner/Spinner'
@@ -70,27 +69,10 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
 
   const suiCoinInfo = infos.get(suiTypeArg)
 
-  const unrecognizedCoins: CoinInfo[] = []
-  const recognizedCoins: CoinInfo[] = []
-
-  for (const [typeArg, coinInfo] of infos.entries()) {
-    if (coinInfo.amount.int === 0n) {
-      continue
-    }
-
-    let isRecognized = false
-    if (network === NETWORK_MAINNET) {
-      const packageId = getPackageIdFromTypeArg(typeArg)
-      if (RECOGNIZED_TOKENS_PACKAGE_IDS.has(packageId)) {
-        isRecognized = true
-      }
-    }
-
-    if (isRecognized) {
-      recognizedCoins.push(coinInfo)
-    } else {
-      unrecognizedCoins.push(coinInfo)
-    }
+  const coins: CoinInfo[] = []
+  for (const coinInfo of infos.values()) {
+    if (coinInfo.amount.int === 0n) continue
+    coins.push(coinInfo)
   }
 
   return (
@@ -170,9 +152,7 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
           </TokensLabel>
         </div>
       </Tabs>
-      {activeTab === Tab.Tokens && (
-        <Tokens unrecognizedCoins={unrecognizedCoins} recognizedCoins={recognizedCoins} onSendClick={onSendClick} />
-      )}
+      {activeTab === Tab.Tokens && <Tokens coins={coins} onSendClick={onSendClick} />}
       {activeTab === Tab.Nft && <Nft />}
       {activeTab === Tab.Activity && <Activity />}
     </div>
