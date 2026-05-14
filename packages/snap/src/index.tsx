@@ -163,7 +163,7 @@ function renderPackageLine(pkg: string, chain: IdentifierString): JSXElement {
   }
   return (
     <Text size="sm" color="muted">
-      <Link href={`https://suivision.xyz/package/${pkg}?network=${network}`}>
+      <Link href={`https://${network}.suivision.xyz/package/${pkg}`}>
         {truncated}
       </Link>
     </Text>

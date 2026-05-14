@@ -130,7 +130,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
         return
       }
       const digest = res.Transaction.digest
-      const url = `https://suivision.xyz/txblock/${digest}?network=${network}`
+      const url = `https://${network}.suivision.xyz/txblock/${digest}`
       toast.success(
         <div>
           Transaction succeeded:{' '}
