@@ -86,9 +86,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
         address: v.suiAddress,
         poolId: v.stakingPoolId,
         name: v.name,
-        // TODO: APY isn't available from GraphQL / gRPC v2; the legacy
-        // JSON-RPC was the only source. Surface '--' until restored.
-        apy: undefined,
+        apy: v.apy,
         imageUrl: v.imageUrl,
         totalSuiStaked: Amount.fromInt(BigInt(v.stakingPoolSuiBalance), SUI_DECIMALS),
         votingPower: Number(v.votingPower) / 100_00,
