@@ -187,10 +187,23 @@ async function waitForMetaMask(
   return null
 }
 
+// How long to wait for an EIP-6963 announcement after subscribing before
+// emitting an initial UNAVAILABLE. Without this, the synchronous initial
+// emit fires before any wallet has had a chance to respond to our
+// `eip6963:requestProvider`, so consumers see a brief UNAVAILABLE flash
+// before the real announcement lands a tick later.
+const INITIAL_DETECT_WINDOW_MS = 250
+
 /**
- * Subscribe to MetaMask provider availability. The callback fires
- * immediately with the current status and again whenever a new MetaMask
- * variant announces itself via EIP-6963. Returns an unsubscribe function.
+ * Subscribe to MetaMask provider availability. The callback fires when an
+ * EIP-6963 announcement is processed (which may be on the next tick after
+ * subscribe) and again whenever a new MetaMask variant announces itself.
+ * Returns an unsubscribe function.
+ *
+ * The initial emit is deferred by `INITIAL_DETECT_WINDOW_MS` so wallets
+ * have a moment to respond to our `eip6963:requestProvider` before we
+ * report UNAVAILABLE. A real announcement during the window pre-empts the
+ * timer and emits the actual provider info instead.
  *
  * Useful in long-lived UI (e.g. the wallet-dapp shell) where the user
  * might install or finish booting MetaMask after the page has mounted.
@@ -206,7 +219,10 @@ export function subscribeMetaMaskProvider(
   installAnnouncementListener()
 
   let active = true
-  let lastProvider: MetaMaskInpageProvider | null = null
+  // `undefined` until the first emit, then the most recently emitted
+  // provider (null = UNAVAILABLE). The dedup check uses `!==` so the
+  // initial undefined sentinel never matches either null or a provider.
+  let lastProvider: MetaMaskInpageProvider | null | undefined = undefined
 
   const emit = async () => {
     if (!active) {
@@ -228,10 +244,17 @@ export function subscribeMetaMaskProvider(
   }
 
   listeners.add(emit)
-  void emit()
+
+  // Defer the initial emit. If an EIP-6963 announcement lands during the
+  // window, the listener-driven `emit` fires first and sets `lastProvider`
+  // to the real provider; this timer's eventual `emit` then dedupes.
+  const initialEmitTimer = setTimeout(() => {
+    void emit()
+  }, INITIAL_DETECT_WINDOW_MS)
 
   return () => {
     active = false
+    clearTimeout(initialEmitTimer)
     listeners.delete(emit)
   }
 }
