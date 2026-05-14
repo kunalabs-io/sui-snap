@@ -6,6 +6,8 @@ import {
   StandardDisconnectFeature,
   StandardDisconnectMethod,
   StandardEventsFeature,
+  StandardEventsListeners,
+  StandardEventsOnMethod,
   SuiFeatures,
   SuiSignAndExecuteTransactionMethod,
   SuiSignAndExecuteTransactionOutput,
@@ -174,9 +176,24 @@ export class SuiSnapWallet implements Wallet {
   #provider: MetaMaskInpageProvider | null = null
   #accounts: WalletAccount[] | null = null
 
+  // Subscribers registered via the `standard:events` feature. The
+  // wallet-standard UI registry snapshots `wallet.accounts` once and only
+  // refreshes the cache when a `'change'` event fires here, so the snap
+  // MUST emit one whenever the accounts list mutates — otherwise consumers
+  // like dapp-kit-react keep a stale empty array forever (which previously
+  // caused the dapp to "disconnect" on network switch).
+  #changeListeners: Set<StandardEventsListeners['change']> = new Set()
+
   constructor() {
     this.#connecting = false
     this.#connected = false
+  }
+
+  #emitChange = () => {
+    const accounts = this.accounts
+    for (const listener of this.#changeListeners) {
+      listener({ accounts })
+    }
   }
 
   get version() {
@@ -234,25 +251,41 @@ export class SuiSnapWallet implements Wallet {
       },
       'standard:events': {
         version: '1.0.0',
-        on: () => {
-          return () => {}
-        },
+        on: this.#onEvent,
       },
     }
   }
 
-  #connect: StandardConnectMethod = async () => {
+  #onEvent: StandardEventsOnMethod = (event, listener) => {
+    if (event !== 'change') {
+      return () => {}
+    }
+    this.#changeListeners.add(listener as StandardEventsListeners['change'])
+    return () => {
+      this.#changeListeners.delete(listener as StandardEventsListeners['change'])
+    }
+  }
+
+  #connect: StandardConnectMethod = async input => {
     if (this.#connecting) {
       throw new Error('Already connecting')
     }
 
     this.#connecting = true
-    this.#connected = false
 
     try {
-      const { available, provider } = await getMetaMaskProvider()
+      const { available, provider, suiSnapInstalled } = await getMetaMaskProvider()
       if (!available) {
         throw new Error('MetaMask not detected!')
+      }
+
+      // Silent connect (used by dapp-kit-react's autoConnect on page load):
+      // wallet-standard says we MUST NOT prompt the user. If the snap isn't
+      // already installed, return an empty account list — the caller will
+      // treat that as "not authorized" without triggering a popup.
+      if (input?.silent && !suiSnapInstalled) {
+        this.#connecting = false
+        return { accounts: [] }
       }
 
       await provider.request({
@@ -266,16 +299,19 @@ export class SuiSnapWallet implements Wallet {
 
       this.#provider = provider
       this.#accounts = await getAccounts(provider)
-
-      this.#connecting = false
       this.#connected = true
+      this.#connecting = false
+
+      // Tell the wallet-standard UI registry (and any other subscribers)
+      // that the accounts list has been populated. Without this, cached
+      // UiWallet snapshots stay at the empty pre-connect state.
+      this.#emitChange()
 
       return {
         accounts: this.accounts,
       }
     } catch (e) {
       this.#connecting = false
-      this.#connected = false
       throw e
     }
   }
@@ -285,6 +321,7 @@ export class SuiSnapWallet implements Wallet {
     this.#connected = false
     this.#accounts = null
     this.#provider = null
+    this.#emitChange()
   }
 
   #signPersonalMessage: SuiSignPersonalMessageMethod = async input => {
