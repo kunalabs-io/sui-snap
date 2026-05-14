@@ -1,6 +1,6 @@
 import { NonAdminOrigin } from '@kunalabs-io/sui-snap-wallet/errors'
 import { IdentifierString, SuiChain } from '@mysten/wallet-standard'
-import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc'
+import { SuiGrpcClient } from '@mysten/sui/grpc'
 import type { SuiClientTypes } from '@mysten/sui/client'
 import { Transaction } from '@mysten/sui/transactions'
 import { parseStructTag } from '@mysten/sui/utils'
@@ -125,7 +125,7 @@ export type SimResult = SuiClientTypes.SimulateTransactionResult<{
 export type SimSuccess = Extract<SimResult, { $kind: 'Transaction' }>
 
 async function summarizeBalanceChanges(
-  client: SuiJsonRpcClient,
+  client: SuiGrpcClient,
   changes: SuiClientTypes.BalanceChange[],
   sender: string
 ): Promise<Array<BalanceChange>> {
@@ -213,7 +213,7 @@ export interface BuildTransactionInput {
 }
 
 export interface BuildTransactionResult {
-  client: SuiJsonRpcClient
+  client: SuiGrpcClient
   transactionBytes: Uint8Array | undefined
   balanceChanges: Array<BalanceChange> | undefined
   simRes: SimSuccess | undefined
@@ -226,7 +226,7 @@ export async function buildTransaction(
 ): Promise<BuildTransactionResult> {
   const url = await getFullnodeUrlForChain(input.chain)
   const network = networkFromChain(input.chain)
-  const client = new SuiJsonRpcClient({ url, network })
+  const client = new SuiGrpcClient({ baseUrl: url, network })
 
   input.transaction.setSender(input.sender)
 
