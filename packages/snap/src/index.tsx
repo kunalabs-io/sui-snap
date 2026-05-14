@@ -37,6 +37,7 @@ import {
   assertAdminOrigin,
   buildTransaction,
   calcTotalGasFeesDec,
+  containsAddressAliasCall,
   formatExecutionError,
   getStoredState,
   networkFromChain,
@@ -254,6 +255,29 @@ function OperationsSection({
   )
 }
 
+function BlockedDialogContent({
+  origin,
+  chain,
+}: {
+  origin: string
+  chain: IdentifierString
+}): JSXElement {
+  return (
+    <Box>
+      <Heading size="md">Transaction blocked</Heading>
+      <Text color="muted">{origin}</Text>
+      <Banner severity="danger" title="Account-takeover risk">
+        <Text>
+          This {prettyNetwork(chain)} transaction attempts to call the
+          <Bold> 0x2::address_alias</Bold> module, which can be used to
+          take over your account. The transaction has been blocked and
+          will not be signed.
+        </Text>
+      </Banner>
+    </Box>
+  )
+}
+
 function FailedDialogContent({
   origin,
   chain,
@@ -407,6 +431,19 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
       const input = deserializeSuiSignTransactionInput(serialized)
 
+      if (containsAddressAliasCall(input.transaction)) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: <BlockedDialogContent origin={origin} chain={input.chain} />,
+          },
+        })
+        throw DryRunFailedError.asSimpleError(
+          'Transaction blocked: calls to 0x2::address_alias are not allowed.'
+        )
+      }
+
       const keypair = await deriveKeypair()
       const sender = keypair.getPublicKey().toSuiAddress()
       const result = await buildTransaction({
@@ -476,6 +513,19 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       const input = deserializeSuiSignTransactionInput(serialized)
+
+      if (containsAddressAliasCall(input.transaction)) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: <BlockedDialogContent origin={origin} chain={input.chain} />,
+          },
+        })
+        throw DryRunFailedError.asSimpleError(
+          'Transaction blocked: calls to 0x2::address_alias are not allowed.'
+        )
+      }
 
       const keypair = await deriveKeypair()
       const sender = keypair.getPublicKey().toSuiAddress()

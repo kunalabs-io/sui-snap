@@ -3,7 +3,29 @@ import { IdentifierString, SuiChain } from '@mysten/wallet-standard'
 import { SuiGrpcClient } from '@mysten/sui/grpc'
 import type { SuiClientTypes } from '@mysten/sui/client'
 import { Transaction } from '@mysten/sui/transactions'
-import { parseStructTag } from '@mysten/sui/utils'
+import { normalizeSuiAddress, parseStructTag } from '@mysten/sui/utils'
+
+const SUI_FRAMEWORK = normalizeSuiAddress('0x2')
+
+/**
+ * Returns true if the transaction contains a top-level MoveCall to the
+ * `0x2::address_alias` module. Per Mysten's wallet guidance, those calls
+ * can be used to perform account take-overs and should be blocked at the
+ * wallet layer before signing. Address-alias functions can only be
+ * invoked as a top-level MoveCall in a PTB, so we only need to inspect
+ * the top-level commands.
+ *
+ * https://gist.github.com/hayes-mysten/c2c7e190cbc297ffbd7ef13b19feb307
+ */
+export function containsAddressAliasCall(tx: Transaction): boolean {
+  const data = tx.getData()
+  return data.commands.some(
+    cmd =>
+      cmd.$kind === 'MoveCall' &&
+      normalizeSuiAddress(cmd.MoveCall.package) === SUI_FRAMEWORK &&
+      cmd.MoveCall.module === 'address_alias'
+  )
+}
 
 export const ALLOWED_ADMIN_ORIGIN = 'https://suisnap.com'
 
