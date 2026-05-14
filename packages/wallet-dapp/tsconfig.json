@@ -1,15 +1,10 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
@@ -19,12 +14,14 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": "src"
+    "paths": {
+      "components/*": ["./src/components/*"],
+      "lib/*": ["./src/lib/*"],
+      "modules/*": ["./src/modules/*"],
+      "styles/*": ["./src/styles/*"],
+      "utils/*": ["./src/utils/*"]
+    }
   },
-  "include": [
-    "src"
-  ],
-  "references": [
-		{ "path": "../wallet-adapter" },
-	]
+  "include": ["src"],
+  "references": [{ "path": "../wallet-adapter" }]
 }
