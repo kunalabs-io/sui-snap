@@ -120,6 +120,26 @@ const Main = () => {
     }
   }
 
+  const signBlockedAddressAliasTxCb = async () => {
+    if (!connectedToSnap || !currentAccount) {
+      return
+    }
+
+    const txb = new Transaction()
+    txb.moveCall({
+      target: '0x2::address_alias::add_alias',
+      arguments: [txb.pure.address(currentAccount.address)],
+    })
+
+    try {
+      const result = await dAppKit.signAndExecuteTransaction({ transaction: txb })
+      console.log(result)
+    } catch (e) {
+      setError(errorMessage(e))
+      console.error(e)
+    }
+  }
+
   const getStoredState = async () => {
     if (!connectedToSnap) {
       return
@@ -238,6 +258,19 @@ const Main = () => {
             button: (
               <Button onClick={signAndExecuteTransactionCb} disabled={!connectedToSnap}>
                 Sign and execute
+              </Button>
+            ),
+          }}
+          disabled={!connectedToSnap}
+        />
+        <Card
+          content={{
+            title: 'Try blocked transaction (0x2::address_alias)',
+            description:
+              'Attempts to sign and execute a PTB that calls into 0x2::address_alias. The snap should refuse to sign it and surface a block dialog — verify the rejection.',
+            button: (
+              <Button onClick={signBlockedAddressAliasTxCb} disabled={!connectedToSnap}>
+                Try blocked
               </Button>
             ),
           }}
