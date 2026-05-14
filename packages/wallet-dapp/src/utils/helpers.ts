@@ -33,14 +33,6 @@ export const ellipsizeTokenAddress = (tokenAddress: string, charStartEndNum = 5)
   )}`
 }
 
-export const getPackageIdFromTypeArg = (typeArg: string, separator = '::') => {
-  const firstIndexOfSeparator = typeArg.indexOf(separator)
-  if (firstIndexOfSeparator >= 0) {
-    return typeArg.substring(0, firstIndexOfSeparator)
-  }
-  return ''
-}
-
 export function formatTimeDifference(startDate: Date, endDate: Date) {
   const msPerMinute = 60 * 1000
   const msPerHour = msPerMinute * 60
