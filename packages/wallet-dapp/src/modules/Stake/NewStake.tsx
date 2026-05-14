@@ -188,7 +188,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
         return
       }
       const digest = res.Transaction.digest
-      const url = `https://suivision.xyz/txblock/${digest}?network=${network}`
+      const url = `https://${network}.suivision.xyz/txblock/${digest}`
       toast.success(
         <div>
           Transaction succeeded:{' '}
@@ -286,7 +286,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
               <a
                 target="_blank"
                 rel="noreferrer"
-                href={`https://suivision.xyz/validator/${selectedValidator.address}?network=${network}`}
+                href={`https://${network}.suivision.xyz/validator/${selectedValidator.address}`}
                 style={{ textDecoration: 'none' }}
               >
                 <DetailsInfoValue fontWeight="medium" variant="description" isAddress>

@@ -115,7 +115,7 @@ const Info = ({ onSendClick, onStakeClick }: Props) => {
         </IconButtonContainer>
 
         <a
-          href={`https://suivision.xyz/address/${currentAccount?.address}?network=${network}`}
+          href={`https://${network}.suivision.xyz/address/${currentAccount?.address}`}
           target="_blank"
           rel="noreferrer"
           style={{ textDecoration: 'none' }}
