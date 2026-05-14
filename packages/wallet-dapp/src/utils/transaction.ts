@@ -1,7 +1,7 @@
-import { MoveCallSuiTransaction, SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
 import { parseStructTag } from '@mysten/sui/utils'
 
 import { CoinMetadata } from 'lib/coin'
+import type { TransactionGasSummary } from './useTransactions'
 
 export interface BalanceChange {
   symbol: string
@@ -31,258 +31,76 @@ export const getTokenSymbolAndNameFromTypeArg = (typeArg: string) => {
   }
 }
 
-export function calcTotalGasFeesDec(tx?: SuiTransactionBlockResponse): number {
-  const gasUsed = tx?.effects?.gasUsed
-  if (!gasUsed) {
+export function calcTotalGasFeesDec(gas?: TransactionGasSummary | null): number {
+  if (!gas) {
     return 0
   }
   const totalGasFeesInt =
-    BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
+    BigInt(gas.computationCost) + BigInt(gas.storageCost) - BigInt(gas.storageRebate)
 
   return Number(totalGasFeesInt.toString()) / 1e9
 }
 
-export function getTxFees(tx?: SuiTransactionBlockResponse) {
-  const gasUsed = tx?.effects?.gasUsed
-  if (!gasUsed) {
+export function getTxFees(gas?: TransactionGasSummary | null) {
+  if (!gas) {
     return null
   }
   const totalGasFeesInt =
-    BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)
+    BigInt(gas.computationCost) + BigInt(gas.storageCost) - BigInt(gas.storageRebate)
 
   return {
     total: Number(totalGasFeesInt.toString()) / 1e9,
-    computation: Number(BigInt(gasUsed.computationCost).toString()) / 1e9,
-    storage: Number(BigInt(gasUsed.storageCost).toString()) / 1e9,
-    rebate: Number(BigInt(gasUsed.storageRebate).toString()) / 1e9,
+    computation: Number(BigInt(gas.computationCost).toString()) / 1e9,
+    storage: Number(BigInt(gas.storageCost).toString()) / 1e9,
+    rebate: Number(BigInt(gas.storageRebate).toString()) / 1e9,
   }
 }
 
-export const getChangesForEachTx = (
-  transactions: SuiTransactionBlockResponse[],
-  address: string
-): Map<string, Map<string, bigint>> => {
-  const changes: Map<string, Map<string, bigint>> = new Map()
-
-  for (const tx of transactions) {
-    const txChanges: Map<string, bigint> = new Map()
-    if (!tx.balanceChanges) {
-      continue
-    }
-    const { balanceChanges, digest } = tx
-    for (const change of balanceChanges) {
-      if (
-        change.owner === 'Immutable' ||
-        !('AddressOwner' in change.owner) ||
-        change.owner.AddressOwner !== address
-      ) {
-        continue
-      }
-      const value = txChanges.get(change.coinType) ?? 0n
-      txChanges.set(change.coinType, value + BigInt(change.amount))
-    }
-    changes.set(digest, txChanges)
-  }
-
-  return changes
-}
-
-export const getCoinTypes = (changes: Map<string, Map<string, bigint>>): string[] => {
-  const coinTypes = new Set<string>()
-  for (const txChanges of changes.values()) {
-    for (const coinType of txChanges.keys()) {
-      coinTypes.add(coinType)
-    }
-  }
-
-  return Array.from(coinTypes)
-}
-
-export const getBalanceChangesForEachTx = (
-  coinTypeChanges: Map<string, Map<string, bigint>>,
+/**
+ * Format a transaction's raw per-coinType balance deltas into UI strings,
+ * using fetched coin metadata for symbol + decimals. SUI entries whose
+ * absolute amount equals the gas fee are filtered out (these are 'just the
+ * gas, no actual transfer' rows).
+ */
+export function formatBalanceChanges(
+  changes: Array<{ coinType: string; amount: string }>,
   metas: (CoinMetadata | undefined)[],
-  transactions: SuiTransactionBlockResponse[]
-): Map<string, BalanceChange[]> => {
-  const balanceChangesMap: Map<string, BalanceChange[]> = new Map()
-
-  const digestToTxMap = transactions.reduce(
-    (map, tx) => map.set(tx.digest, tx),
-    new Map<string, SuiTransactionBlockResponse>()
-  )
-
-  const typeArgToMetaMap = new Map<string, CoinMetadata>()
+  gas: TransactionGasSummary | null
+): BalanceChange[] {
+  const typeArgToMeta = new Map<string, CoinMetadata>()
   for (const m of metas) {
-    if (!m) {
+    if (m) typeArgToMeta.set(m.typeArg, m)
+  }
+
+  const out: BalanceChange[] = []
+  for (const { coinType, amount: amountStr } of changes) {
+    const amount = BigInt(amountStr)
+    const meta = typeArgToMeta.get(coinType)
+    if (!meta) {
+      out.push({
+        symbol: getTokenSymbolAndNameFromTypeArg(coinType).name,
+        amount: amount.toString(),
+      })
       continue
     }
-    typeArgToMetaMap.set(m.typeArg, m)
-  }
 
-  for (const [txDigest, txChanges] of coinTypeChanges) {
-    const balanceChangesByTransaction: BalanceChange[] = []
-    for (const [coinType, amount] of txChanges) {
-      const metadata = typeArgToMetaMap.get(coinType)
-      if (!metadata) {
-        balanceChangesByTransaction.push({
-          symbol: getTokenSymbolAndNameFromTypeArg(coinType).name,
-          amount: amount.toString(),
-        })
-      } else {
-        const positive = amount >= 0n
-        const abs = positive ? amount : -amount
-        const integral = abs / 10n ** BigInt(metadata.decimals)
-        const fractional = abs % 10n ** BigInt(metadata.decimals)
+    const positive = amount >= 0n
+    const abs = positive ? amount : -amount
+    const integral = abs / 10n ** BigInt(meta.decimals)
+    const fractional = abs % 10n ** BigInt(meta.decimals)
 
-        let value = positive ? '+' : '-'
-        value += integral.toString()
-        if (fractional > 0n) {
-          value += '.'
-          value += fractional.toString().padStart(metadata.decimals, '0').replace(/0+$/, '')
-        }
-
-        const tx = digestToTxMap.get(txDigest)
-        const txFee = calcTotalGasFeesDec(tx)
-        if (txFee - Math.abs(Number(value)) !== 0) {
-          balanceChangesByTransaction.push({
-            symbol: metadata.symbol,
-            amount: value,
-          })
-        }
-      }
+    let value = positive ? '+' : '-'
+    value += integral.toString()
+    if (fractional > 0n) {
+      value += '.'
+      value += fractional.toString().padStart(meta.decimals, '0').replace(/0+$/, '')
     }
-    balanceChangesMap.set(txDigest, balanceChangesByTransaction)
-  }
-  return balanceChangesMap
-}
 
-export function genTxBlockForTxDetails(tx: SuiTransactionBlockResponse): string[] | null {
-  const transaction = tx.transaction?.data.transaction
-  if (transaction?.kind !== 'ProgrammableTransaction') {
-    return null
-  }
-  const txStrings = []
-  const { transactions } = transaction
-  for (const tx of transactions) {
-    const txKey = Object.keys(tx)[0]
-    switch (txKey) {
-      case 'MoveCall': {
-        const txMoveCall = tx as {
-          MoveCall: MoveCallSuiTransaction
-        }
-        txStrings.push(
-          `${txMoveCall.MoveCall.package}::${txMoveCall.MoveCall.module}::${txMoveCall.MoveCall.function}`
-        )
-        continue
-      }
-      case 'MergeCoins': {
-        txStrings.push('MergeCoins')
-        continue
-      }
-      case 'SplitCoins': {
-        txStrings.push('SplitCoins')
-        continue
-      }
-      case 'TransferObjects': {
-        txStrings.push('TransferObjects')
-        continue
-      }
-      case 'Publish': {
-        txStrings.push('Publish')
-        continue
-      }
-      case 'Upgrade': {
-        txStrings.push('Upgrade')
-        continue
-      }
-      case 'MakeMoveVec': {
-        txStrings.push('MakeMoveVec')
-      }
+    // Skip rows that are exactly the gas fee (no real balance movement).
+    const txFee = calcTotalGasFeesDec(gas)
+    if (txFee - Math.abs(Number(value)) !== 0) {
+      out.push({ symbol: meta.symbol, amount: value })
     }
   }
-  return txStrings
-}
-
-export function genTxBlockTransactionsTextForEachTx(
-  transactions: SuiTransactionBlockResponse[]
-): Map<string, string[]> {
-  const allTxStrings: Map<string, string[]> = new Map()
-  for (const tx of transactions) {
-    const transaction = tx.transaction?.data.transaction
-    if (transaction?.kind !== 'ProgrammableTransaction') {
-      continue
-    }
-    const txStrings = []
-    const { transactions } = transaction
-    for (const tx of transactions) {
-      const txKey = Object.keys(tx)[0]
-      switch (txKey) {
-        case 'MoveCall': {
-          const txMoveCall = tx as {
-            MoveCall: MoveCallSuiTransaction
-          }
-          txStrings.push(txMoveCall.MoveCall.function)
-          continue
-        }
-        case 'MergeCoins': {
-          txStrings.push('MergeCoins')
-          continue
-        }
-        case 'SplitCoins': {
-          txStrings.push('SplitCoins')
-          continue
-        }
-        case 'TransferObjects': {
-          txStrings.push('TransferObjects')
-          continue
-        }
-        case 'Publish': {
-          txStrings.push('Publish')
-          continue
-        }
-        case 'Upgrade': {
-          txStrings.push('Upgrade')
-          continue
-        }
-        case 'MakeMoveVec': {
-          txStrings.push('MakeMoveVec')
-        }
-      }
-    }
-    allTxStrings.set(tx.digest, txStrings)
-  }
-  return allTxStrings
-}
-
-export const getTxTimestampStart = (
-  sentTransactions: SuiTransactionBlockResponse[],
-  receivedTransactions: SuiTransactionBlockResponse[]
-): number => {
-  if (!sentTransactions || !receivedTransactions) {
-    return 0
-  }
-
-  const minTimestampSent = sentTransactions.reduce(
-    (min, tx) => {
-      if (typeof tx.timestampMs === 'undefined' || tx.timestampMs === null) {
-        return min
-      }
-
-      const timestampNum = parseInt(tx.timestampMs, 10)
-      return timestampNum < (min || Infinity) ? timestampNum : min
-    },
-    parseInt(sentTransactions[0].timestampMs || '', 10)
-  )
-  const minTimestampReceived = receivedTransactions.reduce(
-    (min, tx) => {
-      if (typeof tx.timestampMs === 'undefined' || tx.timestampMs === null) {
-        return min
-      }
-
-      const timestampNum = parseInt(tx.timestampMs, 10)
-      return timestampNum < (min || Infinity) ? timestampNum : min
-    },
-    parseInt(receivedTransactions[0].timestampMs || '', 10)
-  )
-
-  return Math.max(minTimestampSent, minTimestampReceived)
+  return out
 }

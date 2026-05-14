@@ -1,4 +1,6 @@
-export const suiTypeArg = '0x2::sui::SUI'
+import { SUI_TYPE_ARG } from '@mysten/sui/utils'
+
+export const suiTypeArg = SUI_TYPE_ARG
 
 export const WALLET_BALANCES_REFETCH_INTERVAL = 3000
 

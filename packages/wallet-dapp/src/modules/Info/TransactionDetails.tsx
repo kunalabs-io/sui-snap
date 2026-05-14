@@ -1,5 +1,4 @@
 import { ReactNode } from 'react'
-import { SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
 import styled from 'styled-components'
 
 import Modal from 'components/Modal'
@@ -8,14 +7,15 @@ import Typography from 'components/Typography'
 import { getFormattedDate } from 'utils/date'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { IconLink } from 'components/Icons/IconLink'
-import { BalanceChange, genTxBlockForTxDetails, getTxFees } from 'utils/transaction'
+import { BalanceChange, getTxFees } from 'utils/transaction'
+import { ActivityTransaction } from 'utils/useTransactions'
 import { ellipsizeTokenAddress } from 'utils/helpers'
 import { IconClose } from 'components/Icons/IconClose'
 
 interface Props {
   toggleModal: () => void
   balanceChanges?: BalanceChange[]
-  tx?: SuiTransactionBlockResponse
+  tx?: ActivityTransaction
 }
 
 const IconSection = styled.div`
@@ -76,6 +76,7 @@ const TxBlockItem = styled(Typography)`
 const Fee = styled(Typography)`
   color: ${p => p.theme.colors.text.description};
 `
+
 export const TransactionDetails = ({ toggleModal, tx, balanceChanges }: Props) => {
   const { network } = useNetwork()
 
@@ -83,11 +84,9 @@ export const TransactionDetails = ({ toggleModal, tx, balanceChanges }: Props) =
     return null
   }
 
-  const txDate = tx.timestampMs ? new Date(parseInt(tx.timestampMs, 10)) : null
+  const txDate = tx.timestamp ? new Date(tx.timestamp) : null
 
-  const txBlocks = genTxBlockForTxDetails(tx)
-
-  const txFees = getTxFees(tx)
+  const txFees = getTxFees(tx.gas)
 
   return (
     <Modal onClose={toggleModal} style={{ padding: 20, maxHeight: 450 }}>
@@ -121,7 +120,10 @@ export const TransactionDetails = ({ toggleModal, tx, balanceChanges }: Props) =
             </Subtitle>
             <div>
               {balanceChanges.map((balanceChange, i) => (
-                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 6 }} key={i}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 6 }}
+                  key={i}
+                >
                   <AmountChanged
                     variant="caption"
                     isPositive={Number(balanceChange.amount || '') >= 0n}
@@ -135,44 +137,74 @@ export const TransactionDetails = ({ toggleModal, tx, balanceChanges }: Props) =
             </div>
           </div>
         ) : null}
-        <Subtitle fontWeight="medium" variant="body" style={{ marginBottom: 9, marginTop: 20 }}>
-          Transaction Block
-        </Subtitle>
-        <TxBlockContainer>
-          {txBlocks?.map((block, index) => {
-            let blockToDisplay: ReactNode = block
-            if (block.indexOf('::') !== -1) {
-              const blockParts = block.split('::')
-              blockToDisplay = (
-                <>
-                  <a
-                    href={`https://suivision.xyz/object/${blockParts[0]}?network=${network}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ textDecoration: 'none' }}
+        {tx.commandSummaries.length > 0 && (
+          <>
+            <Subtitle fontWeight="medium" variant="body" style={{ marginBottom: 9, marginTop: 20 }}>
+              Transaction Block
+            </Subtitle>
+            <TxBlockContainer>
+              {tx.commandSummaries.map((block, index) => {
+                // MoveCall summaries have the form `0x<pkg>::<mod>::<rest>`
+                // where `<rest>` is the function name plus an optional
+                // `<T1, T2, …>` type-arg suffix. Capture greedily so type
+                // args containing `::` don't get split apart.
+                const moveCall = block.match(/^(0x[0-9a-fA-F]+)::([^:]+)::(.+)$/)
+                // TransferObjects summaries embed the destination address
+                // (when resolvable) as `→ 0x<addr>`; turn it into a link
+                // pointing at the recipient's account page.
+                const transfer = block.match(
+                  /^(TransferObjects\([^)]*?→ )(0x[0-9a-fA-F]+)(\))$/
+                )
+                let blockToDisplay: ReactNode = block
+                if (moveCall) {
+                  blockToDisplay = (
+                    <>
+                      <a
+                        href={`https://suivision.xyz/object/${moveCall[1]}?network=${network}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        {ellipsizeTokenAddress(moveCall[1])}
+                      </a>
+                      <span>::</span>
+                      <span>{moveCall[2]}</span>
+                      <span>::</span>
+                      <span>{moveCall[3]}</span>
+                    </>
+                  )
+                } else if (transfer) {
+                  blockToDisplay = (
+                    <>
+                      <span>{transfer[1]}</span>
+                      <a
+                        href={`https://suivision.xyz/address/${transfer[2]}?network=${network}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        {ellipsizeTokenAddress(transfer[2])}
+                      </a>
+                      <span>{transfer[3]}</span>
+                    </>
+                  )
+                }
+                return (
+                  <div
+                    key={`${block}-${index}`}
+                    style={{
+                      padding: '4px 8px',
+                      borderBottom:
+                        index === tx.commandSummaries.length - 1 ? 'none' : '1px solid #BBC0C5',
+                    }}
                   >
-                    {ellipsizeTokenAddress(blockParts[0])}
-                  </a>
-                  <span>::</span>
-                  <span>{blockParts[1]}</span>
-                  <span>::</span>
-                  <span>{blockParts[2]}</span>
-                </>
-              )
-            }
-            return (
-              <div
-                key={`${block}-${index}`}
-                style={{
-                  padding: '4px 8px',
-                  borderBottom: index === txBlocks.length - 1 ? 'none' : '1px solid #BBC0C5',
-                }}
-              >
-                <TxBlockItem variant="caption">{blockToDisplay}</TxBlockItem>
-              </div>
-            )
-          })}
-        </TxBlockContainer>
+                    <TxBlockItem variant="caption">{blockToDisplay}</TxBlockItem>
+                  </div>
+                )
+              })}
+            </TxBlockContainer>
+          </>
+        )}
         <Subtitle fontWeight="medium" variant="body" style={{ marginBottom: 6, marginTop: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>Transaction Fee Total</div>

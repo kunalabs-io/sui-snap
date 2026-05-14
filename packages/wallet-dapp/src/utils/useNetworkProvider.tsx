@@ -1,15 +1,9 @@
 import { useCurrentNetwork, useDAppKit } from '@mysten/dapp-kit-react'
 
-// Mutable tuple so that `createDAppKit({ networks: NETWORKS })`'s
-// `TNetworks extends Networks` infers a concrete tuple (and not the wide
-// `string[]` default that would leave `switchNetwork` typed as
-// `(network: never) => void`). Networks is typed as a mutable array
-// upstream, so a `readonly` tuple via `as const` would be rejected.
-export const NETWORKS: ['mainnet', 'testnet', 'devnet', 'localnet'] = [
+export const NETWORKS: ['mainnet', 'testnet', 'devnet'] = [
   'mainnet',
   'testnet',
   'devnet',
-  'localnet',
 ]
 
 export type NETWORK = (typeof NETWORKS)[number]
@@ -17,16 +11,14 @@ export type NETWORK = (typeof NETWORKS)[number]
 export const NETWORK_MAINNET: NETWORK = 'mainnet'
 export const NETWORK_TESTNET: NETWORK = 'testnet'
 export const NETWORK_DEVNET: NETWORK = 'devnet'
-export const NETWORK_LOCAL: NETWORK = 'localnet'
 
-export const NETWORK_URLS: Record<NETWORK, string> = {
-  mainnet: 'https://fullnode.mainnet.sui.io:443',
-  testnet: 'https://fullnode.testnet.sui.io:443',
-  devnet: 'https://fullnode.devnet.sui.io:443',
-  localnet: 'http://127.0.0.1:9000',
+export const NETWORK_GRAPHQL_URLS: Record<NETWORK, string> = {
+  mainnet: 'https://graphql.mainnet.sui.io/graphql',
+  testnet: 'https://graphql.testnet.sui.io/graphql',
+  devnet: 'https://graphql.devnet.sui.io/graphql',
 }
 
-export type SuiChain = `${'sui'}:${'mainnet' | 'testnet' | 'devnet' | 'localnet'}`
+export type SuiChain = `${'sui'}:${'mainnet' | 'testnet' | 'devnet'}`
 
 export function chainFromNetwork(network: NETWORK): SuiChain {
   return `sui:${network}`
@@ -35,15 +27,15 @@ export function chainFromNetwork(network: NETWORK): SuiChain {
 const NETWORK_STORAGE_KEY = 'network'
 
 /**
- * Convenience wrapper that pairs the dapp-kit-react `useCurrentNetwork()` value
- * with the corresponding `sui:<network>` chain identifier and a setter that
- * routes back through `useDAppKit().switchNetwork(...)`. This preserves the
- * `const { network, chain, setNetwork } = useNetwork()` call shape the rest of
- * the wallet-dapp uses.
+ * Convenience wrapper that pairs the dapp-kit-react `useCurrentNetwork()`
+ * value with the corresponding `sui:<network>` chain identifier and a
+ * setter that routes back through `useDAppKit().switchNetwork(...)`. This
+ * preserves the `const { network, chain, setNetwork } = useNetwork()` call
+ * shape the rest of the wallet-dapp uses.
  *
- * dapp-kit-react persists wallet+account state but not the active network, so
- * `setNetwork` also writes to localStorage; App.tsx reads it back on mount as
- * the `defaultNetwork` argument to `createDAppKit`.
+ * dapp-kit-react persists wallet+account state but not the active
+ * network, so `setNetwork` also writes to localStorage; dappkit.ts reads
+ * it back on mount as the `defaultNetwork` argument to `createDAppKit`.
  */
 export function useNetwork() {
   const dAppKit = useDAppKit()

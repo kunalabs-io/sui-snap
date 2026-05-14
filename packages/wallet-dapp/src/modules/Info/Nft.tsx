@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react'
 import styled from 'styled-components'
-import { SuiObjectResponse } from '@mysten/sui/jsonRpc'
 
 import Spinner from 'components/Spinner'
-import { useOwnedObjects } from 'utils/useOwnedObjects'
+import { useOwnedObjects, OwnedObject } from 'utils/useOwnedObjects'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import { NftDetails } from './NftDetails'
 import { Kiosk as KioskType, useGetKioskContents } from 'utils/useGetKioskContents'
@@ -35,21 +34,14 @@ const EmptyList = styled.div`
 
 export const Nft = () => {
   const [activeKiosk, setActiveKiosk] = useState<KioskType>()
-  const [activeNft, setActiveNft] = useState<SuiObjectResponse>()
+  const [activeNft, setActiveNft] = useState<OwnedObject>()
   const { isInitialFetch, isLoading, ownedObjects, hasNextPage, loadMore } = useOwnedObjects({
-    filter: {
-      MatchNone: [
-        {
-          StructType: '0x2::coin::Coin',
-        },
-      ],
-    },
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
   const { isLoading: isLoadingKiosks, data: ownedKiosks } = useGetKioskContents()
 
-  const toggleModal = useCallback((nft?: SuiObjectResponse) => {
+  const toggleModal = useCallback((nft?: OwnedObject) => {
     setActiveNft(nft)
   }, [])
 
@@ -79,34 +71,30 @@ export const Nft = () => {
     <>
       <Container isScrollable={ownedObjects.length + ownedKiosks.length > 2}>
         {ownedKiosks.map(k => {
-          const kioskImages = k.items.map(i => i.data?.display?.data?.image_url)
+          const kioskImages = k.items.map(i => {
+            const data = i.data?.display?.data as Record<string, string> | undefined | null
+            return data?.image_url
+          })
           if (!kioskImages || kioskImages.length === 0) {
             return null
           }
           return <Kiosk key={k.kioskId} kiosk={k} toggleModal={toggleKioskModal} />
         })}
         {ownedObjects.map(o => {
-          if (o.error) {
-            return null
-          }
-
-          const type = o.data?.type || ''
-          const address = o.data?.objectId || ''
-          const displayData = o.data?.display?.data as Record<string, string> | undefined | null
-          const imgSrc = displayData?.image_url
-          const name = displayData?.name
-          const objectId = o?.data?.objectId
+          const displayOutput = o.display?.output as Record<string, unknown> | undefined | null
+          const imgSrc = displayOutput?.image_url as string | undefined
+          const name = displayOutput?.name as string | undefined
           return (
             <NftImageContainer
-              key={o.data?.objectId}
+              key={o.objectId}
               toggleModal={() => toggleModal(o)}
-              type={type}
-              address={address}
+              type={o.type}
+              address={o.objectId}
               imgSrc={formatImgUrl(imgSrc)}
               name={name}
-              objectId={objectId}
+              objectId={o.objectId}
               showImgInfoOnHover={true}
-              noDisplayData={o.data?.display?.data === null}
+              noDisplayData={o.display?.output == null}
             />
           )
         })}
@@ -118,7 +106,12 @@ export const Nft = () => {
       ) : (
         <div style={{ height: 51 }} />
       )}
-      {activeNft && <NftDetails nft={activeNft.data} toggleModal={toggleModal} />}
+      {activeNft && (
+        <NftDetails
+          nft={{ objectId: activeNft.objectId, type: activeNft.type, display: { data: activeNft.display?.output ?? null } }}
+          toggleModal={toggleModal}
+        />
+      )}
       {activeKiosk && <KioskDetails kiosk={activeKiosk} toggleModal={toggleKioskModal} />}
     </>
   )

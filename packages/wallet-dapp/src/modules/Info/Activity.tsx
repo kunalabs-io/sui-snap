@@ -1,10 +1,9 @@
 import styled from 'styled-components'
-import { SuiTransactionBlockResponse } from '@mysten/sui/jsonRpc'
 import { useCallback, useState } from 'react'
 
 import Spinner from 'components/Spinner'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
-import { useTransactions } from 'utils/useTransactions'
+import { useTransactions, ActivityTransaction } from 'utils/useTransactions'
 import Typography from 'components/Typography'
 import { IconArrowTransaction } from 'components/Icons/ArrowTransaction'
 import { IconArrowReceived } from 'components/Icons/ArrowReceived'
@@ -75,16 +74,16 @@ const AmountChangedSymbol = styled(Typography)`
 
 export const Activity = () => {
   const [isOpenTxDetailsModal, setIsOpenTxDetailsModal] = useState(false)
-  const [activeTx, setActiveTx] = useState<SuiTransactionBlockResponse>()
+  const [activeTx, setActiveTx] = useState<ActivityTransaction>()
 
-  const { isLoading, transactions, balanceChanges, txBlockTexts } = useTransactions({
+  const { isLoading, transactions, formattedBalanceChanges } = useTransactions({
     refetchInterval: WALLET_BALANCES_REFETCH_INTERVAL,
   })
 
   const currentAccount = useCurrentAccount()
 
   const toggleModal = useCallback(
-    (tx?: SuiTransactionBlockResponse) => {
+    (tx?: ActivityTransaction) => {
       setIsOpenTxDetailsModal(!isOpenTxDetailsModal)
       setActiveTx(tx)
     },
@@ -104,15 +103,15 @@ export const Activity = () => {
   }
 
   const groupedTransactionsByDate = transactions.reduce(
-    (result: Record<string, SuiTransactionBlockResponse[]>, item) => {
-      const date = item.timestampMs ? new Date(parseInt(item.timestampMs, 10)) : new Date()
+    (result: Record<string, ActivityTransaction[]>, item) => {
+      const date = item.timestamp ? new Date(item.timestamp) : new Date()
       const dateString = date.toISOString().split('T')[0]
 
       if (!result[dateString]) {
         result[dateString] = []
       }
 
-      result[dateString].push(item as SuiTransactionBlockResponse)
+      result[dateString].push(item)
 
       return result
     },
@@ -125,31 +124,34 @@ export const Activity = () => {
         <DateContainer key={dateKey}>
           <DateLabel variant="body">{getFormattedDate(dateKey)}</DateLabel>
           {groupedTransactionsByDate[dateKey]
-            .sort((tx1, tx2) => parseInt(tx2.timestampMs || '', 10) - parseInt(tx1.timestampMs || '', 10))
+            .sort((tx1, tx2) => {
+              if (!tx1.timestamp || !tx2.timestamp) return 0
+              return new Date(tx2.timestamp).getTime() - new Date(tx1.timestamp).getTime()
+            })
             .map((tx, i) => {
-              const txDate = tx.timestampMs ? new Date(parseInt(tx.timestampMs)) : null
+              const txDate = tx.timestamp ? new Date(tx.timestamp) : null
+              const isSent = tx.sender === currentAccount?.address
               return (
                 <div key={`${tx.digest}-${i}`} onClick={() => toggleModal(tx)}>
                   <TransactionContainer>
-                    {tx.transaction?.data.sender !== currentAccount?.address ? (
-                      <IconArrowReceived />
-                    ) : (
-                      <IconArrowTransaction />
-                    )}
+                    {isSent ? <IconArrowTransaction /> : <IconArrowReceived />}
                     <div style={{ marginLeft: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <TransactionType style={{ marginRight: 5 }}>
-                          {tx.transaction?.data.sender !== currentAccount?.address ? 'Received' : 'Transaction'}
+                          {isSent ? 'Transaction' : 'Received'}
                         </TransactionType>
                         <TimeLabel>{`(${txDate ? txDate.toLocaleTimeString() : ''})`}</TimeLabel>
                       </div>
-                      <TxBlockTexts>{txBlockTexts?.get(tx.digest)?.join(', ')}</TxBlockTexts>
+                      <TxBlockTexts>{tx.commandSummaries.join(', ')}</TxBlockTexts>
                     </div>
                     <div style={{ marginLeft: 'auto' }}>
-                      {balanceChanges && balanceChanges.get(tx.digest) && (
+                      {formattedBalanceChanges.get(tx.digest) && (
                         <div>
-                          {balanceChanges.get(tx.digest)?.map((balanceChange, i) => (
-                            <div style={{ display: 'flex', justifyContent: 'flex-end' }} key={i}>
+                          {formattedBalanceChanges.get(tx.digest)?.map((balanceChange, i) => (
+                            <div
+                              style={{ display: 'flex', justifyContent: 'flex-end' }}
+                              key={i}
+                            >
                               <AmountChanged
                                 variant="caption"
                                 fontWeight="medium"
@@ -176,7 +178,7 @@ export const Activity = () => {
         <TransactionDetails
           toggleModal={toggleModal}
           tx={activeTx}
-          balanceChanges={activeTx ? balanceChanges.get(activeTx.digest) : undefined}
+          balanceChanges={activeTx ? formattedBalanceChanges.get(activeTx.digest) : undefined}
         />
       )}
     </Container>
