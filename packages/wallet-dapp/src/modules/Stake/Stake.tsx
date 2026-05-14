@@ -7,7 +7,7 @@ import Typography from 'components/Typography'
 import { StakeDetails } from './StakeDetails'
 import { NewStake } from './NewStake'
 import { Amount } from 'lib/amount'
-import useStakes from 'utils/useStakes'
+import useStakes, { useStakeRewards } from 'utils/useStakes'
 import useLatestSuiSystemState from 'utils/useLatestSuiSystemState'
 import { SUI_DECIMALS } from '@mysten/sui/utils'
 import { formatNumberWithCommas } from 'utils/formatting'
@@ -171,50 +171,63 @@ export const Stake = ({ onBackClick }: Props) => {
   const stakesRes = useStakes()
   const systemStateRes = useLatestSuiSystemState()
 
+  // Build pool → validator map up-front so we can also pass it to the
+  // reward computation hook (which needs each validator's exchange-rates
+  // table id).
+  const validatorByPoolId = new Map(
+    systemStateRes.data?.systemState.activeValidators.map(v => [v.stakingPoolId, v]) ?? []
+  )
+  const rewardsRes = useStakeRewards({
+    stakes: stakesRes.data ?? [],
+    validatorByPoolId,
+    currentEpoch: systemStateRes.data
+      ? BigInt(systemStateRes.data.systemState.epoch)
+      : undefined,
+  })
+
   const stakes: StakeItem[] = []
   if (stakesRes.data && systemStateRes.data) {
-    for (const validator of stakesRes.data) {
-      for (const stake of validator.stakes) {
-        const validatorInfo = systemStateRes.data.systemState.activeValidators.find(
-          v => v.suiAddress === validator.validatorAddress
+    for (const stake of stakesRes.data) {
+      const validatorInfo = validatorByPoolId.get(stake.poolId)
+
+      const startedEarning =
+        Number(stake.stakeActiveEpoch) < Number(systemStateRes.data.systemState.epoch)
+
+      const currentEpoch = Number(systemStateRes.data.systemState.epoch)
+      const stakeRequestEpoch = Number(stake.stakeRequestEpoch)
+      let rewardsStart: Date | undefined
+      if (!startedEarning) {
+        rewardsStart = new Date(
+          Number(systemStateRes.data.systemState.epochStartTimestampMs) +
+            (stakeRequestEpoch - currentEpoch + 2) *
+              Number(systemStateRes.data.systemState.epochDurationMs)
         )
-
-        if (stake.status === 'Unstaked') {
-          continue
-        }
-
-        const startedEarning = Number(stake.stakeActiveEpoch) < Number(systemStateRes.data.systemState.epoch)
-
-        const currentEpoch = Number(systemStateRes.data.systemState.epoch)
-        const stakeRequestEpoch = Number(stake.stakeRequestEpoch)
-        let rewardsStart: Date | undefined
-        if (!startedEarning) {
-          rewardsStart = new Date(
-            Number(systemStateRes.data.systemState.epochStartTimestampMs) +
-              (stakeRequestEpoch - currentEpoch + 2) * Number(systemStateRes.data.systemState.epochDurationMs)
-          )
-        }
-
-        stakes.push({
-          id: stake.stakedSuiId,
-          validatorAddress: validator.validatorAddress,
-          validator: validatorInfo
-            ? {
-                address: validatorInfo.suiAddress,
-                name: validatorInfo.name,
-                imgUrl: validatorInfo.imageUrl,
-                apy: systemStateRes.data?.apyMap.get(validatorInfo.suiAddress),
-                commission: Number(validatorInfo.commissionRate) / 100_00,
-              }
-            : undefined,
-          principal: Amount.fromInt(BigInt(stake.principal), SUI_DECIMALS),
-          status: stake.status,
-          startedEarning,
-          rewardsStart,
-          estimatedReward:
-            ('estimatedReward' in stake && Amount.fromInt(BigInt(stake.estimatedReward), SUI_DECIMALS)) || undefined,
-        })
       }
+
+      stakes.push({
+        id: stake.stakedSuiId,
+        validatorAddress: validatorInfo?.suiAddress ?? '',
+        validator: validatorInfo
+          ? {
+              address: validatorInfo.suiAddress,
+              name: validatorInfo.name,
+              imgUrl: validatorInfo.imageUrl,
+              // TODO: APY is no longer exposed by GraphQL or gRPC v2; only
+              // the legacy JSON-RPC computed it. Show '--' until we have a
+              // replacement source.
+              apy: undefined,
+              commission: Number(validatorInfo.commissionRate) / 100_00,
+            }
+          : undefined,
+        principal: Amount.fromInt(BigInt(stake.principal), SUI_DECIMALS),
+        status: stake.status,
+        startedEarning,
+        rewardsStart,
+        estimatedReward:
+          rewardsRes.data?.get(stake.stakedSuiId) !== undefined
+            ? Amount.fromInt(rewardsRes.data.get(stake.stakedSuiId)!, SUI_DECIMALS)
+            : undefined,
+      })
     }
   }
 

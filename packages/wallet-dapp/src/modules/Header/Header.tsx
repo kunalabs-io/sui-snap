@@ -10,7 +10,6 @@ import ModalBody from 'components/Modal/components/ModalBody'
 import {
   NETWORK,
   NETWORK_DEVNET,
-  NETWORK_LOCAL,
   NETWORK_MAINNET,
   NETWORK_TESTNET,
   useNetwork,
@@ -62,7 +61,6 @@ const Header = () => {
             { label: 'Mainnet', value: NETWORK_MAINNET },
             { label: 'Testnet', value: NETWORK_TESTNET },
             { label: 'Devnet', value: NETWORK_DEVNET },
-            { label: 'Localnet', value: NETWORK_LOCAL },
           ]}
           handleChange={handleOptionClick}
           selectedOption={{

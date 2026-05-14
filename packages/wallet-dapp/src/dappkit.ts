@@ -1,7 +1,7 @@
 import { createDAppKit } from '@mysten/dapp-kit-react'
-import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc'
+import { SuiGraphQLClient } from '@mysten/sui/graphql'
 
-import { NETWORK, NETWORKS, NETWORK_URLS } from 'utils/useNetworkProvider'
+import { NETWORK, NETWORKS, NETWORK_GRAPHQL_URLS } from 'utils/useNetworkProvider'
 
 const NETWORK_STORAGE_KEY = 'network'
 
@@ -12,7 +12,7 @@ function readStoredNetwork(): NETWORK {
       return 'mainnet'
     }
     const parsed = JSON.parse(raw)
-    if (NETWORKS.includes(parsed)) {
+    if ((NETWORKS as readonly string[]).includes(parsed)) {
       return parsed
     }
   } catch {
@@ -26,19 +26,20 @@ function readStoredNetwork(): NETWORK {
  * inside the component tree) gives us a stable TypeScript type that we can
  * register globally via module augmentation, so `useCurrentClient` /
  * `useDAppKit` / `useCurrentAccount` etc. all resolve to our concrete
- * `SuiJsonRpcClient` instead of the generic `ClientWithCoreApi` upper bound.
+ * `SuiGraphQLClient` instead of the generic `ClientWithCoreApi` upper
+ * bound.
  */
 export const dAppKit = createDAppKit({
   networks: NETWORKS,
   defaultNetwork: readStoredNetwork(),
   autoConnect: true,
   createClient: network =>
-    new SuiJsonRpcClient({ url: NETWORK_URLS[network as NETWORK], network }),
+    new SuiGraphQLClient({
+      url: NETWORK_GRAPHQL_URLS[network as NETWORK],
+      network,
+    }),
 })
 
-// Register the dAppKit type globally so dapp-kit-react hooks (useDAppKit,
-// useCurrentClient, useCurrentAccount, ...) resolve to our concrete client
-// and network tuple instead of the generic upper bounds.
 declare module '@mysten/dapp-kit-react' {
   interface Register {
     dAppKit: typeof dAppKit

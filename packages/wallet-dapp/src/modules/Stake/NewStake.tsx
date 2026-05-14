@@ -80,18 +80,22 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
 
   const systemStateRes = useLatestSuiSystemState()
 
-  const validators: ValidatorInfo[] | undefined = systemStateRes.data?.systemState.activeValidators.map(v => {
-    return {
-      address: v.suiAddress,
-      poolId: v.stakingPoolId,
-      name: v.name,
-      apy: systemStateRes.data?.apyMap.get(v.suiAddress),
-      imageUrl: v.imageUrl,
-      totalSuiStaked: Amount.fromInt(BigInt(v.stakingPoolSuiBalance), SUI_DECIMALS),
-      votingPower: Number(v.votingPower) / 100_00,
-      commission: Number(v.commissionRate) / 100_00,
+  const validators: ValidatorInfo[] | undefined = systemStateRes.data?.systemState.activeValidators.map(
+    v => {
+      return {
+        address: v.suiAddress,
+        poolId: v.stakingPoolId,
+        name: v.name,
+        // TODO: APY isn't available from GraphQL / gRPC v2; the legacy
+        // JSON-RPC was the only source. Surface '--' until restored.
+        apy: undefined,
+        imageUrl: v.imageUrl,
+        totalSuiStaked: Amount.fromInt(BigInt(v.stakingPoolSuiBalance), SUI_DECIMALS),
+        votingPower: Number(v.votingPower) / 100_00,
+        commission: Number(v.commissionRate) / 100_00,
+      }
     }
-  })
+  )
 
   let rewardsStart = undefined
   if (systemStateRes.data?.systemState) {
