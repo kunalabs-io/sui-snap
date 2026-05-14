@@ -212,10 +212,7 @@ export const Stake = ({ onBackClick }: Props) => {
               address: validatorInfo.suiAddress,
               name: validatorInfo.name,
               imgUrl: validatorInfo.imageUrl,
-              // TODO: APY is no longer exposed by GraphQL or gRPC v2; only
-              // the legacy JSON-RPC computed it. Show '--' until we have a
-              // replacement source.
-              apy: undefined,
+              apy: validatorInfo.apy,
               commission: Number(validatorInfo.commissionRate) / 100_00,
             }
           : undefined,
