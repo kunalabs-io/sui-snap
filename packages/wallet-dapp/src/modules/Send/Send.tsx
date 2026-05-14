@@ -9,15 +9,13 @@ import { useInputAmountValidate } from 'utils/input/useInputAmountValidate'
 import { toast } from 'react-toastify'
 import { WALLET_BALANCES_REFETCH_INTERVAL } from 'utils/const'
 import Spinner from 'components/Spinner/Spinner'
-import { Transaction, TransactionArgument } from '@mysten/sui/transactions'
-import { SUI_TYPE_ARG } from '@mysten/sui/utils'
+import { Transaction } from '@mysten/sui/transactions'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
-import type { SuiClientTypes } from '@mysten/sui/client'
 import Typography from 'components/Typography'
-import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react'
+import { useCurrentAccount, useDAppKit } from '@mysten/dapp-kit-react'
 
 interface Props {
   openInfoScreen: () => void
@@ -103,77 +101,27 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     amountError = 'Amount too large'
   }
 
-  const client = useCurrentClient()
   const currentAccount = useCurrentAccount()
   const { network } = useNetwork()
   const dAppKit = useDAppKit()
 
   const onSendClick = useCallback(async () => {
     setIsSending(true)
-    // invariants
     if (!recipient || !amount || !selectedCoin || !currentAccount) {
       toast.error('Something went wrong')
       setIsSending(false)
       return
     }
 
-    let coin: TransactionArgument
     const txb = new Transaction()
-
-    if (selectedCoin.meta.typeArg === SUI_TYPE_ARG) {
-      coin = txb.splitCoins(txb.gas, [amount.int])
-    } else {
-      let acc = 0n
-      const coins: Array<SuiClientTypes.Coin> = []
-      let cursor: string | null | undefined = undefined
-      let hasNextPage = true
-      while (hasNextPage && acc < amount.int) {
-        const page = await client.core.listCoins({
-          owner: currentAccount.address,
-          coinType: selectedCoin.meta.typeArg,
-          cursor,
-        })
-        for (const coin of page.objects) {
-          acc += BigInt(coin.balance)
-          coins.push(coin)
-        }
-        cursor = page.cursor
-        hasNextPage = page.hasNextPage
-      }
-
-      if (acc < amount.int || coins.length === 0) {
-        toast.error('Not enough balance')
-        setIsSending(false)
-        return
-      }
-
-      const coinIds: Array<string> = []
-      let selectedAmount = 0n
-      while (selectedAmount < amount.int) {
-        // select random coin from the array
-        const idx = Math.floor(Math.random() * coins.length)
-        const coin = coins[idx]
-        selectedAmount += BigInt(coin.balance)
-        coinIds.push(coin.objectId)
-        // remove the coin from the array
-        coins.splice(idx, 1)
-      }
-
-      // merge all coins into a single object
-      if (coinIds.length > 1) {
-        txb.mergeCoins(
-          txb.object(coinIds[0]),
-          coinIds.slice(1).map(c => txb.object(c))
-        )
-      }
-      coin = txb.object(coinIds[0])
-      // split the coin to the exact amount if necessary
-      if (selectedAmount > amount.int) {
-        coin = txb.splitCoins(txb.object(coinIds[0]), [amount.int])
-      }
-    }
-
-    txb.transferObjects([coin], recipient)
+    txb.moveCall({
+      target: '0x2::balance::send_funds',
+      typeArguments: [selectedCoin.meta.typeArg],
+      arguments: [
+        txb.balance({ type: selectedCoin.meta.typeArg, balance: amount.int }),
+        txb.pure.address(recipient),
+      ],
+    })
 
     try {
       const res = await dAppKit.signAndExecuteTransaction({ transaction: txb })
@@ -197,6 +145,11 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     } catch (e) {
       if (e instanceof UserRejectionError) {
         toast.warn('Transaction rejected')
+      } else if (e instanceof Error && /No valid gas coins/i.test(e.message)) {
+        // SDK's core resolver throws this when the address-balance can't
+        // cover both the transfer and gas AND the sender has no Coin<SUI>
+        // objects to fall back to as payment.
+        toast.error('Not enough SUI to cover gas')
       } else {
         toast.error('Transaction failed')
         console.error(e)
@@ -210,7 +163,6 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     selectedCoin,
     currentAccount,
     dAppKit,
-    client,
     network,
     triggerWalletBalancesUpdate,
     openInfoScreen,
