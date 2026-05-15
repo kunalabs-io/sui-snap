@@ -11,13 +11,13 @@ export const StyledSpinner = styled.div`
   display: inline-block;
   box-sizing: border-box;
   animation: rotation 1s linear infinite;
-  }
 
   @keyframes rotation {
-  0% {
+    0% {
       transform: rotate(0deg);
-  }
-  100% {
+    }
+    100% {
       transform: rotate(360deg);
+    }
   }
 `
