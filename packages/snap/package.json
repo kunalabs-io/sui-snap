@@ -30,7 +30,6 @@
     "@metamask/snaps-sdk": "11.1.0",
     "@mysten/sui": "^2.17.0",
     "@mysten/wallet-standard": "^0.20.3",
-    "@noble/hashes": "^1.8.0",
     "buffer": "^6.0.3"
   },
   "devDependencies": {
