@@ -45,21 +45,21 @@
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.52.8",
-    "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.38.0",
-    "eslint": "^9.31.0",
+    "@microsoft/api-extractor": "^7.58.7",
+    "@types/node": "^24.12.4",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.3",
-    "prettier": "^3.6.2",
-    "tsup": "^8.5.0",
-    "typescript": "^5.8.3"
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@metamask/detect-provider": "^2.0.0",
     "@metamask/providers": "^22.1.1",
-    "@mysten/sui": "^2.16.2",
+    "@mysten/sui": "^2.17.0",
     "@mysten/wallet-standard": "^0.20.3",
     "superstruct": "^2.0.2"
   }
