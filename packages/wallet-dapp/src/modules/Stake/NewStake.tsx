@@ -20,7 +20,26 @@ import { formatNumberToPct, formatNumberWithCommas } from 'utils/formatting'
 import { Transaction } from '@mysten/sui/transactions'
 import { useNetwork } from 'utils/useNetworkProvider'
 import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
-import { useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react'
+import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react'
+import { MIN_GAS_RESERVE, estimateGasReserve, isInsufficientGasError, placeholderAmount } from 'utils/gasReserve'
+
+function buildStakeTx(amount: bigint, validator: string): Transaction {
+  const txb = new Transaction()
+  const stakeCoin = txb.splitCoins(txb.gas, [amount])
+  txb.moveCall({
+    target: '0x3::sui_system::request_add_stake',
+    arguments: [
+      txb.sharedObjectRef({
+        objectId: SUI_SYSTEM_STATE_OBJECT_ID,
+        initialSharedVersion: 1,
+        mutable: true,
+      }),
+      stakeCoin,
+      txb.pure.address(validator),
+    ],
+  })
+  return txb
+}
 
 const Container = styled.div`
   padding-top: 16px;
@@ -73,27 +92,27 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
   const [selectedValidator, setSelectedValidator] = useState<ValidatorInfo>()
   const [rawInputStr, setRawInputStr] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isEstimatingMax, setIsEstimatingMax] = useState(false)
 
+  const currentAccount = useCurrentAccount()
   const client = useCurrentClient()
   const { network } = useNetwork()
   const dAppKit = useDAppKit()
 
   const systemStateRes = useLatestSuiSystemState()
 
-  const validators: ValidatorInfo[] | undefined = systemStateRes.data?.systemState.activeValidators.map(
-    v => {
-      return {
-        address: v.suiAddress,
-        poolId: v.stakingPoolId,
-        name: v.name,
-        apy: v.apy,
-        imageUrl: v.imageUrl,
-        totalSuiStaked: Amount.fromInt(BigInt(v.stakingPoolSuiBalance), SUI_DECIMALS),
-        votingPower: Number(v.votingPower) / 100_00,
-        commission: Number(v.commissionRate) / 100_00,
-      }
+  const validators: ValidatorInfo[] | undefined = systemStateRes.data?.systemState.activeValidators.map(v => {
+    return {
+      address: v.suiAddress,
+      poolId: v.stakingPoolId,
+      name: v.name,
+      apy: v.apy,
+      imageUrl: v.imageUrl,
+      totalSuiStaked: Amount.fromInt(BigInt(v.stakingPoolSuiBalance), SUI_DECIMALS),
+      votingPower: Number(v.votingPower) / 100_00,
+      commission: Number(v.commissionRate) / 100_00,
     }
-  )
+  })
 
   let rewardsStart = undefined
   if (systemStateRes.data?.systemState) {
@@ -131,19 +150,47 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
     setSelectedValidator(validator)
   }, [])
 
-  const handleMaxClick = useCallback(() => {
-    if (!suiCoin) {
+  const handleMaxClick = useCallback(async () => {
+    if (!suiCoin || isEstimatingMax) {
       return
     }
-    setRawInputStr(suiCoin.amount.toString())
-  }, [suiCoin])
+
+    // The stake is split off the gas coin, so "max" is the balance minus
+    // whatever the node will budget for gas.
+    const balance = suiCoin.amount.int
+    let reserve = MIN_GAS_RESERVE
+    if (currentAccount) {
+      setIsEstimatingMax(true)
+      try {
+        const sender = currentAccount.address
+        // Any validator works for the estimate; fall back to the first active one.
+        const validator = selectedValidator?.address ?? validators?.[0]?.address
+        if (!validator) {
+          throw new Error('no validator available for estimate')
+        }
+        const estimateTx = buildStakeTx(placeholderAmount(balance), validator)
+        reserve = await estimateGasReserve(client, sender, estimateTx)
+      } catch (e) {
+        console.error('gas reserve estimate failed, using floor', e)
+      } finally {
+        setIsEstimatingMax(false)
+      }
+    }
+    const max = balance > reserve ? balance - reserve : 0n
+    setRawInputStr(Amount.fromInt(max, suiCoin.meta.decimals).toString())
+  }, [suiCoin, isEstimatingMax, currentAccount, client, selectedValidator, validators])
+
+  // Cheap sync guard against staking everything; the real budget is only
+  // known after an estimate (see handleMaxClick).
+  let spendable = suiCoin?.amount.int ?? 0n
+  spendable = spendable > MIN_GAS_RESERVE ? spendable - MIN_GAS_RESERVE : 0n
 
   let stakeEnabled = false
   if (
     amount &&
     suiCoin &&
     amount.int > 0n &&
-    amount.int <= suiCoin.amount.int &&
+    amount.int <= spendable &&
     amount.decimals === (suiCoin.meta.decimals || 0)
   ) {
     stakeEnabled = true
@@ -155,6 +202,8 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
   }
   if (suiCoin && amount && amount.int > suiCoin.amount.int) {
     amountError = 'Amount too large'
+  } else if (suiCoin && amount && amount.int > spendable) {
+    amountError = 'Not enough SUI left for gas'
   }
 
   const handleStakeClick = useCallback(async () => {
@@ -164,20 +213,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
 
     setIsSending(true)
 
-    const txb = new Transaction()
-    const stakeCoin = txb.splitCoins(txb.gas, [amount.int])
-    txb.moveCall({
-      target: '0x3::sui_system::request_add_stake',
-      arguments: [
-        txb.sharedObjectRef({
-          objectId: SUI_SYSTEM_STATE_OBJECT_ID,
-          initialSharedVersion: 1,
-          mutable: true,
-        }),
-        stakeCoin,
-        txb.pure.address(selectedValidator.address),
-      ],
-    })
+    const txb = buildStakeTx(amount.int, selectedValidator.address)
 
     try {
       const res = await dAppKit.signAndExecuteTransaction({ transaction: txb })
@@ -201,6 +237,8 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
     } catch (e) {
       if (e instanceof UserRejectionError) {
         toast.warn('Transaction rejected')
+      } else if (isInsufficientGasError(e)) {
+        toast.error('Not enough SUI to cover gas')
       } else {
         toast.error('Transaction failed')
         console.error(e)
@@ -208,15 +246,7 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
     } finally {
       setIsSending(false)
     }
-  }, [
-    client,
-    selectedValidator,
-    amount,
-    dAppKit,
-    network,
-    triggerWalletBalancesUpdate,
-    openStakeScreen,
-  ])
+  }, [client, selectedValidator, amount, dAppKit, network, triggerWalletBalancesUpdate, openStakeScreen])
 
   if (isLoadingWalletBalances || systemStateRes.isLoading) {
     return (
@@ -247,9 +277,11 @@ export const NewStake = ({ onBackClick, openStakeScreen }: Props) => {
             <div>Amount</div>
             <div onClick={handleMaxClick}>
               <Typography variant="body" color="secondary" style={{ cursor: 'pointer' }}>
-                {`Balance: ${suiCoin?.amount
-                  .toNumber()
-                  .toLocaleString('en-US', { maximumFractionDigits: 20 })} ${suiCoin?.meta.symbol}`}
+                {isEstimatingMax
+                  ? 'Estimating gas…'
+                  : `Balance: ${suiCoin?.amount
+                      .toNumber()
+                      .toLocaleString('en-US', { maximumFractionDigits: 20 })} ${suiCoin?.meta.symbol}`}
               </Typography>
             </div>
           </div>
