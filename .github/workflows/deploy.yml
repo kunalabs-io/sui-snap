@@ -1,0 +1,41 @@
+name: Deploy to production
+
+# Fast-forwards the `production` branch to `master`. Cloudflare Pages builds
+# the wallet-dapp from `production`, so this is the deploy button.
+#
+# The `production` environment has required reviewers, so a run sits as a
+# pending deployment until approved. The `production` branch ruleset only
+# lets GitHub Actions push to it, so this workflow is the only way it moves.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Fast-forward production to master
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Verify fast-forward
+        run: |
+          git fetch origin production
+          if ! git merge-base --is-ancestor origin/production master; then
+            echo "::error::production is not an ancestor of master; refusing non-fast-forward deploy"
+            exit 1
+          fi
+          echo "Deploying:"
+          git log --oneline origin/production..master
+
+      - name: Push
+        run: git push origin master:production
