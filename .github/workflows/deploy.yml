@@ -4,8 +4,11 @@ name: Deploy to production
 # the wallet-dapp from `production`, so this is the deploy button.
 #
 # The `production` environment has required reviewers, so a run sits as a
-# pending deployment until approved. The `production` branch ruleset only
-# lets GitHub Actions push to it, so this workflow is the only way it moves.
+# pending deployment until approved. The push uses a write deploy key stored
+# as an environment secret (only readable by an approved run); the
+# `production` branch ruleset only lets deploy keys push, so this workflow
+# is the only way the branch moves. GITHUB_TOKEN can't be used: GitHub
+# Actions isn't accepted as a ruleset bypass actor.
 
 on:
   workflow_dispatch:
@@ -20,12 +23,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           ref: master
           fetch-depth: 0
+          # Switches the remote to SSH and authenticates as the deploy key,
+          # so the push below bypasses the production ruleset.
+          ssh-key: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
 
       - name: Verify fast-forward
         run: |
