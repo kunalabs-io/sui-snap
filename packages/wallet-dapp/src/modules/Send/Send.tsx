@@ -15,7 +15,10 @@ import { UserRejectionError } from '@kunalabs-io/sui-snap-wallet'
 import Textarea from 'components/Textarea/Textarea'
 import { useAutoSizeTextarea } from 'utils/useAutoSizeTextarea'
 import Typography from 'components/Typography'
-import { useCurrentAccount, useDAppKit } from '@mysten/dapp-kit-react'
+import { useCurrentAccount, useCurrentClient, useDAppKit } from '@mysten/dapp-kit-react'
+import { suiTypeArg } from 'utils/const'
+import { Amount } from 'lib/amount'
+import { MIN_GAS_RESERVE, estimateGasReserve, isInsufficientGasError, placeholderAmount } from 'utils/gasReserve'
 
 interface Props {
   openInfoScreen: () => void
@@ -26,13 +29,29 @@ function isValidSuiAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]+$/.test(value) && value.length - 2 === 64
 }
 
+function buildSendTx(coinType: string, amount: bigint, recipient: string): Transaction {
+  const txb = new Transaction()
+  txb.moveCall({
+    target: '0x2::balance::send_funds',
+    typeArguments: [coinType],
+    arguments: [txb.balance({ type: coinType, balance: amount }), txb.pure.address(recipient)],
+  })
+  return txb
+}
+
 const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   const [recipient, setRecipient] = useState('')
   const [rawInputStr, setRawInputStr] = useState('')
   const [selectedCoin, setSelectedCoin] = useState<CoinInfo | undefined>(initialCoinInfo)
   const [isSending, setIsSending] = useState(false)
+  const [isEstimatingMax, setIsEstimatingMax] = useState(false)
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
+
+  const currentAccount = useCurrentAccount()
+  const client = useCurrentClient()
+  const { network } = useNetwork()
+  const dAppKit = useDAppKit()
 
   useAutoSizeTextarea(textAreaRef.current, recipient)
 
@@ -54,12 +73,34 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     setRawInputStr(e.target.value)
   }, [])
 
-  const handleMaxClick = useCallback(() => {
-    if (!selectedCoin) {
+  const handleMaxClick = useCallback(async () => {
+    if (!selectedCoin || isEstimatingMax) {
       return
     }
-    setRawInputStr(selectedCoin.amount.toString())
-  }, [selectedCoin])
+    if (selectedCoin.meta.typeArg !== suiTypeArg) {
+      setRawInputStr(selectedCoin.amount.toString())
+      return
+    }
+
+    // Gas comes out of the same SUI balance we're sending from, so "max" is
+    // the balance minus whatever the node will budget for gas.
+    const balance = selectedCoin.amount.int
+    let reserve = MIN_GAS_RESERVE
+    if (currentAccount) {
+      setIsEstimatingMax(true)
+      try {
+        const sender = currentAccount.address
+        const estimateTx = buildSendTx(suiTypeArg, placeholderAmount(balance), sender)
+        reserve = await estimateGasReserve(client, sender, estimateTx)
+      } catch (e) {
+        console.error('gas reserve estimate failed, using floor', e)
+      } finally {
+        setIsEstimatingMax(false)
+      }
+    }
+    const max = balance > reserve ? balance - reserve : 0n
+    setRawInputStr(Amount.fromInt(max, selectedCoin.meta.decimals).toString())
+  }, [selectedCoin, isEstimatingMax, currentAccount, client])
 
   const options = useMemo(() => {
     if (!infos) {
@@ -76,6 +117,14 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     setSelectedCoin(coin)
   }, [])
 
+  // For SUI the sendable amount is capped by the gas floor; the real budget
+  // is only known after an estimate (see handleMaxClick), so this is a cheap
+  // sync guard against the obvious "send everything" case.
+  let spendable = selectedCoin?.amount.int ?? 0n
+  if (selectedCoin?.meta.typeArg === suiTypeArg) {
+    spendable = spendable > MIN_GAS_RESERVE ? spendable - MIN_GAS_RESERVE : 0n
+  }
+
   let sendEnabled = false
   if (
     recipient &&
@@ -83,7 +132,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     amount &&
     selectedCoin &&
     amount.int > 0n &&
-    amount.int <= selectedCoin.amount.int &&
+    amount.int <= spendable &&
     amount.decimals === (selectedCoin.meta.decimals || 0)
   ) {
     sendEnabled = true
@@ -99,11 +148,9 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
   }
   if (amount && selectedCoin && amount.int > selectedCoin.amount.int) {
     amountError = 'Amount too large'
+  } else if (amount && selectedCoin && amount.int > spendable) {
+    amountError = 'Not enough SUI left for gas'
   }
-
-  const currentAccount = useCurrentAccount()
-  const { network } = useNetwork()
-  const dAppKit = useDAppKit()
 
   const onSendClick = useCallback(async () => {
     setIsSending(true)
@@ -113,15 +160,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
       return
     }
 
-    const txb = new Transaction()
-    txb.moveCall({
-      target: '0x2::balance::send_funds',
-      typeArguments: [selectedCoin.meta.typeArg],
-      arguments: [
-        txb.balance({ type: selectedCoin.meta.typeArg, balance: amount.int }),
-        txb.pure.address(recipient),
-      ],
-    })
+    const txb = buildSendTx(selectedCoin.meta.typeArg, amount.int, recipient)
 
     try {
       const res = await dAppKit.signAndExecuteTransaction({ transaction: txb })
@@ -145,10 +184,9 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     } catch (e) {
       if (e instanceof UserRejectionError) {
         toast.warn('Transaction rejected')
-      } else if (e instanceof Error && /No valid gas coins/i.test(e.message)) {
-        // SDK's core resolver throws this when the address-balance can't
-        // cover both the transfer and gas AND the sender has no Coin<SUI>
-        // objects to fall back to as payment.
+      } else if (isInsufficientGasError(e)) {
+        // Node-side gas selection (via the snap's dry run) rejects the tx
+        // when the SUI balance can't cover both the transfer and gas.
         toast.error('Not enough SUI to cover gas')
       } else {
         toast.error('Transaction failed')
@@ -157,16 +195,7 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
     } finally {
       setIsSending(false)
     }
-  }, [
-    recipient,
-    amount,
-    selectedCoin,
-    currentAccount,
-    dAppKit,
-    network,
-    triggerWalletBalancesUpdate,
-    openInfoScreen,
-  ])
+  }, [recipient, amount, selectedCoin, currentAccount, dAppKit, network, triggerWalletBalancesUpdate, openInfoScreen])
 
   if (isLoadingWalletBalances) {
     return <Spinner />
@@ -204,9 +233,11 @@ const Send = ({ openInfoScreen, initialCoinInfo }: Props) => {
             {selectedCoin ? (
               <div onClick={handleMaxClick}>
                 <Typography variant="body" color="secondary" style={{ cursor: 'pointer' }}>
-                  {`Balance: ${selectedCoin.amount.toNumber().toLocaleString('en-US', { maximumFractionDigits: 20 })} ${
-                    selectedCoin.meta.symbol
-                  }`}
+                  {isEstimatingMax
+                    ? 'Estimating gas…'
+                    : `Balance: ${selectedCoin.amount.toNumber().toLocaleString('en-US', { maximumFractionDigits: 20 })} ${
+                        selectedCoin.meta.symbol
+                      }`}
                 </Typography>
               </div>
             ) : null}
